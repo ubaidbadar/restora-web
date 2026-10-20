@@ -1,0 +1,306 @@
+@import "tailwindcss";
+
+@theme {
+  /* Design tokens: this block is the whole look of the design system.
+     Components only use these roles (bg-surface, text-ink, rounded-card, …), never raw colors,
+     so re-theming a project means editing this file. Contrast ratios are against `surface` (white)
+     unless stated; text roles are all WCAG 2.2 AA (4.5:1) on both `surface` and `canvas`. */
+
+  /* Surfaces: cool neutrals, white content on a soft gray page */
+  --color-canvas: #F6F7F9;   /* page background behind content */
+  --color-surface: #FFFFFF;  /* cards, inputs, dialogs, menus, sidebar; also text on dark fills */
+  --color-sunken: #F1F3F6;   /* muted surface: wells, resting fills, skeletons */
+  --color-hover: #EBEEF2;    /* neutral hover/pressed fill for ghost controls and rows */
+  --color-scrim: rgb(15 23 42 / 0.4); /* backdrop behind dialogs, drawers and sheets */
+
+  /* Text */
+  --color-ink: #0F172A;      /* primary text, headings, values (17.9:1) */
+  --color-body: #334155;     /* regular running text (10.4:1) */
+  --color-muted: #5B6474;    /* secondary text, metadata, icons (6:1; 5.4:1 on sunken) */
+  --color-subtle: #6B7280;   /* placeholders and hints (4.8:1; 4.5:1 on canvas) */
+
+  /* Lines */
+  --color-border: #E5E7EB;        /* card edges, dividers, separators (decorative, not relied on alone) */
+  --color-border-strong: #848D9C; /* outlines of form controls and outline buttons (3.4:1, WCAG 1.4.11) */
+
+  /* Brand: one indigo carries identity, primary actions and selection */
+  --color-primary: #4F46E5;        /* primary buttons, selected chips, active indicators (6.3:1 with white) */
+  --color-primary-hover: #4338CA;
+  --color-primary-soft: #EEF2FF;   /* selected/hover tint behind primary-colored content (5.6:1 with primary) */
+  --color-on-primary: #FFFFFF;     /* content placed on primary fills */
+  --color-focus: #4F46E5;          /* keyboard focus ring (5.9:1 on canvas) */
+
+  /* Accent: the same family, for small highlights (today in the calendar, quoted messages) */
+  --color-accent: #6366F1;
+  --color-accent-text: #4338CA;    /* accent used as text (7:1 on accent-soft) */
+  --color-accent-soft: #EEF2FF;
+  --color-accent-alt: #4F46E5;     /* hover partner of accent */
+  --color-on-accent: #FFFFFF;
+  --color-hero-start: #EEF2FF;     /* showcase hero tint (demo page only) */
+  --color-hero-mid: #F6F7F9;
+
+  /* Status: each role has a tint (50/100), an edge (200), a graphic tone (500) and text tones (600–800).
+     Meaning is always repeated by a label or icon, never carried by color alone. */
+  --color-danger-50: #FCEFEC;
+  --color-danger-100: #F8DED8;
+  --color-danger-200: #EFC0B6;
+  --color-danger-300: #E29C8E;
+  --color-danger-500: #C24A35;
+  --color-danger-600: #B54531;
+  --color-danger-700: #A3301F;  /* 7:1; 6.2:1 on danger-50 */
+  --color-danger-800: #84261A;
+  --color-success-50: #EDF6F0;
+  --color-success-100: #E0EFE5;
+  --color-success-200: #BFDDC9;
+  --color-success-500: #2E8A56;
+  --color-success-600: #257447;
+  --color-success-700: #1F6B43;  /* 6.5:1; 5.9:1 on success-50 */
+  --color-success-800: #185535;
+  --color-warning-50: #FDF5E4;
+  --color-warning-100: #FAEAC4;
+  --color-warning-200: #F1D392;
+  --color-warning-500: #B57B0C;
+  --color-warning-600: #9A6705;
+  --color-warning-700: #8F5A00;
+  --color-warning-800: #7A4B00;  /* 7.4:1; 6.8:1 on warning-50 */
+  --color-info-50: #EDF3FA;
+  --color-info-100: #DCE8F5;
+  --color-info-200: #BCD2EA;
+  --color-info-500: #3B6FA6;
+  --color-info-600: #33639A;
+  --color-info-700: #2B5A8A;     /* 6.4:1 on info-50 */
+  --color-info-800: #22476D;
+
+  /* Illustration: warm colors for drawings only (icons/auth_art.tsx), never for UI controls or text */
+  --color-art-sand: #F2E2C4;    /* table, soft shapes */
+  --color-art-rice: #F5D48A;
+  --color-art-saffron: #E39B2D;
+  --color-art-chili: #D4543A;
+  --color-art-leaf: #3F9A62;
+  --color-art-chat: #D9F2E1;    /* outgoing chat bubbles */
+
+  /* Radius: restrained; one step per kind of surface */
+  --radius-pill: 9999px;     /* switches, progress, count bubbles: true capsules only */
+  --radius-panel: 1rem;      /* dialogs, drawers' sheet edge, bottom sheet */
+  --radius-card: 0.75rem;    /* cards, panels, list rows */
+  --radius-control: 0.5rem;  /* buttons, inputs, chips, menus, toasts */
+  --radius-small: 0.375rem;  /* badges, tooltips, compact controls, menu items */
+  --radius-chip: 0.25rem;    /* checkboxes, tiny markers */
+
+  /* Elevation: borders separate; shadows only mean "floating above the page".
+     shadow-card is a hairline edge drawn as a shadow, so it never shifts layout. */
+  --shadow-card: 0 0 0 1px var(--color-border), 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-lg: 0 0 0 1px rgb(15 23 42 / 0.06), 0 10px 28px -8px rgb(15 23 42 / 0.18), 0 2px 6px rgb(15 23 42 / 0.06);
+  --shadow-sheet: 0 -10px 30px -8px rgb(15 23 42 / 0.2);
+
+  /* Typography: system fonts only (nothing is downloaded), with Noto fallbacks for other scripts. */
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+    "Noto Sans Arabic", "Geeza Pro", sans-serif;
+  --font-display: var(--font-body);  /* headings share the body face; hierarchy comes from size and weight */
+  --default-font-family: var(--font-body);
+
+  /* Headings: h1–h6 (and the .h1–.h6 classes) get these sizes by default, see @layer base below. They grow
+     smoothly with the screen width (clamp), so no sm:/md:/lg: text sizes are needed. Also usable as text-h1…text-h6.
+       h1 page titles 24→30px · h2 20→24px · h3 18→20px · h4 16px · h5 14px · h6 12px */
+  --text-h1: clamp(1.5rem, 1.3rem + 0.8vw, 1.875rem);
+  --text-h1--line-height: 1.2;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 650;
+  --text-h2: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+  --text-h2--line-height: 1.25;
+  --text-h2--letter-spacing: -0.015em;
+  --text-h2--font-weight: 650;
+  --text-h3: clamp(1.125rem, 1.08rem + 0.2vw, 1.25rem);
+  --text-h3--line-height: 1.3;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 600;
+  --text-h4: 1rem;
+  --text-h4--line-height: 1.5;
+  --text-h4--letter-spacing: -0.005em;
+  --text-h4--font-weight: 600;
+  --text-h5: 0.875rem;
+  --text-h5--line-height: 1.43;
+  --text-h5--letter-spacing: 0em;
+  --text-h5--font-weight: 600;
+  --text-h6: 0.75rem;
+  --text-h6--line-height: 1.33;
+  --text-h6--letter-spacing: 0.02em;
+  --text-h6--font-weight: 600;
+
+  /* Other semantic sizes (on top of Tailwind's text-xs…text-xl):
+     text-heading  section, card and dialog headings   text-metric  dashboard/stat values
+     text-display  order tokens and grand totals
+     Body text is text-sm (14px) on desktop; inputs are 16px on phones so iOS does not zoom. */
+  --text-display: 1.75rem;
+  --text-display--line-height: 2.125rem;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 650;
+  --text-metric: 1.375rem;
+  --text-metric--line-height: 1.75rem;
+  --text-metric--letter-spacing: -0.01em;
+  --text-metric--font-weight: 600;
+  --text-heading: 1rem;
+  --text-heading--line-height: 1.5rem;
+  --text-heading--letter-spacing: -0.005em;
+  --text-heading--font-weight: 600;
+
+  /* Motion */
+  --default-transition-duration: 150ms;
+  --ease-emphasized: cubic-bezier(0.22, 1, 0.36, 1);  /* panels and indicators that slide */
+  --animate-pop-in: pop-in 140ms ease-out both;        /* menus */
+  --animate-lid: lid 1.6s var(--ease-emphasized) infinite; /* the loader's cloche lifting its lid (as index.html's boot screen) */
+  --animate-fade-in-late: fade-in 300ms 400ms both;   /* loaders: a quick load never flashes them */
+}
+
+/* Spacing convention (Tailwind's 4px scale): page gutter 4 / sm:6 / lg:8, page sections gap-6,
+   card padding 4 / sm:5, form fields gap-4, rows py-3, chip rows gap-2. */
+
+/* Outside @theme so it is always emitted. */
+@keyframes pop-in {
+  from { opacity: 0; scale: 0.97; }
+}
+@keyframes lid {
+  0%, 55%, 100% { transform: none; }
+  25% { transform: translateY(-2px) rotate(12deg); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+/* `error:` styles a control that is invalid by prop (aria-invalid) or by native constraint after user input. */
+@custom-variant error (&:is([aria-invalid="true"], :user-invalid));
+
+@layer base {
+  :root {
+    color-scheme: light;
+    /* Toasts sit above the phone bottom bar; the sidebar layout starts at lg (64rem). */
+    --toast-bottom: 5.5rem;
+    @media (width >= 64rem) {
+      --toast-bottom: 1.25rem;
+    }
+  }
+
+  /* Feel of an app, not a page: no 300ms tap delay or grey tap flash, and no pull-to-refresh bounce once installed
+     (an accidental refresh at the counter would drop a half-made order). */
+  html {
+    -webkit-tap-highlight-color: transparent;
+    @media (display-mode: standalone) {
+      overscroll-behavior-y: none;
+    }
+  }
+  a, button, [role='button'], label, summary {
+    touch-action: manipulation;
+  }
+  button, nav {
+    user-select: none;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Default heading sizes (tokens --text-h1…h6 above). A text-* class on a heading still wins. */
+  h1,
+  .h1 {
+    font-size: var(--text-h1);
+    line-height: var(--text-h1--line-height);
+    letter-spacing: var(--text-h1--letter-spacing);
+    font-weight: var(--text-h1--font-weight);
+  }
+  h2,
+  .h2 {
+    font-size: var(--text-h2);
+    line-height: var(--text-h2--line-height);
+    letter-spacing: var(--text-h2--letter-spacing);
+    font-weight: var(--text-h2--font-weight);
+  }
+  h3,
+  .h3 {
+    font-size: var(--text-h3);
+    line-height: var(--text-h3--line-height);
+    letter-spacing: var(--text-h3--letter-spacing);
+    font-weight: var(--text-h3--font-weight);
+  }
+  h4,
+  .h4 {
+    font-size: var(--text-h4);
+    line-height: var(--text-h4--line-height);
+    letter-spacing: var(--text-h4--letter-spacing);
+    font-weight: var(--text-h4--font-weight);
+  }
+  h5,
+  .h5 {
+    font-size: var(--text-h5);
+    line-height: var(--text-h5--line-height);
+    letter-spacing: var(--text-h5--letter-spacing);
+    font-weight: var(--text-h5--font-weight);
+  }
+  h6,
+  .h6 {
+    font-size: var(--text-h6);
+    line-height: var(--text-h6--line-height);
+    letter-spacing: var(--text-h6--letter-spacing);
+    font-weight: var(--text-h6--font-weight);
+  }
+
+  ::selection {
+    background-color: var(--color-primary-soft);
+    color: var(--color-ink);
+  }
+
+  /* One keyboard focus style for every interactive element; components only opt out or adjust the offset. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* Belt and braces: components already use motion-reduce:, this also covers anything they missed. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Native <details> (ui/accordion.tsx): the panel animates its height where interpolate-size is supported
+     and simply opens elsewhere. */
+  .disclosure {
+    interpolate-size: allow-keywords;
+
+    &::details-content {
+      block-size: 0;
+      overflow: clip;
+    }
+    &[open]::details-content {
+      block-size: auto;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      &::details-content {
+        transition: block-size 300ms var(--ease-emphasized), content-visibility 300ms allow-discrete;
+      }
+    }
+  }
+}
+
+/* Custom utility for the showcase hero tint, since it's a one-off, not a themed color */
+@utility bg-hero {
+  background: linear-gradient(180deg, var(--color-hero-start) 0%, var(--color-hero-mid) 55%, var(--color-canvas) 100%);
+}
+
+@utility hide-scrollbar {
+  scrollbar-width: none;
+
+  /* Safari before 18.2 ignores scrollbar-width */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

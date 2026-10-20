@@ -1,0 +1,38 @@
+import { ChevronRight } from 'lucide-react';
+import { useWatch } from 'react-hook-form';
+import type RestaurantSettings from '@shared/restaurant_settings';
+import ORDER_TOTAL_FIELDS from '../../constants/order_total_fields';
+import ORDER_TYPE_LABELS from '../../constants/order_type_labels';
+import type FormComponentProps from '../../types/form_component_props';
+import formatRs from '../../utils/format_rs';
+import orderTotalsOf from '../../utils/order_totals_of';
+
+interface CartBarProps extends Pick<FormComponentProps, 'control'>, Pick<RestaurantSettings, 'taxByPaymentMethod'> {
+  /** Opens the order sheet. */
+  onOpen: () => void;
+}
+
+/** Phones only: the order so far, kept in reach under the menu; tapping it opens the order to finish and place it. */
+export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBarProps) {
+  const watched = useWatch({ control, name: [...ORDER_TOTAL_FIELDS] });
+  const { totals, itemCount, type } = orderTotalsOf(watched, taxByPaymentMethod);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-haspopup="dialog"
+      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 flex h-14 cursor-pointer items-center gap-3 rounded-card bg-primary px-4 text-start text-on-primary shadow-lg transition-colors hover:bg-primary-hover"
+    >
+      <span aria-label={`${itemCount} items`} className="min-w-7 rounded-small bg-on-primary/15 px-1.5 py-0.5 text-center text-sm font-semibold tabular-nums">
+        {itemCount}
+      </span>
+      <span className="text-base font-semibold whitespace-nowrap tabular-nums">{formatRs(totals.total)}</span>
+      <span className="truncate text-sm opacity-80">{ORDER_TYPE_LABELS[type]}</span>
+      <span className="ms-auto flex shrink-0 items-center gap-0.5 text-sm font-semibold">
+        {itemCount ? 'View order' : 'Order'}
+        <ChevronRight size={18} aria-hidden="true" />
+      </span>
+    </button>
+  );
+}
