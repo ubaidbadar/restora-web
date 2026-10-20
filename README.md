@@ -59,3 +59,4 @@ Tailwind CSS v4 sets the floor: Chrome 111+, Firefox 128+, Safari 16.4+.
   token change in `src/index.css`.
 - **Dialogs** move, trap and restore focus, but have no accessible name (`aria-labelledby`) and `Modal` has no `aria-modal`.
 - **Tooling.** `typescript` stays on 6.x until `typescript-eslint` supports 7. There is no formatter and no CI workflow.
+# restora-web
