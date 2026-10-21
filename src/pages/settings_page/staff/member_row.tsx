@@ -5,7 +5,7 @@ import Badge from '../../../ui/badge';
 import initialsOf from '../../../utils/initials_of';
 import BranchSummary from './branch_summary';
 import MemberActions from './member_actions';
-import useWorkplace from '../../../hooks/useWorkplace';
+import useAuthStore from '../../../store/auth_store';
 
 interface MemberRowProps {
   member: StaffMember;
@@ -17,8 +17,9 @@ interface MemberRowProps {
 
 /** One person: name, roles, branches, state. Their access can be changed by people allowed to, never by themselves. */
 export default function MemberRow({ member, roles, roleNames, onSaved, onRemoved }: MemberRowProps) {
-  const workplace = useWorkplace();
-  const isMe = member._id === workplace?.membershipId;
+  const me = useAuthStore((state) => state.me);
+  const workplace = me?.workplace;
+  const isMe = member.userId === me?.user.id;
   const name = member.user?.name ?? 'Someone';
   // Changing access needs staff:manage; owners are changed only by owners; nobody changes themselves here.
   const canManage = Boolean(workplace?.permissions.includes('staff:manage')) && !isMe && !member.isPrimaryOwner && (!member.isOwner || workplace?.isOwner);

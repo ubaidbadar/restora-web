@@ -4,7 +4,7 @@ import WhatsAppLink from '../../components/whatsapp_link';
 import formatAgo from '../../utils/format_ago';
 import type Customer from '../../types/customer';
 import fillTemplate from '../../utils/fill_template';
-import useRestaurantSettings from '../../hooks/useRestaurantSettings';
+import useAuthStore from '../../store/auth_store';
 
 interface SlippingListProps {
   customers: Customer[];
@@ -13,7 +13,7 @@ interface SlippingListProps {
 
 /** Good customers who have not ordered for 30 days, biggest spenders first. */
 export default function SlippingList({ customers, total }: SlippingListProps) {
-  const settings = useRestaurantSettings();
+  const workplace = useAuthStore((state) => state.me!.workplace!);
 
   return (
     <div className="rounded-card bg-surface shadow-card p-4 sm:p-5">
@@ -29,7 +29,7 @@ export default function SlippingList({ customers, total }: SlippingListProps) {
               <span className="block truncate font-medium text-ink group-hover:underline"><bdi>{customer.name}</bdi></span>
               <span className="block text-sm text-muted">Last order {formatAgo(customer.lastOrderAt).toLowerCase()}</span>
             </Link>
-            <WhatsAppLink phone={customer.phone} message={fillTemplate(settings.whatsappTemplates.winback, { name: customer.name, restaurant: settings.restaurantName })}>Message</WhatsAppLink>
+            <WhatsAppLink phone={customer.phone} message={fillTemplate(workplace.settings.whatsappTemplates.winback, { name: customer.name, restaurant: workplace.restaurant.name })}>Message</WhatsAppLink>
           </li>
         ))}
       </ul>

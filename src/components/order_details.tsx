@@ -8,7 +8,7 @@ import formatRs from '../utils/format_rs';
 import formatTime from '../utils/format_time';
 import lineDetails from '../utils/line_details';
 import TotalsList from './totals_list';
-import useRestaurantSettings from '../hooks/useRestaurantSettings';
+import useAuthStore from '../store/auth_store';
 
 interface OrderDetailsProps {
   order: Order;
@@ -39,7 +39,7 @@ function receiptText(order: Order, restaurantName: string): string {
 
 /** Everything about one order: what was ordered, what it cost, how it is being paid. */
 export default function OrderDetails({ order }: OrderDetailsProps) {
-  const { restaurantName } = useRestaurantSettings();
+  const restaurantName = useAuthStore((state) => state.me!.workplace!.restaurant.name);
   const customer = order.customer;
   const where = [order.tableName && `Table ${order.tableName}`, order.area, order.address, order.rider && `Rider: ${order.rider}`].filter(Boolean).join(' · ');
 

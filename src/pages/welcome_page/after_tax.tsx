@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import type RestaurantSettings from '@shared/restaurant_settings';
+import type Workplace from '@shared/workplace';
 import SetupShell from '../../components/setup_shell';
 import StepMenu from './step_menu';
 import StepTax from './step_tax';
 
 interface AfterTaxProps {
-  settings: RestaurantSettings;
+  settings: Workplace['settings'];
 }
 
 /** Step 3, the menu. "Back" opens the tax step again until it is saved once more. */

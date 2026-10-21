@@ -4,7 +4,7 @@ import type KhataEntry from '../../types/khata_entry';
 import formatDate from '../../utils/format_date';
 import formatRs from '../../utils/format_rs';
 import khataLabel from '../../utils/khata_label';
-import useRestaurantSettings from '../../hooks/useRestaurantSettings';
+import useAuthStore from '../../store/auth_store';
 
 interface KhataShareProps {
   customer: Customer;
@@ -13,7 +13,7 @@ interface KhataShareProps {
 
 /** The last ten khata lines and the balance, ready to send on WhatsApp. */
 export default function KhataShare({ customer, entries }: KhataShareProps) {
-  const { restaurantName } = useRestaurantSettings();
+  const restaurantName = useAuthStore((state) => state.me!.workplace!.restaurant.name);
   const lines = entries
     .slice(0, 10)
     .reverse()
