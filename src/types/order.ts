@@ -34,6 +34,8 @@ export default interface Order {
   rider?: string;
   /** Name of the person who placed the order. */
   takenBy?: string;
+  /** The Pakistan-time day it counts on (YYYY-MM-DD). */
+  dayKey?: string;
   createdAt: string;
   /** Taken without internet and still waiting on this device to be sent. */
   pendingSync?: boolean;

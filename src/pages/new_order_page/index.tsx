@@ -28,6 +28,7 @@ import type CartItem from '../../types/cart_item';
 import calcTotals from '../../utils/calc_totals';
 import dayKey from '../../utils/day_key';
 import syncOutbox from '../../utils/sync_outbox';
+import upsertById from '../../utils/upsert_by_id';
 
 /**
  * The number an order taken offline shows until the server gives it a token: this device's letter and a count for
@@ -215,7 +216,8 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
           api
             .post('/orders', body)
             .then((res) => {
-              getCache.update<Order[]>(getCache.keyOf('/orders'), (list) => (list ? [res.data, ...list] : list));
+              // The board may already have it, sent live by the server.
+              getCache.update<Order[]>(getCache.keyOf('/orders'), (list) => (list ? upsertById(list, res.data) : list));
               finish(`Order #${res.data?.dailyToken ?? ''} placed`);
             })
             .catch((err) => (err.response ? onError(err) : (saveOffline(), void syncOutbox())));
