@@ -1,8 +1,17 @@
 import axios from 'axios';
+import apiOrigin from '../constants/api_origin';
 import useAuthStore from '../store/auth_store';
 
 /** The app's API. The server takes the restaurant and branch from the sign-in, so requests never send them. */
-const api = axios.create({ baseURL: '/api/v1', withCredentials: true });
+const api = axios.create({ baseURL: `${apiOrigin}/api/v1`, withCredentials: true });
+
+// A host that is not the API (e.g. the hosting's page for every path) answers HTML: that is an error, never data.
+api.interceptors.response.use((res) => {
+  if (typeof res.data === 'string' && /^\s*</.test(res.data)) {
+    return Promise.reject(new Error('The API answered with a page instead of data. Check VITE_API_URL at build time.'));
+  }
+  return res;
+});
 
 api.interceptors.response.use(undefined, (error) => {
   const status = error.response?.status;
