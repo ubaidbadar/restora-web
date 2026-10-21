@@ -14,7 +14,7 @@ import formatTime from '../../utils/format_time';
 import pktToIso from '../../utils/pkt_to_iso';
 import toast from '../../utils/toast';
 import reservationEditSchema from './reservation_edit_schema';
-import useRestaurantSettings from '../../hooks/useRestaurantSettings';
+import useAuthStore from '../../store/auth_store';
 import getAxiosMessage from '../../utils/get_axios_message';
 
 interface ReservationActionsProps {
@@ -24,16 +24,16 @@ interface ReservationActionsProps {
 
 /** What can be done to a booking that has not been seated or cancelled yet. */
 export default function ReservationActions({ reservation, onSaved }: ReservationActionsProps) {
-  const settings = useRestaurantSettings();
+  const workplace = useAuthStore((state) => state.me!.workplace!);
   const name = reservation.customer?.name ?? 'Guest';
   const phone = reservation.customer?.phone;
   const pending = reservation.status === 'pending';
-  const message = fillTemplate(settings.whatsappTemplates.reservation, {
+  const message = fillTemplate(workplace.settings.whatsappTemplates.reservation, {
     name,
     date: formatDay(reservation.dateTime),
     time: formatTime(reservation.dateTime),
     party: reservation.partySize,
-    restaurant: settings.restaurantName,
+    restaurant: workplace.restaurant.name,
   });
   // The HH:mm wall-clock time in PKT, for the edit form's time input.
   const editTime = new Date(new Date(reservation.dateTime).getTime() + 5 * 3_600_000).toISOString().slice(11, 16);

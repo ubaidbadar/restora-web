@@ -1,4 +1,4 @@
-import type RestaurantSettings from '@shared/restaurant_settings';
+import type Workplace from '@shared/workplace';
 import api from '../../config/api';
 import SetupForm from '../../components/setup_form';
 import TaxFields from '../../components/tax_fields';
@@ -6,7 +6,7 @@ import useAuthStore from '../../store/auth_store';
 import taxStepSchema from './tax_step_schema';
 
 interface StepTaxProps {
-  settings: RestaurantSettings;
+  settings: Workplace['settings'];
   onSaved?: () => void;
 }
 

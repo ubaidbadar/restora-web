@@ -12,7 +12,6 @@ export default function sampleMe(): Me {
     device: null,
     workplace: {
       restaurant: { _id: 'r1', name: 'Test Grill' },
-      membershipId: 'm1',
       roleNames: ['Owner'],
       isOwner: true,
       isPrimaryOwner: true,
@@ -25,7 +24,6 @@ export default function sampleMe(): Me {
         { _id: 'b2', name: 'Gulberg' },
       ],
       settings: {
-        restaurantName: 'Test Grill',
         onboarded: true,
         taxSet: true,
         taxByPaymentMethod: { cash: 15, card: 5, jazzcash: 5, easypaisa: 5, bank: 5 },

@@ -15,7 +15,6 @@ describe('auth store', () => {
 
   it('setSettings renames the restaurant in the workplace and in the switcher', () => {
     useAuthStore.getState().setSettings({ ...workplace().settings, restaurantName: 'New Grill', logo: '/uploads/logo.png' });
-    expect(workplace().settings.restaurantName).toBe('New Grill');
     expect(workplace().restaurant).toEqual({ _id: 'r1', name: 'New Grill', logo: '/uploads/logo.png' });
     expect(useAuthStore.getState().me!.restaurants.map((r) => r.name)).toEqual(['New Grill', 'Other Place']);
   });

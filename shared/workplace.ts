@@ -4,7 +4,6 @@ import type RestaurantSettings from './restaurant_settings';
 /** Where the signed-in person works right now, and what they may do there (`GET /me`). */
 export default interface Workplace {
   restaurant: { _id: string; name: string; logo?: string };
-  membershipId: string;
   roleNames: string[];
   isOwner: boolean;
   isPrimaryOwner: boolean;
@@ -17,6 +16,6 @@ export default interface Workplace {
   allBranches: boolean;
   /** The open branches they may switch to. */
   branches: { _id: string; name: string }[];
-  /** The restaurant's settings: every screen that needs tax, templates, the name or logo reads them from here. */
-  settings: RestaurantSettings;
+  /** The restaurant's settings: every screen that needs tax or templates reads them from here (name and logo are on `restaurant`). */
+  settings: Omit<RestaurantSettings, 'restaurantName' | 'logo'>;
 }
