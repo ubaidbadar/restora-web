@@ -22,7 +22,7 @@ export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBar
       type="button"
       onClick={onOpen}
       aria-haspopup="dialog"
-      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 flex h-14 cursor-pointer items-center gap-3 rounded-card bg-primary px-4 text-start text-on-primary shadow-lg transition-colors hover:bg-primary-hover"
+      className="fixed md:inset-x-6 inset-x-3 bottom-[max(2rem,env(safe-area-inset-bottom))] z-30 flex h-14 cursor-pointer items-center gap-3 rounded-card bg-primary px-4 text-start text-on-primary shadow-lg transition-colors hover:bg-primary-hover"
     >
       <span aria-label={`${itemCount} items`} className="min-w-7 rounded-small bg-on-primary/15 px-1.5 py-0.5 text-center text-sm font-semibold tabular-nums">
         {itemCount}

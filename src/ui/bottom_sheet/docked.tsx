@@ -19,9 +19,9 @@ interface DockedSheetProps {
  * form, but a submit button there sits outside the <form> (the sheet is a portal), so it names the form with `form`.
  */
 export default function DockedSheet({ label, component, children, className = '' }: DockedSheetProps) {
-  const { md } = useBreakpoint();
+  const { lg } = useBreakpoint();
 
-  if (!md) {
+  if (!lg) {
     return (
       <BottomSheet label={label} flush component={component}>
         {children}
@@ -29,8 +29,10 @@ export default function DockedSheet({ label, component, children, className = ''
     );
   }
   return (
-    <section aria-label={label} className={`sticky top-4 flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-card bg-surface shadow-card lg:top-8 lg:max-h-[calc(100dvh-4rem)] ${className}`}>
-      {children}
-    </section>
+    <>
+      <section aria-label={label} className={`fixed bottom-8 top-4 flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-card bg-surface shadow-card lg:top-8 ${className}`}>
+        {children}
+      </section>
+    </>
   );
 }

@@ -29,7 +29,7 @@ const addItem = (items: CartItem[], item: CartItem): CartItem[] =>
 export default function MenuGrid({ menu, search, category, control, setValue }: MenuGridProps) {
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
   // Tablet width and up has room for tiles, and the order panel beside them.
-  const { md: wide } = useBreakpoint();
+  const { lg: wide } = useBreakpoint();
   const shown = filterMenu(menu, search, category);
   const save = (next: CartItem[]) => setValue('items', next, { shouldDirty: true, shouldValidate: next.length > 0 });
 

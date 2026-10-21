@@ -97,7 +97,7 @@ const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing })
 
   return (
     <>
-      <div className="min-w-0">
+      <div className="min-w-0 w-full lg:pr-96">
         {/* The bottom bar is hidden on this page below the sidebar width, so it gets its own way back. */}
         <div className="flex items-start gap-1">
           <IconButton as={Link} to="/orders" icon={ArrowLeft} aria-label="Back to orders" className="-ms-2.5 mt-0.5 lg:hidden" />
@@ -115,7 +115,6 @@ const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing })
 
       {/* Beside the menu from tablet width; on phones a bottom sheet, opened from the cart bar. */}
       <DockedSheet
-        className="flex-1 min-h-full"
         label="Order"
         component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} onOpen={open} />}
       >
@@ -133,7 +132,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
   return (
     <>
       <Form
-        className="grid grid-cols-1 flex-1 gap-4 md:grid-cols-[minmax(0,1fr)_20rem] md:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]"
+        className="flex items-end md:justify-end"
         id={ORDER_FORM}
         component={(props) => <Main {...props} editing={editing} />}
         schema={orderSchema}
