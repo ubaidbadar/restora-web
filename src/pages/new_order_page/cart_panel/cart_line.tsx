@@ -11,7 +11,7 @@ interface CartLineProps {
 export default function CartLine({ line, onQty }: CartLineProps) {
   const details = lineDetails(line);
   return (
-    <li className="flex items-center justify-between gap-2 py-1.5">
+    <li className="flex items-center justify-between gap-2 py-1.5 overflow-hidden">
       <span className="min-w-0">
         <span className="block truncate text-sm font-medium text-ink"><bdi>{line.name}</bdi></span>
         {details && <span className="block truncate text-sm text-body">{details}</span>}
