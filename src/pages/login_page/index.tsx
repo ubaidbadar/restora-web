@@ -7,6 +7,7 @@ import PasswordInput from '../../ui/password_input';
 import fieldError from '../../utils/field_error';
 import safeNext from '../../utils/safe_next';
 import authApi from '../../config/auth_api';
+import GoogleSignIn from '../../components/google_sign_in';
 import useAuthStore from '../../store/auth_store';
 import loginSchema from './schema';
 
@@ -30,39 +31,42 @@ export default function LoginPage() {
         </>
       }
     >
-      <AuthForm
-        schema={loginSchema}
-        submitLabel="Sign in"
-        busyLabel="Signing in…"
-        onSubmit={({ data, onSuccess, onError }) =>
-          authApi
-            .post('/sign-in/email', data)
-            .then((res) => {
-              // The answer carries /me (who they are, where they work): no second request.
-              useAuthStore.getState().setMe(res.data.me);
-              onSuccess('');
-              navigate(adding ? '/' : next, { replace: true });
-            })
-            .catch((err) => {
-              // Not confirmed yet: a fresh code was just emailed.
-              if (err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+      <div className="flex flex-col gap-4">
+        <GoogleSignIn next={adding ? '/' : next} />
+        <AuthForm
+          schema={loginSchema}
+          submitLabel="Sign in"
+          busyLabel="Signing in…"
+          onSubmit={({ data, onSuccess, onError }) =>
+            authApi
+              .post('/sign-in/email', data)
+              .then((res) => {
+                // The answer carries /me (who they are, where they work): no second request.
+                useAuthStore.getState().setMe(res.data.me);
                 onSuccess('');
-                navigate(`/verify-email?email=${encodeURIComponent(data.email)}&next=${encodeURIComponent(next)}`, { replace: true });
-                return;
-              }
-              onError(err);
-            })
-        }
-        fields={({ register, errors }) => (
-          <>
-            <Input label="Email" type="email" autoComplete="email" inputMode="email" required autoFocus {...register('email')} error={fieldError(errors, 'email')} />
-            <PasswordInput label="Password" autoComplete="current-password" required {...register('password')} error={fieldError(errors, 'password')} />
-            <Button as={Link} to="/reset-password" variant="primaryLink" className="self-end text-sm">
-              Forgot password?
-            </Button>
-          </>
-        )}
-      />
+                navigate(adding ? '/' : next, { replace: true });
+              })
+              .catch((err) => {
+                // Not confirmed yet: a fresh code was just emailed.
+                if (err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+                  onSuccess('');
+                  navigate(`/verify-email?email=${encodeURIComponent(data.email)}&next=${encodeURIComponent(next)}`, { replace: true });
+                  return;
+                }
+                onError(err);
+              })
+          }
+          fields={({ register, errors }) => (
+            <>
+              <Input label="Email" type="email" autoComplete="email" inputMode="email" required autoFocus {...register('email')} error={fieldError(errors, 'email')} />
+              <PasswordInput label="Password" autoComplete="current-password" required {...register('password')} error={fieldError(errors, 'password')} />
+              <Button as={Link} to="/reset-password" variant="primaryLink" className="self-end text-sm">
+                Forgot password?
+              </Button>
+            </>
+          )}
+        />
+      </div>
     </AuthCard>
   );
 }

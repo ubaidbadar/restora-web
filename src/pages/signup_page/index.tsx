@@ -7,6 +7,7 @@ import PasswordInput from '../../ui/password_input';
 import fieldError from '../../utils/field_error';
 import safeNext from '../../utils/safe_next';
 import authApi from '../../config/auth_api';
+import GoogleSignIn from '../../components/google_sign_in';
 import signupSchema from './schema';
 
 /**
@@ -32,6 +33,7 @@ export default function SignupPage() {
       }
     >
       <div className="flex flex-col gap-4">
+        <GoogleSignIn next={next} />
         <AuthForm
           schema={signupSchema}
           defaultValues={{ email: params.get('email') ?? '' }}
