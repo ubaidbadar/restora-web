@@ -20,15 +20,7 @@ export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBar
   const watched = useWatch({ control, name: [...ORDER_TOTAL_FIELDS] });
   const { totals, itemCount, type } = orderTotalsOf(watched, taxByPaymentMethod);
 
-  // Nothing to review yet: the bar only says how to start, and stays out of the way of the menu.
-  if (!itemCount) {
-    return (
-      <p className="fixed inset-x-3 bottom-[max(1rem,calc(env(safe-area-inset-bottom)+0.75rem))] z-30 flex h-14 items-center justify-center rounded-panel border border-border bg-surface px-4 text-sm text-muted shadow-card md:inset-x-6">
-        Tap a dish to start the order
-      </p>
-    );
-  }
-  return (
+  return itemCount ? (
     <button
       type="button"
       onClick={onOpen}
@@ -45,5 +37,5 @@ export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBar
         <ChevronRight size={18} aria-hidden="true" />
       </span>
     </button>
-  );
+  ) : null;
 }
