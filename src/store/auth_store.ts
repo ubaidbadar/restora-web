@@ -24,7 +24,7 @@ const useAuthStore = createStore<AuthState>((set, get) => ({
       me: {
         ...me,
         workplace: { ...me.workplace, settings, restaurant },
-        restaurants: me.restaurants.map((r) => (r._id === restaurant._id ? { ...r, name: restaurant.name } : r)),
+        restaurants: me.restaurants.map((r) => (r._id === restaurant._id ? { ...r, name: restaurant.name, logo: restaurant.logo } : r)),
       },
     });
   },
