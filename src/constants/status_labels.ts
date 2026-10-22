@@ -1,6 +1,7 @@
 import type OrderStatus from '../types/order_status';
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: 'From table',
   new: 'New',
   preparing: 'Preparing',
   ready: 'Ready',

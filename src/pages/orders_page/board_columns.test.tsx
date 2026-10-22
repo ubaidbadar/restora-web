@@ -40,4 +40,13 @@ describe('Orders board', () => {
     expect(tokensShown()).toHaveLength(5);
     expect(screen.queryByRole('group', { name: 'Order status' })).toBeNull();
   });
+
+  it("puts a guest's order from the table at the top of New, to accept or turn down", () => {
+    setWide(false);
+    render(<MemoryRouter><BoardColumns orders={[...ORDERS, order('g', 6, 'pending')]} /></MemoryRouter>);
+    expect(tokensShown()).toEqual(['#6', '#1', '#2']);
+    expect(screen.getByText('From table QR')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Accept order 6' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Turn down order 6' })).toBeTruthy();
+  });
 });
