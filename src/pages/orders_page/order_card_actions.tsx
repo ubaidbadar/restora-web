@@ -20,6 +20,7 @@ interface OrderCardActionsProps {
 }
 
 const ADVANCE_LABELS: Partial<Record<OrderStatus, string>> = {
+  new: 'Accept',
   preparing: 'Start',
   ready: 'Mark ready',
   out_for_delivery: 'Send out',
@@ -28,6 +29,7 @@ const ADVANCE_LABELS: Partial<Record<OrderStatus, string>> = {
 
 /** Where "advance" takes an order next, or null when it is finished. */
 const nextStatus = (order: Pick<Order, 'status' | 'type'>): OrderStatus | null => {
+  if (order.status === 'pending') return 'new';
   if (order.status === 'new') return 'preparing';
   if (order.status === 'preparing') return 'ready';
   if (order.status === 'ready') return order.type === 'delivery' ? 'out_for_delivery' : 'completed';
@@ -61,13 +63,14 @@ export default function OrderCardActions({ order, onOrderUpdated }: OrderCardAct
       .catch((err) => (err.response ? toast.error(getAxiosMessage(err)) : (queue(), void syncOutbox())));
   };
 
-  const handleAdvance = () => next && change('patch', `/orders/${order._id}`, { status: next }, `Order #${token} moved to ${STATUS_LABELS[next]}`);
+  const handleAdvance = () =>
+    next && change('patch', `/orders/${order._id}`, { status: next }, order.status === 'pending' ? `Order #${token} accepted` : `Order #${token} moved to ${STATUS_LABELS[next]}`);
   const handleCancel = () => change('post', `/orders/${order._id}/cancel`, undefined, `Order #${token} cancelled`);
 
   return (
     <>
-      {/* Payments change what customers owe, so they wait for internet. */}
-      {order.paymentStatus === 'unpaid' && !order.pendingSync && <PayOrderSheet order={order} onOrderUpdated={onOrderUpdated} />}
+      {/* Payments change what customers owe, so they wait for internet. A guest's order is accepted before it is paid. */}
+      {order.paymentStatus === 'unpaid' && !order.pendingSync && order.status !== 'pending' && <PayOrderSheet order={order} onOrderUpdated={onOrderUpdated} />}
       {next && (
         <div className="flex items-center gap-2">
           <Button
@@ -84,13 +87,13 @@ export default function OrderCardActions({ order, onOrderUpdated }: OrderCardAct
             <IconButton as={Link} to={`/orders/${order._id}/edit`} icon={Pencil} variant="outline" aria-label={`Edit order ${token}`} className="size-11" />
           )}
           <AlertModal
-            title={`Cancel order #${token}?`}
-            description="It leaves the board and is not counted in sales. Its customer's khata and totals are corrected."
-            confirmText="Cancel order"
+            title={order.status === 'pending' ? `Turn down order #${token}?` : `Cancel order #${token}?`}
+            description={order.status === 'pending' ? 'The guest’s order leaves the board. Let them know at the table.' : "It leaves the board and is not counted in sales. Its customer's khata and totals are corrected."}
+            confirmText={order.status === 'pending' ? 'Turn down' : 'Cancel order'}
             cancelText="Keep it"
             onConfirm={handleCancel}
             component={({ open }) => (
-              <IconButton icon={X} variant="outline" aria-label={`Cancel order ${token}`} className="size-11 hover:border-danger-300 hover:bg-danger-50 hover:text-danger-700" onClick={open} />
+              <IconButton icon={X} variant="outline" aria-label={`${order.status === 'pending' ? 'Turn down' : 'Cancel'} order ${token}`} className="size-11 hover:border-danger-300 hover:bg-danger-50 hover:text-danger-700" onClick={open} />
             )}
           />
         </div>

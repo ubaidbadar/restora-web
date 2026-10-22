@@ -10,6 +10,7 @@ import TableOrder from './table_order';
 type FloorOrder = FloorTable['orders'][number];
 
 const STATUS_TONES: Record<OrderStatus, 'primary' | 'warning' | 'success' | 'info' | 'neutral' | 'error'> = {
+  pending: 'warning',
   new: 'primary',
   preparing: 'warning',
   ready: 'success',

@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly VITE_APP_URL?: string;
   /** The API's address in production, e.g. https://api.restora.live. Empty in dev (vite proxies /api). */
   readonly VITE_API_URL?: string;
+  /** The public site, where a table's QR code leads. Defaults to https://restora.live. */
+  readonly VITE_SITE_URL?: string;
 }
 
 interface ImportMeta {

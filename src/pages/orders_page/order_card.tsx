@@ -40,6 +40,7 @@ export default function OrderCard({ order, onOrderUpdated }: OrderCardProps) {
           {isActive ? <ElapsedChip since={order.createdAt} /> : <span className="text-xs tabular-nums text-muted">{formatTime(order.createdAt)}</span>}
           <Badge variant={paymentVariant}>{paymentLabel}</Badge>
           {order.pendingSync && <Badge variant="neutral">Waiting to sync</Badge>}
+          {order.status === 'pending' && <Badge variant="warning">From table QR</Badge>}
         </div>
       </div>
       {order.customer && <p className="-mb-1 truncate font-medium text-ink"><bdi>{order.customer.name}</bdi></p>}

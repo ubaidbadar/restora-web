@@ -2,6 +2,7 @@ import { Outlet, useNavigate } from 'react-router';
 import BottomNav from './bottom_nav';
 import SideNav from './side_nav';
 import TableCallsPill from './table_calls_pill';
+import LiveUpdates from './live_updates';
 import { useEffect, useEffectEvent } from 'react';
 import useAuthStore from '../../store/auth_store';
 import Can from '../../components/can';
@@ -52,6 +53,9 @@ export default function AppLayout() {
       </main>
       <Can permission="tables:view">
         <TableCallsPill key={place} />
+      </Can>
+      <Can permission="orders:view">
+        <LiveUpdates key={place} />
       </Can>
       {me?.device && <PosIdleLock seconds={me.device.settings.idleLockSeconds} />}
       {!lg && <BottomNav />}
