@@ -12,17 +12,28 @@ interface CartBarProps extends Pick<FormComponentProps, 'control'>, Pick<Restaur
   onOpen: () => void;
 }
 
-/** Phones only: the order so far, kept in reach under the menu; tapping it opens the order to finish and place it. */
+/**
+ * Phones only: the order so far, kept in reach under the menu; tapping it opens the order to finish and place it. It sits
+ * above the gesture bar or home indicator (safe-area inset), clear of the screen's rounded corners.
+ */
 export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBarProps) {
   const watched = useWatch({ control, name: [...ORDER_TOTAL_FIELDS] });
   const { totals, itemCount, type } = orderTotalsOf(watched, taxByPaymentMethod);
 
+  // Nothing to review yet: the bar only says how to start, and stays out of the way of the menu.
+  if (!itemCount) {
+    return (
+      <p className="fixed inset-x-3 bottom-[max(1rem,calc(env(safe-area-inset-bottom)+0.75rem))] z-30 flex h-14 items-center justify-center rounded-panel border border-border bg-surface px-4 text-sm text-muted shadow-card md:inset-x-6">
+        Tap a dish to start the order
+      </p>
+    );
+  }
   return (
     <button
       type="button"
       onClick={onOpen}
       aria-haspopup="dialog"
-      className="fixed md:inset-x-6 inset-x-3 bottom-[max(2rem,env(safe-area-inset-bottom))] z-30 flex h-14 cursor-pointer items-center gap-3 rounded-card bg-primary px-4 text-start text-on-primary shadow-lg transition-colors hover:bg-primary-hover"
+      className="fixed inset-x-3 bottom-[max(1rem,calc(env(safe-area-inset-bottom)+0.75rem))] z-30 flex h-14 cursor-pointer items-center gap-3 rounded-panel bg-primary px-4 text-start text-on-primary shadow-lg transition-colors hover:bg-primary-hover md:inset-x-6"
     >
       <span aria-label={`${itemCount} items`} className="min-w-7 rounded-small bg-on-primary/15 px-1.5 py-0.5 text-center text-sm font-semibold tabular-nums">
         {itemCount}
@@ -30,7 +41,7 @@ export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBar
       <span className="text-base font-semibold whitespace-nowrap tabular-nums">{formatRs(totals.total)}</span>
       <span className="truncate text-sm opacity-80">{ORDER_TYPE_LABELS[type]}</span>
       <span className="ms-auto flex shrink-0 items-center gap-0.5 text-sm font-semibold">
-        {itemCount ? 'View order' : 'Order'}
+        View order
         <ChevronRight size={18} aria-hidden="true" />
       </span>
     </button>

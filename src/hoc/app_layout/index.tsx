@@ -45,7 +45,7 @@ export default function AppLayout() {
         Skip to content
       </a>
       {lg && <SideNav />}
-      <main id="main" className="mx-auto min-h-dvh w-full max-w-7xl flex flex-col px-4 pt-5 pb-28 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
+      <main id="main" className="mx-auto min-h-dvh w-full max-w-7xl flex flex-col px-4 pt-5 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
         <SyncStatus />
         <div key={place} className="contents">
           <Outlet />
