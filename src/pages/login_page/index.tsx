@@ -44,7 +44,7 @@ export default function LoginPage() {
               navigate(adding ? '/' : next, { replace: true });
             })
             .catch((err) => {
-              // Not confirmed yet: a fresh link was just emailed.
+              // Not confirmed yet: a fresh code was just emailed.
               if (err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
                 onSuccess('');
                 navigate(`/verify-email?email=${encodeURIComponent(data.email)}&next=${encodeURIComponent(next)}`, { replace: true });

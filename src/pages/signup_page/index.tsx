@@ -10,8 +10,8 @@ import authApi from '../../config/auth_api';
 import signupSchema from './schema';
 
 /**
- * Create an account: name, email, password. We email a link to confirm the address; opening it signs the
- * person in and continues to `next` (their invitation, or creating a restaurant).
+ * Create an account: name, email, password. We email a code to confirm the address; entering it (or opening
+ * the link in the same email) signs the person in and continues to `next` (their invitation, or creating a restaurant).
  */
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -39,7 +39,7 @@ export default function SignupPage() {
           busyLabel="Creating your account…"
           onSubmit={({ data, onSuccess, onError }) =>
             authApi
-              // The emailed link signs them in and opens `next` (their invitation, or creating a restaurant).
+              // The code (or the emailed link) signs them in and opens `next` (their invitation, or creating a restaurant).
               .post('/sign-up/email', { ...data, callbackURL: next })
               .then(() => {
                 onSuccess('');

@@ -5,11 +5,11 @@ import toast from '../../utils/toast';
 
 interface ResendLinkProps {
   email: string;
-  /** Where the link takes them after confirming. */
+  /** Where the link in the email takes them after confirming. */
   next: string;
 }
 
-/** Sends the verification email again. */
+/** Sends the verification email (a new code and link) again. */
 export default function ResendLink({ email, next }: ResendLinkProps) {
   const [loading, setLoading] = useState(false);
   if (!email) return null;
@@ -25,7 +25,7 @@ export default function ResendLink({ email, next }: ResendLinkProps) {
 
   return (
     <Button disabled={loading} variant="outline" size="lg" onClick={handleResend}>
-      Send the link again
+      Send a new code
     </Button>
   );
 }
