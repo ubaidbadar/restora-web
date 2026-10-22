@@ -10,8 +10,10 @@ export default function RestaurantSwitcher() {
   const me = useAuthStore((state) => state.me);
   const restaurant = me?.workplace?.restaurant;
   if (!restaurant) return null;
+  // Suspended ones and those being deleted cannot be opened.
+  const openable = me.restaurants.filter((r) => !r.status);
 
-  if (me.restaurants.length <= 1) {
+  if (openable.length <= 1) {
     return <p dir="auto" className="truncate px-2 text-sm font-semibold text-ink">{restaurant.name}</p>;
   }
 
@@ -26,7 +28,7 @@ export default function RestaurantSwitcher() {
           .then(() => navigate('/', { replace: true }))
           .catch((err) => toast.error(err.response?.data?.message || 'Could not switch restaurant'))
       }
-      options={me.restaurants.map((r) => ({ value: r._id, label: r.name }))}
+      options={openable.map((r) => ({ value: r._id, label: r.name }))}
     />
   );
 }

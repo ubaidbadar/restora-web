@@ -1,25 +1,23 @@
+import type Me from '@shared/me';
 import { useNavigate } from 'react-router';
 import api from '../../config/api';
-import type Membership from '../../types/membership';
+import Avatar from '../../ui/avatar';
 import Badge from '../../ui/badge';
 import Button from '../../ui/button';
 import formatDate from '../../utils/format_date';
+import initialsOf from '../../utils/initials_of';
 import toast from '../../utils/toast';
 import useAuthStore from '../../store/auth_store';
 import useWorkplace from '../../hooks/useWorkplace';
 
 interface RestaurantRowProps {
-  membership: Membership;
-  onSaved: (membership: Membership) => void;
+  restaurant: Me['restaurants'][number];
 }
 
 /** One of your restaurants: open it, see why you can't, or (owner) keep it from being deleted. */
-export default function RestaurantRow({ membership, onSaved }: RestaurantRowProps) {
+export default function RestaurantRow({ restaurant }: RestaurantRowProps) {
   const navigate = useNavigate();
-  const { restaurant } = membership;
   const current = useWorkplace()?.restaurant._id === restaurant._id;
-  const deleting = restaurant.status === 'deleting';
-  const suspended = membership.status === 'suspended';
 
   const openRestaurant = () => {
     api
@@ -32,8 +30,11 @@ export default function RestaurantRow({ membership, onSaved }: RestaurantRowProp
   const keepIt = () => {
     api
       .post(`/restaurants/${restaurant._id}/keep`)
-      .then((res) => {
-        onSaved({ ...membership, restaurant: { ...restaurant, ...res.data.restaurant, deleteAfter: undefined } });
+      .then(() => {
+        // It can be opened again.
+        useAuthStore.setState(({ me }) => ({
+          me: me && { ...me, restaurants: me.restaurants.map((r) => (r._id === restaurant._id ? { ...r, status: undefined, deleteAfter: undefined } : r)) },
+        }));
         toast.success(`${restaurant.name} will not be deleted`);
       })
       .catch((err) => toast.error(err.response?.data?.message || 'Could not keep the restaurant'));
@@ -41,15 +42,18 @@ export default function RestaurantRow({ membership, onSaved }: RestaurantRowProp
 
   return (
     <li className="flex items-center justify-between gap-3 rounded-card border border-border p-3">
-      <span className="min-w-0">
-        <span dir="auto" className="block truncate font-semibold text-ink">{restaurant.name}</span>
-        <span className="block truncate text-sm text-muted">{membership.roleNames.join(', ')}</span>
-        {deleting && restaurant.deleteAfter && <span className="mt-1 block text-xs text-danger-700">Will be deleted on {formatDate(restaurant.deleteAfter)}</span>}
+      <span className="flex min-w-0 items-center gap-3">
+        <Avatar src={restaurant.logo} initials={initialsOf(restaurant.name)} alt="" />
+        <span className="min-w-0">
+          <span dir="auto" className="block truncate font-semibold text-ink">{restaurant.name}</span>
+          {restaurant.isOwner && <span className="block text-sm text-muted">Owner</span>}
+          {restaurant.status === 'deleting' && restaurant.deleteAfter && <span className="mt-1 block text-xs text-danger-700">Will be deleted on {formatDate(restaurant.deleteAfter)}</span>}
+        </span>
       </span>
-      {suspended ? (
+      {restaurant.status === 'suspended' ? (
         <Badge variant="warning">Suspended</Badge>
-      ) : deleting ? (
-        membership.isPrimaryOwner && <Button variant="outline" onClick={keepIt}>Keep it</Button>
+      ) : restaurant.status === 'deleting' ? (
+        <Button variant="outline" onClick={keepIt}>Keep it</Button>
       ) : current ? (
         <Button variant="secondary" onClick={() => navigate('/', { replace: true })}>Continue</Button>
       ) : (
