@@ -24,14 +24,14 @@ export default function PlaceOrderBar({ control, loading, error, taxByPaymentMet
       {/* Why the server refused it (a dish just sold out, no permission…), right by the button that was pressed. */}
       {error && <p role="alert" className="text-sm font-medium text-danger-700">{error}</p>}
       <div className="flex items-center justify-between gap-3">
-      <p aria-live="polite">
-        <span className="block text-sm text-muted">{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
-        <span className="text-display whitespace-nowrap tabular-nums text-ink">{formatRs(totals.total)}</span>
-      </p>
-      {/* `form`: on phones this bar is in a bottom sheet, outside the <form> element. */}
-      <Button type="submit" form={ORDER_FORM} size="lg" className="h-13 px-6 text-base" disabled={loading}>
-        {submitLabel}
-      </Button>
+        <p aria-live="polite">
+          <span className="block text-sm text-muted">{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
+          <span className="text-xl leading-1 font-bold whitespace-nowrap tabular-nums text-ink">{formatRs(totals.total)}</span>
+        </p>
+        {/* `form`: on phones this bar is in a bottom sheet, outside the <form> element. */}
+        <Button type="submit" form={ORDER_FORM} size="lg" disabled={loading}>
+          {submitLabel}
+        </Button>
       </div>
     </div>
   );
