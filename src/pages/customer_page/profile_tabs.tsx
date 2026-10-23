@@ -18,7 +18,7 @@ export default function ProfileTabs({ customer, onCustomer }: ProfileTabsProps) 
   const setTab = (id: string) => setParams((prev) => withParam(prev, 'tab', id, 'orders'), { replace: true });
   const notes = { id: 'notes', label: 'Notes', content: <NotesTab customer={customer} onCustomer={onCustomer} /> };
   // Keyed by the balance: a payment recorded above (or taken back here) loads the lines again.
-  const khata = { id: 'khata', label: 'Khata', content: <KhataTab customer={customer} /> };
+  const khata = { id: 'khata', label: 'Khata', content: <KhataTab customer={customer} onCustomer={onCustomer} /> };
 
   return (
     <Tabs
