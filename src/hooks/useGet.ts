@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { AxiosRequestConfig } from 'axios';
 import api from '../config/api';
 import getCache from '../store/get_cache';
+import useOutboxStore from '../store/outbox_store';
 import toast from '../utils/toast';
 import getAxiosMessage from '../utils/get_axios_message';
 
@@ -54,10 +55,10 @@ export default function useGet<T = unknown>(url: string, { active, ...initialOpt
         if (!promise) {
             promise = api<T>({ method: 'GET', url, ...request.options }).then(res => res.data);
             pending.set(key, promise);
-            // Saved and reported once, however many screens are waiting for it. Without internet, a screen that has a saved
-            // answer just keeps showing it: no error toast on every screen while offline.
+            // Saved and reported once, however many screens are waiting for it. Without internet no toast: a screen with a
+            // saved answer keeps showing it, and the offline bar already says why nothing new loads.
             promise
-                .then(data => getCache.set(key, data), err => (err.response || cached === undefined) && toast.error(getAxiosMessage(err)))
+                .then(data => getCache.set(key, data), err => (err.response || (cached === undefined && useOutboxStore.getState().online)) && toast.error(getAxiosMessage(err)))
                 .finally(() => pending.delete(key));
         }
 
