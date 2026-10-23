@@ -1,4 +1,5 @@
 import addonRule from '../../../utils/addon_rule';
+import Can from '../../../components/can';
 import { Pencil, Trash2 } from 'lucide-react';
 import FormDrawer from '../../../components/form_drawer';
 import type AddonGroup from '../../../types/addon_group';
@@ -38,22 +39,24 @@ export default function AddonGroupRow({ group, dishes, onSaved, onDeleted }: Add
         </p>
         <p className="text-sm text-body">{group.options.map((option) => (option.price ? `${option.name} +${formatRs(option.price)}` : option.name)).join(', ')}</p>
       </div>
-      <FormDrawer
-        title="Edit add-on group"
-        schema={addonGroupSchema}
-        defaultValues={{ name: group.name, min: String(group.min), max: String(group.max), options: group.options.map((option) => ({ _id: option._id, name: option.name, price: String(option.price) })) }}
-        onSave={(values) => api.patch(`/menu/addon-groups/${group._id}`, values).then((res) => onSaved(res.data))}
-        fields={(form) => <AddonGroupFields {...form} />}
-        component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${group.name}`} onClick={open} />}
-      />
-      <AlertModal
-        title={`Delete ${group.name}?`}
-        description={dishes ? `It comes off the ${dishes} ${dishes === 1 ? 'dish' : 'dishes'} that offer it. Past orders keep what was picked.` : 'No dish offers it, so nothing else changes.'}
-        confirmText="Delete group"
-        cancelText="Keep it"
-        onConfirm={remove}
-        component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${group.name}`} onClick={open} />}
-      />
+      <Can permission="menu:update">
+        <FormDrawer
+          title="Edit add-on group"
+          schema={addonGroupSchema}
+          defaultValues={{ name: group.name, min: String(group.min), max: String(group.max), options: group.options.map((option) => ({ _id: option._id, name: option.name, price: String(option.price) })) }}
+          onSave={(values) => api.patch(`/menu/addon-groups/${group._id}`, values).then((res) => onSaved(res.data))}
+          fields={(form) => <AddonGroupFields {...form} />}
+          component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${group.name}`} onClick={open} />}
+        />
+        <AlertModal
+          title={`Delete ${group.name}?`}
+          description={dishes ? `It comes off the ${dishes} ${dishes === 1 ? 'dish' : 'dishes'} that offer it. Past orders keep what was picked.` : 'No dish offers it, so nothing else changes.'}
+          confirmText="Delete group"
+          cancelText="Keep it"
+          onConfirm={remove}
+          component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${group.name}`} onClick={open} />}
+        />
+      </Can>
     </li>
   );
 }

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router';
-import useCan from '../../hooks/useCan';
+import can from '@shared/can';
+import useWorkplace from '../../hooks/useWorkplace';
 import { ArrowRight, ChefHat, FileText, MoreHorizontal, Pencil, Receipt, X } from 'lucide-react';
 import api from '../../config/api';
 import STATUS_LABELS from '../../constants/status_labels';
@@ -48,14 +49,17 @@ const nextStatus = (order: Pick<Order, 'status' | 'type'>): OrderStatus | null =
  */
 export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFooterProps) {
   const navigate = useNavigate();
-  const next = nextStatus(order);
+  const workplace = useWorkplace();
   const token = order.dailyToken;
   const pending = order.status === 'pending';
-  const canEdit = useCan('orders:update');
+  // Each button only for people who may use it (the server checks again).
+  const canMove = can(workplace, 'orders:update');
+  const canCancel = can(workplace, 'orders:cancel');
+  const next = canMove ? nextStatus(order) : null;
   // Dishes can change until the order is on the way or done, while the bill is still open.
-  const editable = canEdit && order.status !== 'out_for_delivery' && order.status !== 'completed' && order.paymentStatus === 'unpaid';
+  const editable = canMove && order.status !== 'out_for_delivery' && order.status !== 'completed' && order.paymentStatus === 'unpaid';
   // Payments change what customers owe, so they wait for internet. A guest's order is accepted before it is paid.
-  const payable = order.paymentStatus === 'unpaid' && !order.pendingSync && !pending;
+  const payable = can(workplace, 'orders:payment') && order.paymentStatus === 'unpaid' && !order.pendingSync && !pending;
   const button = 'min-w-0 flex-1 basis-full whitespace-nowrap @[15rem]:basis-0';
 
   /**
@@ -106,14 +110,14 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
                     { label: 'Print kitchen slip', icon: ChefHat, onClick: () => printOrder(order, 'kitchen') },
                     { label: 'Print receipt', icon: Receipt, onClick: () => printOrder(order, 'receipt') },
                     ...(editable ? [{ label: 'Edit order', icon: Pencil, onClick: () => navigate(`/orders/${order._id}/edit`) }] : []),
-                    ...(active && !pending ? [{ label: 'Cancel order', icon: X, danger: true, onClick: askCancel }] : []),
+                    ...(canCancel && active && !pending ? [{ label: 'Cancel order', icon: X, danger: true, onClick: askCancel }] : []),
                   ]}
                 />
               </div>
-              {(next || payable) && (
+              {(next || payable || (pending && canCancel)) && (
                 <div className="@container">
                   <div className="flex flex-wrap gap-2">
-                    {pending && (
+                    {pending && canCancel && (
                       <Button variant="outline" className={`min-h-11 ${button}`} aria-label={`Turn down order ${token}`} onClick={askCancel}>
                         Turn down
                       </Button>

@@ -1,11 +1,13 @@
 import { UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import can from '@shared/can';
 import api from '../../../config/api';
 import CustomerFields from '../../../components/customer_fields';
 import FormDrawer from '../../../components/form_drawer';
 import customerSchema from '../../../constants/customer_schema';
 import useGet from '../../../hooks/useGet';
 import getCache from '../../../store/get_cache';
+import useAuthStore from '../../../store/auth_store';
 import useOutboxStore from '../../../store/outbox_store';
 import type Customer from '../../../types/customer';
 import type Order from '../../../types/order';
@@ -96,8 +98,18 @@ function Main({ setValue, picked }: FormComponentProps & { picked?: Order['custo
       schema={customerSchema}
       defaultValues={newCustomer}
       submitLabel="Save and pick"
-      onSave={(values) =>
-        api
+      onSave={(values) => {
+        // The order carries the name and number, and the server saves the customer with it: without internet, and for
+        // people who may take orders but not add customers (a waiter).
+        const carry = () => {
+          const phone = normalizePhone(values.phone) ?? '';
+          pick({ _id: '', name: values.name, phone, area: values.area, tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: new Date().toISOString() });
+          setValue('customerId', undefined);
+          setValue('newName', values.name);
+          setValue('newPhone', phone);
+        };
+        if (!can(useAuthStore.getState().me?.workplace, 'customers:manage')) return Promise.resolve(carry());
+        return api
           .post('/customers', values)
           .then((res) => {
             getCache.update<Customer[]>(getCache.keyOf('/customers'), (current) => (current ? [res.data, ...current] : current));
@@ -113,14 +125,9 @@ function Main({ setValue, picked }: FormComponentProps & { picked?: Order['custo
               return pick(existing);
             }
             if (err.response) throw err;
-            // No internet: the order carries the name and number, and the server saves the customer when it arrives.
-            const phone = normalizePhone(values.phone) ?? '';
-            pick({ _id: '', name: values.name, phone, area: values.area, tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: new Date().toISOString() });
-            setValue('customerId', undefined);
-            setValue('newName', values.name);
-            setValue('newPhone', phone);
-          })
-      }
+            carry();
+          });
+      }}
       fields={(form) => <CustomerFields {...form} />}
       component={({ open: addNew }) => (
         <SearchMenu

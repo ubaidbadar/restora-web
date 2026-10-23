@@ -4,7 +4,7 @@ import IconButton from '../../ui/icon_button';
 import DockedSheet from '../../ui/bottom_sheet/docked';
 import ORDER_FORM from '../../constants/order_form';
 import CartBar from './cart_bar';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import useAuthStore from '../../store/auth_store';
 import useRestaurantSettings from '../../hooks/useRestaurantSettings';
 import lockTerminal from '../../utils/lock_terminal';
@@ -91,8 +91,12 @@ interface Editing {
   items: CartItem[];
 }
 
+/** The customer whose profile the order was started from (`?customer=<id>`): already loaded by that page. */
+const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.keyOf(`/customers/${id}`)) as Customer | undefined) : undefined);
+
 const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing }) => {
   const order = editing?.order;
+  const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
   // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
 
@@ -109,7 +113,7 @@ const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing })
           )}
         </div>
         <div className="flex min-w-0 flex-col gap-5">
-          <CustomerStep {...props} picked={order?.customer} />
+          <CustomerStep {...props} picked={order?.customer ?? (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })} />
           <MenuPicker {...props} />
         </div>
       </div>
@@ -129,6 +133,7 @@ const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing })
 export default function NewOrderPage({ editing }: { editing?: Editing }) {
   const navigate = useNavigate();
   const order = editing?.order;
+  const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
 
   return (
     <>
@@ -150,6 +155,10 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             deliveryFee: order.deliveryFee,
             discount: order.discount,
             paymentStatus: 'unpaid',
+          } || {
+            // Pay later until someone picks otherwise; people who can't take payments never see the choice.
+            paymentStatus: 'unpaid',
+            customerId: fromProfile?._id,
           }
         }
         noValidate

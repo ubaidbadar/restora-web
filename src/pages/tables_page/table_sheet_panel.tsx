@@ -78,9 +78,11 @@ export default function TableSheetPanel({ table, sections, onAnswer, onSaved, ..
           </p>
         )}
 
-        <Button as={Link} to={`/orders/new?table=${table._id}`} size="lg" icon={Plus} className="w-full">
-          New order for {table.name}
-        </Button>
+        <Can permission="orders:create">
+          <Button as={Link} to={`/orders/new?table=${table._id}`} size="lg" icon={Plus} className="w-full">
+            New order for {table.name}
+          </Button>
+        </Can>
       </div>
     </Modal>
   );

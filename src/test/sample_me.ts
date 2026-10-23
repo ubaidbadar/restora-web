@@ -1,4 +1,5 @@
 import type Me from '@shared/me';
+import PERMISSION_CATALOG from '@shared/permission_catalog';
 
 /** A signed-in owner at Main of Test Grill, with Gulberg as a second branch. Tests change what they need. */
 export default function sampleMe(): Me {
@@ -15,7 +16,8 @@ export default function sampleMe(): Me {
       isOwner: true,
       isPrimaryOwner: true,
       hasPin: false,
-      permissions: [],
+      // An owner gets the whole catalog, as /me answers it.
+      permissions: PERMISSION_CATALOG.map((entry) => entry.permission),
       branch: { _id: 'b1', name: 'Main' },
       allBranches: true,
       branches: [

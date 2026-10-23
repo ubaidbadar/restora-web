@@ -1,4 +1,5 @@
 import { CalendarDays, Plus } from 'lucide-react';
+import Can from '../../components/can';
 import api from '../../config/api';
 import EmptyState from '../../components/empty_state';
 import FormDrawer from '../../components/form_drawer';
@@ -27,28 +28,30 @@ export default function ReservationsPage() {
   return (
     <>
       <PageHeader title="Reservations" subtitle="Table bookings at your branch, by day">
-        <FormDrawer
-          key={day}
-          title="New reservation"
-          schema={reservationSchema}
-          defaultValues={{ date: day, time: '20:00', partySize: 4 }}
-          submitLabel="Save reservation"
-          onSave={(values) =>
-            api
-              .post('/reservations', {
-                ...values,
-                dateTime: pktToIso(values.date, values.time),
-              })
-              .then((res) => {
-                // An existing customer keeps their saved name, so say the name the booking was saved under.
-                toast.success(`Table booked for ${res.data.customer?.name ?? values.name}`);
-                update((current) => (current ? [res.data, ...current] : [res.data]));
-                if (values.date !== day) setDay(values.date);
-              })
-          }
-          fields={(form) => <ReservationFields {...form} />}
-          component={({ open }) => <Button icon={Plus} onClick={open}>Add reservation</Button>}
-        />
+        <Can permission="reservations:manage">
+          <FormDrawer
+            key={day}
+            title="New reservation"
+            schema={reservationSchema}
+            defaultValues={{ date: day, time: '20:00', partySize: 4 }}
+            submitLabel="Save reservation"
+            onSave={(values) =>
+              api
+                .post('/reservations', {
+                  ...values,
+                  dateTime: pktToIso(values.date, values.time),
+                })
+                .then((res) => {
+                  // An existing customer keeps their saved name, so say the name the booking was saved under.
+                  toast.success(`Table booked for ${res.data.customer?.name ?? values.name}`);
+                  update((current) => (current ? [res.data, ...current] : [res.data]));
+                  if (values.date !== day) setDay(values.date);
+                })
+            }
+            fields={(form) => <ReservationFields {...form} />}
+            component={({ open }) => <Button icon={Plus} onClick={open}>Add reservation</Button>}
+          />
+        </Can>
       </PageHeader>
       <DayBar day={day} onDay={setDay} summary={`${active.length} ${active.length === 1 ? 'booking' : 'bookings'}, ${guests} guests`} />
       {loading && <SkeletonList rows={4} />}

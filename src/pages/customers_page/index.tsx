@@ -13,6 +13,7 @@ import SEGMENT_LABELS from '../../constants/segment_labels';
 import SEGMENTS from '../../constants/segments';
 import SkeletonList from '../../components/skeleton_list';
 import api from '../../config/api';
+import Can from '../../components/can';
 import useGet from '../../hooks/useGet';
 import type Customer from '../../types/customer';
 import type Segment from '../../types/segment';
@@ -49,23 +50,27 @@ export default function CustomersPage() {
   return (
     <>
       <PageHeader title="Customers" subtitle={`${sourceList.length} saved`}>
-        <Button as={Link} to="/customers/import" variant="outline" icon={Upload}>
-          Import
-        </Button>
-        <FormDrawer
-          title="Add customer"
-          schema={customerSchema}
-          onSave={(values) =>
-            api
-              .post('/customers', values)
-              .then((res) => {
-                update((list) => [...(list ?? []), res.data]);
-                toast.success(`${res.data.name} added`);
-              })
-          }
-          fields={(form) => <CustomerFields {...form} />}
-          component={({ open }) => <Button icon={Plus} onClick={open}>Add customer</Button>}
-        />
+        <Can permission="customers:import">
+          <Button as={Link} to="/customers/import" variant="outline" icon={Upload}>
+            Import
+          </Button>
+        </Can>
+        <Can permission="customers:manage">
+          <FormDrawer
+            title="Add customer"
+            schema={customerSchema}
+            onSave={(values) =>
+              api
+                .post('/customers', values)
+                .then((res) => {
+                  update((list) => [...(list ?? []), res.data]);
+                  toast.success(`${res.data.name} added`);
+                })
+            }
+            fields={(form) => <CustomerFields {...form} />}
+            component={({ open }) => <Button icon={Plus} onClick={open}>Add customer</Button>}
+          />
+        </Can>
       </PageHeader>
       <div className="mb-4 flex flex-col gap-3">
         <SearchInput label="Search by name or phone" initialValue={search} onSearch={setSearch} />

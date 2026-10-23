@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, Pencil, Trash2 } from 'lucide-react';
+import Can from '../../../components/can';
 import FormDrawer from '../../../components/form_drawer';
 import type MenuCategory from '../../../types/menu_category';
 import AlertModal from '../../../ui/alert_modal/modal';
@@ -45,22 +46,24 @@ export default function CategoryRow({ category, dishes, first, last, onMove, onS
       </div>
       <IconButton icon={ArrowUp} size="lg" aria-label={`Move ${category.name} up`} disabled={first} onClick={() => onMove(-1)} />
       <IconButton icon={ArrowDown} size="lg" aria-label={`Move ${category.name} down`} disabled={last} onClick={() => onMove(1)} />
-      <FormDrawer
-        title="Edit category"
-        schema={categorySchema}
-        defaultValues={{ name: category.name }}
-        onSave={(values) => api.patch(`/menu/categories/${category._id}`, { name: values.name }).then((res) => onSaved(res.data))}
-        fields={(form) => <CategoryFields {...form} />}
-        component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${category.name}`} onClick={open} />}
-      />
-      <AlertModal
-        title={`Delete ${category.name}?`}
-        description={dishes ? `It still has ${dishes} ${dishes === 1 ? 'dish' : 'dishes'}. Move them to another category or delete them first.` : 'It has no dishes, so nothing else changes.'}
-        confirmText="Delete category"
-        cancelText="Keep it"
-        onConfirm={remove}
-        component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${category.name}`} onClick={open} />}
-      />
+      <Can permission="menu:update">
+        <FormDrawer
+          title="Edit category"
+          schema={categorySchema}
+          defaultValues={{ name: category.name }}
+          onSave={(values) => api.patch(`/menu/categories/${category._id}`, { name: values.name }).then((res) => onSaved(res.data))}
+          fields={(form) => <CategoryFields {...form} />}
+          component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${category.name}`} onClick={open} />}
+        />
+        <AlertModal
+          title={`Delete ${category.name}?`}
+          description={dishes ? `It still has ${dishes} ${dishes === 1 ? 'dish' : 'dishes'}. Move them to another category or delete them first.` : 'It has no dishes, so nothing else changes.'}
+          confirmText="Delete category"
+          cancelText="Keep it"
+          onConfirm={remove}
+          component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${category.name}`} onClick={open} />}
+        />
+      </Can>
     </li>
   );
 }

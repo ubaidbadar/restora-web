@@ -1,4 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react';
+import Can from '../../../components/can';
 import FormDrawer from '../../../components/form_drawer';
 import type Menu from '../../../types/menu';
 import type MenuItem from '../../../types/menu_item';
@@ -60,22 +61,24 @@ export default function DishRow({ dish, menu, onSaved, onDeleted }: DishRowProps
         </p>
       </div>
       {!dish.hidden && <StockToggle dish={dish} onSaved={onSaved} />}
-      <FormDrawer
-        title="Edit dish"
-        schema={dishSchema}
-        defaultValues={dishFormValues(dish)}
-        onSave={(values) => api.patch(`/menu/items/${dish._id}`, values).then((res) => onSaved(res.data))}
-        fields={(form) => <DishFields menu={menu} {...form} />}
-        component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${dish.name}`} onClick={open} />}
-      />
-      <AlertModal
-        title={`Delete ${dish.name}?`}
-        description="It leaves the menu of every branch for good. Past orders keep its name and price. To take it off for a while, hide it or mark it sold out instead."
-        confirmText="Delete dish"
-        cancelText="Keep it"
-        onConfirm={remove}
-        component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${dish.name}`} onClick={open} />}
-      />
+      <Can permission="menu:update">
+        <FormDrawer
+          title="Edit dish"
+          schema={dishSchema}
+          defaultValues={dishFormValues(dish)}
+          onSave={(values) => api.patch(`/menu/items/${dish._id}`, values).then((res) => onSaved(res.data))}
+          fields={(form) => <DishFields menu={menu} {...form} />}
+          component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${dish.name}`} onClick={open} />}
+        />
+        <AlertModal
+          title={`Delete ${dish.name}?`}
+          description="It leaves the menu of every branch for good. Past orders keep its name and price. To take it off for a while, hide it or mark it sold out instead."
+          confirmText="Delete dish"
+          cancelText="Keep it"
+          onConfirm={remove}
+          component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${dish.name}`} onClick={open} />}
+        />
+      </Can>
     </div>
   );
 }
