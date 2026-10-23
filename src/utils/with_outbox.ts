@@ -1,5 +1,6 @@
 import type Order from '../types/order';
 import type OrderStatus from '../types/order_status';
+import type OrderCancellation from '../types/order_cancellation';
 import useOutboxStore from '../store/outbox_store';
 
 /**
@@ -19,7 +20,7 @@ export default function withOutbox(orders: Order[]): Order[] {
       item.method === 'put'
         ? (item.preview as Partial<Order>)
         : action === 'cancel'
-          ? { status: 'cancelled' }
+          ? { status: 'cancelled', cancellation: { ...(item.body as Partial<OrderCancellation>), at: item.createdAt } }
           : (item.body as { status?: OrderStatus } | undefined)?.status
             ? { status: (item.body as { status: OrderStatus }).status }
             : undefined;

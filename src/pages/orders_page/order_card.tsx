@@ -3,6 +3,7 @@ import type Order from '../../types/order';
 import Badge from '../../ui/badge';
 import lineDetails from '../../utils/line_details';
 import formatTime from '../../utils/format_time';
+import cancellationText from '../../utils/cancellation_text';
 import DeliveryInfo from './delivery_info';
 import ElapsedChip from './elapsed_chip';
 import OrderCardFooter from './order_card_footer';
@@ -16,7 +17,8 @@ const paymentBadges = { paid: ['success', 'Paid'], unpaid: ['warning', 'Unpaid']
 
 export default function OrderCard({ order, onOrderUpdated }: OrderCardProps) {
   const [paymentVariant, paymentLabel] = paymentBadges[order.paymentStatus];
-  const isActive = order.status !== 'completed' && order.status !== 'cancelled';
+  const cancelled = order.status === 'cancelled';
+  const isActive = order.status !== 'completed' && !cancelled;
 
   return (
     <li className="flex flex-col gap-3 rounded-card bg-surface p-3.5 shadow-card">
@@ -32,11 +34,14 @@ export default function OrderCard({ order, onOrderUpdated }: OrderCardProps) {
         </div>
         <div className="flex flex-col items-end gap-1.5">
           {isActive ? <ElapsedChip since={order.createdAt} /> : <span className="text-xs tabular-nums text-muted">{formatTime(order.createdAt)}</span>}
-          <Badge variant={paymentVariant}>{paymentLabel}</Badge>
+          {cancelled && <Badge variant="error">Cancelled</Badge>}
+          {/* A cancelled order is not owed; only say it if money had changed hands. */}
+          {!(cancelled && order.paymentStatus === 'unpaid') && <Badge variant={paymentVariant}>{paymentLabel}</Badge>}
           {order.pendingSync && <Badge variant="neutral">Waiting to sync</Badge>}
           {order.status === 'pending' && <Badge variant="warning">From table QR</Badge>}
         </div>
       </div>
+      {cancelled && order.cancellation && <p className="rounded-control bg-danger-50 px-2.5 py-1.5 text-sm text-danger-700">{cancellationText(order.cancellation)}</p>}
       {order.customer && <p className="-mb-1 truncate font-medium text-ink"><bdi>{order.customer.name}</bdi></p>}
       <ul className="text-sm text-body">
         {order.items.map((item, index) => (

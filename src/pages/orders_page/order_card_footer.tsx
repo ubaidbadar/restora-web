@@ -6,7 +6,6 @@ import api from '../../config/api';
 import STATUS_LABELS from '../../constants/status_labels';
 import type Order from '../../types/order';
 import type OrderStatus from '../../types/order_status';
-import AlertModal from '../../ui/alert_modal/modal';
 import Button from '../../ui/button';
 import DropdownMenu from '../../ui/dropdown_menu';
 import IconButton from '../../ui/icon_button';
@@ -15,6 +14,8 @@ import printOrder from '../../utils/print_order';
 import toast from '../../utils/toast';
 import OrderDetailsDrawer from './order_details_drawer';
 import PayOrderSheet from './pay_order_sheet';
+import CancelOrder from './cancel_order';
+import type OrderCancellation from '../../types/order_cancellation';
 import getAxiosMessage from '../../utils/get_axios_message';
 import useOutboxStore from '../../store/outbox_store';
 import syncOutbox from '../../utils/sync_outbox';
@@ -56,10 +57,11 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
   const canMove = can(workplace, 'orders:update');
   const canCancel = can(workplace, 'orders:cancel');
   const next = canMove ? nextStatus(order) : null;
+  const active = order.status !== 'completed' && order.status !== 'cancelled';
   // Dishes can change until the order is on the way or done, while the bill is still open.
-  const editable = canMove && order.status !== 'out_for_delivery' && order.status !== 'completed' && order.paymentStatus === 'unpaid';
+  const editable = canMove && active && order.status !== 'out_for_delivery' && order.paymentStatus === 'unpaid';
   // Payments change what customers owe, so they wait for internet. A guest's order is accepted before it is paid.
-  const payable = can(workplace, 'orders:payment') && order.paymentStatus === 'unpaid' && !order.pendingSync && !pending;
+  const payable = can(workplace, 'orders:payment') && active && order.paymentStatus === 'unpaid' && !order.pendingSync && !pending;
   const button = 'min-w-0 flex-1 basis-full whitespace-nowrap @[15rem]:basis-0';
 
   /**
@@ -83,19 +85,15 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
   };
 
   const handleAdvance = () => next && change('patch', `/orders/${order._id}`, { status: next }, pending ? `Order #${token} accepted` : `Order #${token} moved to ${STATUS_LABELS[next]}`);
-  const handleCancel = () => change('post', `/orders/${order._id}/cancel`, undefined, `Order #${token} cancelled`);
-  const active = order.status !== 'completed' && order.status !== 'cancelled';
+  const handleCancel = (body: Pick<OrderCancellation, 'reason' | 'note'>) => change('post', `/orders/${order._id}/cancel`, body, pending ? `Order #${token} turned down` : `Order #${token} cancelled`);
 
   return (
     <OrderDetailsDrawer
       order={order}
       trigger={(showDetails) => (
-        <AlertModal
-          title={pending ? `Turn down order #${token}?` : `Cancel order #${token}?`}
-          description={pending ? 'The guest’s order leaves the board. Let them know at the table.' : "It leaves the board and is not counted in sales. Its customer's khata and totals are corrected."}
-          confirmText={pending ? 'Turn down' : 'Cancel order'}
-          cancelText="Keep it"
-          onConfirm={handleCancel}
+        <CancelOrder
+          order={order}
+          onCancel={handleCancel}
           component={({ open: askCancel }) => (
             <>
               <div className="-mb-1 flex items-center gap-2 border-t border-border pt-2.5">

@@ -5,6 +5,7 @@ import Badge from '../../ui/badge';
 import formatDate from '../../utils/format_date';
 import formatRs from '../../utils/format_rs';
 import formatTime from '../../utils/format_time';
+import cancellationText from '../../utils/cancellation_text';
 
 interface OrderHistoryRowProps {
   order: Order;
@@ -23,6 +24,7 @@ export default function OrderHistoryRow({ order }: OrderHistoryRowProps) {
           {formatDate(order.createdAt)}, {formatTime(order.createdAt)} · {ORDER_TYPE_LABELS[order.type]}
         </p>
         <p dir="auto" className="mt-0.5 truncate text-sm text-muted">{order.items.map((item) => `${item.qty} × ${item.name}${item.sizeName ? ` (${item.sizeName})` : ""}`).join(', ')}</p>
+        {cancelled && order.cancellation && <p className="mt-0.5 text-sm text-danger-700">{cancellationText(order.cancellation)}</p>}
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
         <span className={`text-sm font-semibold whitespace-nowrap tabular-nums ${cancelled ? 'text-muted line-through' : 'text-ink'}`}>{formatRs(order.total)}</span>

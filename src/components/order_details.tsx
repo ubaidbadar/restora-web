@@ -9,6 +9,7 @@ import formatTime from '../utils/format_time';
 import lineDetails from '../utils/line_details';
 import TotalsList from './totals_list';
 import useAuthStore from '../store/auth_store';
+import cancellationText from '../utils/cancellation_text';
 
 interface OrderDetailsProps {
   order: Order;
@@ -50,6 +51,11 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
         {customer && <span className="mt-1 block text-base font-semibold text-ink"><bdi>{customer.name}</bdi></span>}
         {where && <span dir="auto" className="block">{where}</span>}
       </p>
+      {order.cancellation && (
+        <p className="rounded-control bg-danger-50 px-3 py-2 text-sm text-danger-700">
+          <span className="font-semibold">Cancelled</span> · {cancellationText(order.cancellation)}
+        </p>
+      )}
       <ul className="divide-y divide-border border-y border-border text-sm">
         {order.items.map((item, index) => (
           <li key={index} className="flex justify-between gap-3 py-2.5">
