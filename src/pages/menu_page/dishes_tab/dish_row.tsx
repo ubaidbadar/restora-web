@@ -68,7 +68,7 @@ export default function DishRow({ dish, menu, onSaved, onDeleted }: DishRowProps
           defaultValues={dishFormValues(dish)}
           onSave={(values) => api.patch(`/menu/items/${dish._id}`, values).then((res) => onSaved(res.data))}
           fields={(form) => <DishFields menu={menu} {...form} />}
-          component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${dish.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${dish.name}`} onClick={open} />}
         />
         <AlertModal
           title={`Delete ${dish.name}?`}
@@ -76,7 +76,7 @@ export default function DishRow({ dish, menu, onSaved, onDeleted }: DishRowProps
           confirmText="Delete dish"
           cancelText="Keep it"
           onConfirm={remove}
-          component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${dish.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Trash2} className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${dish.name}`} onClick={open} />}
         />
       </Can>
     </div>

@@ -26,7 +26,7 @@ export default function ChoiceChips<T extends string>({ label, options, value, o
           key={option.value}
           isActive={option.value === value}
           onClick={() => onChange(option.value)}
-          className="min-h-11 shrink-0 px-3.5! text-sm! whitespace-nowrap lg:min-h-10"
+          className="min-h-control shrink-0 px-3.5! text-sm! whitespace-nowrap"
         >
           {option.label}
           {option.count !== undefined && (

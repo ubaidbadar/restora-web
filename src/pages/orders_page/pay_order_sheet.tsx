@@ -28,7 +28,7 @@ export default function PayOrderSheet({ order, onOrderUpdated, className = '' }:
     <BottomSheet
       label={`Record payment for order ${order.dailyToken}`}
       component={({ open }) => (
-        <Button variant="outline" icon={Banknote} className={`min-h-11 ${className}`} aria-label={`Record payment for order ${order.dailyToken}`} onClick={open}>
+        <Button variant="outline" icon={Banknote} className={className} aria-label={`Record payment for order ${order.dailyToken}`} onClick={open}>
           Pay
         </Button>
       )}

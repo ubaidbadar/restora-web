@@ -33,7 +33,7 @@ export default function StockToggle({ dish, onSaved }: StockToggleProps) {
       aria-label={`${dish.name} in stock at ${branch.name}`}
       title={`In stock at ${branch.name}`}
       checked={!dish.soldOut}
-      className="min-h-11 justify-center px-2"
+      className="min-h-control justify-center px-2"
       onChange={(event) => setInStock(event.target.checked)}
     />
   );

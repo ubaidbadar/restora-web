@@ -55,7 +55,7 @@ export default function BranchRow({ branch, isLastOpen, onSaved }: BranchRowProp
               })
           }
           fields={(form) => <BranchFields {...form} />}
-          component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${branch.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${branch.name}`} onClick={open} />}
         />
         {archived ? (
           <ConfirmModal
@@ -63,7 +63,7 @@ export default function BranchRow({ branch, isLastOpen, onSaved }: BranchRowProp
             description="It opens again for people with access to all branches. People who lost access when it was archived need it given back under Staff."
             confirmText="Reopen"
             onConfirm={() => act('reopen', 'reopened')}
-            component={({ open }) => <IconButton icon={ArchiveRestore} size="lg" aria-label={`Reopen ${branch.name}`} onClick={open} />}
+            component={({ open }) => <IconButton icon={ArchiveRestore} aria-label={`Reopen ${branch.name}`} onClick={open} />}
           />
         ) : (
           !isLastOpen && (
@@ -72,7 +72,7 @@ export default function BranchRow({ branch, isLastOpen, onSaved }: BranchRowProp
               description="Its orders and reports stay. Its POS terminals stop working, and people who only worked here lose access until you give them another branch."
               confirmText="Archive"
               onConfirm={() => act('archive', 'archived')}
-              component={({ open }) => <IconButton icon={Archive} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Archive ${branch.name}`} onClick={open} />}
+              component={({ open }) => <IconButton icon={Archive} className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Archive ${branch.name}`} onClick={open} />}
             />
           )
         )}

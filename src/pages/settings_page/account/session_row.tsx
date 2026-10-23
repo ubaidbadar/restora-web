@@ -32,7 +32,7 @@ export default function SessionRow({ session, onRevoked }: SessionRowProps) {
           {session.restaurantName && ` · in ${session.restaurantName}`}
         </span>
       </span>
-      {!session.current && <IconButton icon={LogOut} size="lg" aria-label={`Sign out ${session.device}`} onClick={signOutDevice} />}
+      {!session.current && <IconButton icon={LogOut} aria-label={`Sign out ${session.device}`} onClick={signOutDevice} />}
     </li>
   );
 }

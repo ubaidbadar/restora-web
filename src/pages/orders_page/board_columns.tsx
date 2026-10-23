@@ -52,11 +52,11 @@ export default function BoardColumns({ orders, onOrderUpdated }: BoardColumnsPro
       {xl && (status === 'cancelled' || cancelled.length > 0) && (
         <div className="-mt-2 mb-3 flex justify-end">
           {status === 'cancelled' ? (
-            <Button variant="ghost" size="sm" icon={ArrowLeft} onClick={() => setStatus('new')}>
+            <Button variant="ghost" icon={ArrowLeft} onClick={() => setStatus('new')}>
               Back to the board
             </Button>
           ) : (
-            <Button variant="ghost" size="sm" icon={Ban} onClick={() => setStatus('cancelled')}>
+            <Button variant="ghost" icon={Ban} onClick={() => setStatus('cancelled')}>
               Cancelled · {cancelled.length}
             </Button>
           )}

@@ -23,7 +23,7 @@ export default function AddonChoices({ group, picked, onChange }: AddonChoicesPr
   return (
     <div role="group" aria-label={group.name} className="-mx-1 flex flex-wrap gap-2 p-1">
       {group.options.map((option) => (
-        <Pill key={option._id} isActive={chosen.includes(option._id)} onClick={() => toggle(option._id)} className="min-h-11 px-3.5! text-sm! lg:min-h-10">
+        <Pill key={option._id} isActive={chosen.includes(option._id)} onClick={() => toggle(option._id)} className="min-h-control px-3.5! text-sm!">
           {option.name}
           {option.price > 0 && <span className="ms-1.5 tabular-nums opacity-80">+{formatRs(option.price)}</span>}
         </Pill>

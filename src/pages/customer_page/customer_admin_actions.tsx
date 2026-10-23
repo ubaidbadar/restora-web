@@ -80,7 +80,7 @@ export default function CustomerAdminActions({ customer, onCustomer }: CustomerA
                       ]
                     : []),
                 ];
-                return items.length > 0 && <DropdownMenu trigger={<IconButton icon={Ellipsis} variant="outline" size="lg" aria-label={`More for ${customer.name}`} aria-haspopup="menu" />} items={items} />;
+                return items.length > 0 && <DropdownMenu trigger={<IconButton icon={Ellipsis} variant="outline" aria-label={`More for ${customer.name}`} aria-haspopup="menu" />} items={items} />;
               }}
             />
           )}

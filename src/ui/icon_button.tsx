@@ -15,14 +15,13 @@ const variants = {
 
 const sizes = {
   sm: 'size-8',
-  md: 'size-10',
-  lg: 'size-11',
+  /** As tall as an input or a button. */
+  md: 'size-control',
 };
 
 const iconSizes = {
   sm: 16,
   md: 18,
-  lg: 20,
 };
 
 type IconButtonBaseProps<T extends ElementType> = {

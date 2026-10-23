@@ -22,7 +22,7 @@ export default function WhatsAppLink({ phone, message, children, variant = 'outl
       rel="noopener noreferrer"
       icon={MessageCircle}
       variant={variant}
-      className="min-h-11 shrink-0"
+      className="shrink-0"
       onClick={onOpen}
     >
       {children}

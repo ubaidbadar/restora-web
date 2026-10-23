@@ -12,7 +12,7 @@ export default function MenuPage() {
   if (!menu) return loading ? (
       <div role="status" aria-label="Loading the menu" className="flex flex-col gap-5">
         <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-10 w-72 rounded-control" />
+        <Skeleton className="h-control w-72 rounded-control" />
         <SkeletonList rows={6} />
       </div>
     ) : <LoadFailed what="the menu" onRetry={() => get()} />;

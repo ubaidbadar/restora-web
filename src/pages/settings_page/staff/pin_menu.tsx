@@ -16,7 +16,7 @@ interface PinMenuProps {
 export default function PinMenu({ member, name, onSaved }: PinMenuProps) {
   return (
     <DropdownMenu
-      trigger={<IconButton icon={KeyRound} size="lg" aria-label={`${name}'s POS PIN`} aria-haspopup="menu" />}
+      trigger={<IconButton icon={KeyRound} aria-label={`${name}'s POS PIN`} aria-haspopup="menu" />}
       items={[
         ...(member.pinLocked
           ? [

@@ -44,8 +44,8 @@ export default function CategoryRow({ category, dishes, first, last, onMove, onS
           {dishes} {dishes === 1 ? 'dish' : 'dishes'}
         </p>
       </div>
-      <IconButton icon={ArrowUp} size="lg" aria-label={`Move ${category.name} up`} disabled={first} onClick={() => onMove(-1)} />
-      <IconButton icon={ArrowDown} size="lg" aria-label={`Move ${category.name} down`} disabled={last} onClick={() => onMove(1)} />
+      <IconButton icon={ArrowUp} aria-label={`Move ${category.name} up`} disabled={first} onClick={() => onMove(-1)} />
+      <IconButton icon={ArrowDown} aria-label={`Move ${category.name} down`} disabled={last} onClick={() => onMove(1)} />
       <Can permission="menu:update">
         <FormDrawer
           title="Edit category"
@@ -53,7 +53,7 @@ export default function CategoryRow({ category, dishes, first, last, onMove, onS
           defaultValues={{ name: category.name }}
           onSave={(values) => api.patch(`/menu/categories/${category._id}`, { name: values.name }).then((res) => onSaved(res.data))}
           fields={(form) => <CategoryFields {...form} />}
-          component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${category.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${category.name}`} onClick={open} />}
         />
         <AlertModal
           title={`Delete ${category.name}?`}
@@ -61,7 +61,7 @@ export default function CategoryRow({ category, dishes, first, last, onMove, onS
           confirmText="Delete category"
           cancelText="Keep it"
           onConfirm={remove}
-          component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${category.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Trash2} className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${category.name}`} onClick={open} />}
         />
       </Can>
     </li>

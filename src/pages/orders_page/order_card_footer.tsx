@@ -102,7 +102,7 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
                   {!order.paymentMethod && <span className="block text-xs font-normal text-muted">+ tax when paid</span>}
                 </span>
                 <DropdownMenu
-                  trigger={(isOpen) => <IconButton icon={MoreHorizontal} variant="ghost" size="lg" aria-label={`More for order ${token}`} aria-haspopup="menu" aria-expanded={isOpen} />}
+                  trigger={(isOpen) => <IconButton icon={MoreHorizontal} variant="ghost" aria-label={`More for order ${token}`} aria-haspopup="menu" aria-expanded={isOpen} />}
                   items={[
                     { label: 'Details', icon: FileText, onClick: showDetails },
                     { label: 'Print kitchen slip', icon: ChefHat, onClick: () => printOrder(order, 'kitchen') },
@@ -116,13 +116,13 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
                 <div className="@container">
                   <div className="flex flex-wrap gap-2">
                     {pending && canCancel && (
-                      <Button variant="outline" className={`min-h-11 ${button}`} aria-label={`Turn down order ${token}`} onClick={askCancel}>
+                      <Button variant="outline" className={button} aria-label={`Turn down order ${token}`} onClick={askCancel}>
                         Turn down
                       </Button>
                     )}
                     {payable && <PayOrderSheet order={order} onOrderUpdated={onOrderUpdated} className={button} />}
                     {next && (
-                      <Button icon={ArrowRight} iconPosition="right" className={`min-h-11 ${button}`} aria-label={`${ADVANCE_LABELS[next]} order ${token}`} onClick={handleAdvance}>
+                      <Button icon={ArrowRight} iconPosition="right" className={button} aria-label={`${ADVANCE_LABELS[next]} order ${token}`} onClick={handleAdvance}>
                         {ADVANCE_LABELS[next]}
                       </Button>
                     )}

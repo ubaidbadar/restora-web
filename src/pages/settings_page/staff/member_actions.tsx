@@ -38,7 +38,7 @@ export default function MemberActions({ member, name, roles, onSaved, onRemoved 
           })
         }
         fields={(form) => <AccessFields {...form} roles={roles} />}
-        component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Change ${name}'s access`} onClick={open} />}
+        component={({ open }) => <IconButton icon={Pencil} aria-label={`Change ${name}'s access`} onClick={open} />}
       />
       {member.hasPin && <PinMenu member={member} name={name} onSaved={onSaved} />}
       {suspended ? (
@@ -55,7 +55,7 @@ export default function MemberActions({ member, name, roles, onSaved, onRemoved 
               })
               .catch((err) => toast.error(getAxiosMessage(err)))
           }
-          component={({ open }) => <IconButton icon={UserCheck} size="lg" aria-label={`Reactivate ${name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={UserCheck} aria-label={`Reactivate ${name}`} onClick={open} />}
         />
       ) : (
         <AlertModal
@@ -71,7 +71,7 @@ export default function MemberActions({ member, name, roles, onSaved, onRemoved 
               })
               .catch((err) => toast.error(getAxiosMessage(err)))
           }
-          component={({ open }) => <IconButton icon={UserX} size="lg" aria-label={`Suspend ${name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={UserX} aria-label={`Suspend ${name}`} onClick={open} />}
         />
       )}
       <AlertModal
@@ -87,7 +87,7 @@ export default function MemberActions({ member, name, roles, onSaved, onRemoved 
             })
             .catch((err) => toast.error(getAxiosMessage(err)))
         }
-        component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Remove ${name}`} onClick={open} />}
+        component={({ open }) => <IconButton icon={Trash2} className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Remove ${name}`} onClick={open} />}
       />
     </span>
   );

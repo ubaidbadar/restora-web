@@ -58,7 +58,7 @@ export default function KhataCard({ customer, onSaved }: KhataCardProps) {
               <Input label="Note (optional)" dir="auto" placeholder="e.g. JazzCash, cash at counter" {...register('note')} error={fieldError(errors, 'note')} />
             </>
           )}
-          component={({ open }) => <Button variant={owes ? 'primary' : 'ghost'} className="min-h-11 shrink-0" onClick={open}>Record payment</Button>}
+          component={({ open }) => <Button variant={owes ? 'primary' : 'ghost'} className="shrink-0" onClick={open}>Record payment</Button>}
         />
       </Can>
     </div>

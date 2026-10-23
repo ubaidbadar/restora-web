@@ -53,14 +53,14 @@ export default function InvitationRow({ invitation, onChanged }: InvitationRowPr
       </span>
       {pending && canInvite && (
         <span className="flex shrink-0">
-          <IconButton icon={RotateCw} size="lg" aria-label={`Send ${who} a new link`} onClick={() => void resend()} />
+          <IconButton icon={RotateCw} aria-label={`Send ${who} a new link`} onClick={() => void resend()} />
           <AlertModal
             title={`Cancel ${who}'s invitation?`}
             description="The link stops working. You can invite them again later."
             confirmText="Cancel invitation"
             cancelText="Keep it"
             onConfirm={cancel}
-            component={({ open }) => <IconButton icon={X} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Cancel ${who}'s invitation`} onClick={open} />}
+            component={({ open }) => <IconButton icon={X} className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Cancel ${who}'s invitation`} onClick={open} />}
           />
         </span>
       )}
