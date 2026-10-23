@@ -1,21 +1,18 @@
+import type { ReactNode } from 'react';
 import type Order from '../../types/order';
-import Button from '../../ui/button';
 import Drawer from '../../ui/drawer/modal';
 import OrderDetails from '../../components/order_details';
 
 interface OrderDetailsDrawerProps {
   order: Order;
+  /** What opens it (on a card, the "Details" entry of its menu). */
+  trigger: (open: () => void) => ReactNode;
 }
 
-/** The "Details" button on an order card, and the drawer it opens. */
-export default function OrderDetailsDrawer({ order }: OrderDetailsDrawerProps) {
-  const token = order.dailyToken;
-
+/** An order's details in a drawer. */
+export default function OrderDetailsDrawer({ order, trigger }: OrderDetailsDrawerProps) {
   return (
-    <Drawer
-      title={`Order #${token}`}
-      component={({ open }) => <Button variant="ghost" size="sm" className="ms-auto min-h-11 text-sm" aria-label={`Details of order ${token}`} onClick={open}>Details</Button>}
-    >
+    <Drawer title={`Order #${order.dailyToken}`} component={({ open }) => trigger(open)}>
       <OrderDetails order={order} />
     </Drawer>
   );

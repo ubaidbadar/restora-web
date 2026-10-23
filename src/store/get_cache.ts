@@ -15,7 +15,6 @@ const getCache = {
   /** One entry per person, restaurant, branch, address and params: nothing shows across sign-ins or branches. */
   keyOf(url: string, options: AxiosRequestConfig = {}) {
     const me = useAuthStore.getState().me;
-    console.log(me?.user)
     return JSON.stringify([me?.user?.id, me?.workplace?.restaurant._id, me?.workplace?.branch?._id, options.baseURL, options.url ?? url, options.params]);
   },
   get: (key: string) => entries.get(key),
