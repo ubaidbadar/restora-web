@@ -1,4 +1,5 @@
 import { Users } from 'lucide-react';
+import Can from '../../components/can';
 import RESERVATION_STATUS_LABELS from '../../constants/reservation_status_labels';
 import type Reservation from '../../types/reservation';
 import Badge from '../../ui/badge';
@@ -29,7 +30,11 @@ export default function ReservationRow({ reservation, onSaved }: ReservationRowP
           {reservation.note && <p dir="auto" className="mt-1.5 text-sm text-body">{reservation.note}</p>}
         </div>
       </div>
-      {open && <ReservationActions reservation={reservation} onSaved={onSaved} />}
+      {open && (
+        <Can permission="reservations:manage">
+          <ReservationActions reservation={reservation} onSaved={onSaved} />
+        </Can>
+      )}
     </li>
   );
 }

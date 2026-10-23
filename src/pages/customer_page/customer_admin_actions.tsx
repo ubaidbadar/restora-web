@@ -1,6 +1,8 @@
 import { Ellipsis, Merge, Pencil, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import can from '@shared/can';
 import api from '../../config/api';
+import useWorkplace from '../../hooks/useWorkplace';
 import CustomerFields from '../../components/customer_fields';
 import FormDrawer from '../../components/form_drawer';
 import customerSchema from '../../constants/customer_schema';
@@ -25,6 +27,7 @@ interface CustomerAdminActionsProps {
  */
 export default function CustomerAdminActions({ customer, onCustomer }: CustomerAdminActionsProps) {
   const navigate = useNavigate();
+  const workplace = useWorkplace();
   const remove = () => {
     api
       .delete(`/customers/${customer._id}`)
@@ -66,16 +69,19 @@ export default function CustomerAdminActions({ customer, onCustomer }: CustomerA
               confirmText="Delete"
               cancelText="Keep"
               onConfirm={remove}
-              component={({ open: confirmDelete }) => (
-                <DropdownMenu
-                  trigger={<IconButton icon={Ellipsis} variant="outline" size="lg" aria-label={`More for ${customer.name}`} aria-haspopup="menu" />}
-                  items={[
-                    { label: 'Edit customer', icon: Pencil, onClick: edit },
-                    { label: 'Merge a duplicate', icon: Merge, onClick: merge },
-                    { label: 'Delete', icon: Trash2, danger: true, onClick: confirmDelete },
-                  ]}
-                />
-              )}
+              component={({ open: confirmDelete }) => {
+                // Only what this person may do; with nothing allowed, no menu at all.
+                const items = [
+                  ...(can(workplace, 'customers:manage') ? [{ label: 'Edit customer', icon: Pencil, onClick: edit }] : []),
+                  ...(can(workplace, 'customers:delete')
+                    ? [
+                        { label: 'Merge a duplicate', icon: Merge, onClick: merge },
+                        { label: 'Delete', icon: Trash2, danger: true, onClick: confirmDelete },
+                      ]
+                    : []),
+                ];
+                return items.length > 0 && <DropdownMenu trigger={<IconButton icon={Ellipsis} variant="outline" size="lg" aria-label={`More for ${customer.name}`} aria-haspopup="menu" />} items={items} />;
+              }}
             />
           )}
         />

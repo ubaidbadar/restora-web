@@ -27,7 +27,9 @@ export default function SettingsForm({ settings, section, onSaved }: SettingsFor
   return (
     <Form
       schema={settingsSchema}
-      defaultValues={settings}
+      // Every field the form shows has a starting value, so a section that nobody touched is not "unsaved"
+      // (a receipt line that was never set would otherwise start as undefined and read back as '').
+      defaultValues={{ ...settings, receipt: { ntn: '', strn: '', footer: '', ...settings.receipt } }}
       noValidate
       onSubmit={({ data, onSuccess, onError }) => {
         api

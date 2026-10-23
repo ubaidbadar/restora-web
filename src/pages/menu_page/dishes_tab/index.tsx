@@ -1,4 +1,5 @@
 import { Plus, UtensilsCrossed } from 'lucide-react';
+import Can from '../../../components/can';
 import CategoryChips from '../../../components/category_chips';
 import EmptyState from '../../../components/empty_state';
 import FormDrawer from '../../../components/form_drawer';
@@ -62,18 +63,20 @@ export default function DishesTab({ menu, onUpdate }: MenuTabProps) {
         <div className="min-w-0 flex-1 basis-60">
           <SearchInput label="Search dishes" initialValue={search} onSearch={setSearch} />
         </div>
-        <FormDrawer
-          title="Add dish"
-          schema={dishSchema}
-          defaultValues={{ categoryId: category === ALL_CATEGORIES ? '' : category, sizes: [{ name: '', price: '' }], addonGroupIds: [], hidden: false }}
-          onSave={(values) => api.post('/menu/items', values).then((res) => save(res.data))}
-          fields={(form) => <DishFields menu={menu} {...form} />}
-          component={({ open }) => (
-            <Button icon={Plus} onClick={open}>
-              Add dish
-            </Button>
-          )}
-        />
+        <Can permission="menu:update">
+          <FormDrawer
+            title="Add dish"
+            schema={dishSchema}
+            defaultValues={{ categoryId: category === ALL_CATEGORIES ? '' : category, sizes: [{ name: '', price: '' }], addonGroupIds: [], hidden: false }}
+            onSave={(values) => api.post('/menu/items', values).then((res) => save(res.data))}
+            fields={(form) => <DishFields menu={menu} {...form} />}
+            component={({ open }) => (
+              <Button icon={Plus} onClick={open}>
+                Add dish
+              </Button>
+            )}
+          />
+        </Can>
       </div>
       <CategoryChips categories={menu.categories} value={category} onChange={setCategory} />
       {shown.length === 0 && <EmptyState icon={UtensilsCrossed} title="No dishes here" text={menu.items.length ? 'Try a different search or category.' : 'Add your first dish to start taking orders.'} />}

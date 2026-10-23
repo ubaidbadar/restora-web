@@ -44,7 +44,8 @@ let wide = true;
 function setWidth(isWide: boolean) {
   wide = isWide;
   window.matchMedia = ((query: string) => ({
-    matches: query.includes('min-width: 48rem') ? wide : false,
+    // Wide is a desktop: the order panel docks beside the menu from lg (64rem) up (ui/bottom_sheet/docked).
+    matches: query.includes('min-width: 48rem') || query.includes('min-width: 64rem') ? wide : false,
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -81,7 +82,7 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
-describe('New order (tablet and desktop)', () => {
+describe('New order (desktop)', () => {
   it('adds dishes, counts them and totals the order', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');

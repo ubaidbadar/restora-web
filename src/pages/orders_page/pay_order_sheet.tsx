@@ -14,10 +14,12 @@ import getAxiosMessage from '../../utils/get_axios_message';
 interface PayOrderSheetProps {
   order: Order;
   onOrderUpdated?: (order: Order) => void;
+  /** Classes for the Pay button, which sits beside the card's main action. */
+  className?: string;
 }
 
-/** "Record payment" on an unpaid order: one tap to open, one tap on how the customer paid, each with its total after tax. */
-export default function PayOrderSheet({ order, onOrderUpdated }: PayOrderSheetProps) {
+/** "Pay" on an unpaid order: one tap to open, one tap on how the customer paid, each with its total after tax. */
+export default function PayOrderSheet({ order, onOrderUpdated, className = '' }: PayOrderSheetProps) {
   const { taxByPaymentMethod } = useRestaurantSettings();
   const totalBy = (method: (typeof PAYMENT_METHODS)[number]) =>
     calcTotals(order.items, order.discount, taxByPaymentMethod[method] ?? 0, order.deliveryFee).total;
@@ -26,8 +28,8 @@ export default function PayOrderSheet({ order, onOrderUpdated }: PayOrderSheetPr
     <BottomSheet
       label={`Record payment for order ${order.dailyToken}`}
       component={({ open }) => (
-        <Button variant="outline" icon={Banknote} className="min-h-11 w-full" aria-label={`Record payment for order ${order.dailyToken}`} onClick={open}>
-          Record payment
+        <Button variant="outline" icon={Banknote} className={`min-h-11 ${className}`} aria-label={`Record payment for order ${order.dailyToken}`} onClick={open}>
+          Pay
         </Button>
       )}
     >

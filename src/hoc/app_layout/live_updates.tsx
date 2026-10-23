@@ -33,7 +33,6 @@ export default function LiveUpdates() {
   useEffect(() => {
     const ordersKey = getCache.keyOf('/orders');
     const floorKey = getCache.keyOf('/tables/floor');
-    const source = new EventSource(`${apiOrigin}/api/v1/orders/stream`, { withCredentials: true });
 
     const handleOrder = (event: MessageEvent<string>) => {
       const order = JSON.parse(event.data) as Order;
@@ -64,20 +63,48 @@ export default function LiveUpdates() {
       }
     };
 
-    source.addEventListener('order.created', handleOrder);
-    source.addEventListener('order.updated', handleOrder);
-    source.addEventListener('call.created', handleCall);
-    source.addEventListener('call.updated', handleCall);
-    // The server ends the stream every few minutes and the browser reconnects: load again what came in between.
-    let opened = false;
-    source.onopen = () => {
-      if (opened) {
-        api.get('/orders').then((res) => getCache.set(ordersKey, res.data), () => {});
-        if (getCache.get(floorKey)) api.get('/tables/floor').then((res) => getCache.set(floorKey, res.data), () => {});
-      }
-      opened = true;
+    // Loads again what came in while the stream was closed (and the board, if it could not load without internet).
+    const reload = () => {
+      api.get('/orders').then((res) => getCache.set(ordersKey, res.data), () => {});
+      if (getCache.get(floorKey)) api.get('/tables/floor').then((res) => getCache.set(floorKey, res.data), () => {});
     };
-    return () => source.close();
+
+    // The browser reopens the stream by itself when the server ends it (every few minutes), but gives up for good when
+    // the connection is lost (no internet). Then it is opened again: a few seconds later, and at once when the internet
+    // is back. Each reopening loads what was missed.
+    let source: EventSource | undefined;
+    let retry = 0;
+    let opened = false;
+    const connect = () => {
+      source?.close();
+      source = new EventSource(`${apiOrigin}/api/v1/orders/stream`, { withCredentials: true });
+      source.addEventListener('order.created', handleOrder);
+      source.addEventListener('order.updated', handleOrder);
+      source.addEventListener('call.created', handleCall);
+      source.addEventListener('call.updated', handleCall);
+      source.onopen = () => {
+        if (opened || !getCache.get(ordersKey)) reload();
+        opened = true;
+      };
+      source.onerror = () => {
+        if (source?.readyState !== EventSource.CLOSED) return;
+        window.clearTimeout(retry);
+        retry = window.setTimeout(connect, 5_000);
+      };
+    };
+    const reconnect = () => {
+      if (source?.readyState === EventSource.OPEN) return;
+      window.clearTimeout(retry);
+      connect();
+    };
+
+    connect();
+    window.addEventListener('online', reconnect);
+    return () => {
+      window.clearTimeout(retry);
+      window.removeEventListener('online', reconnect);
+      source?.close();
+    };
   }, [navigate]);
 
   return null;

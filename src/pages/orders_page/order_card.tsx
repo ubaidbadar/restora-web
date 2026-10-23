@@ -1,17 +1,11 @@
-import { ChefHat, Printer, Receipt } from 'lucide-react';
 import ORDER_TYPE_LABELS from '../../constants/order_type_labels';
 import type Order from '../../types/order';
 import Badge from '../../ui/badge';
-import DropdownMenu from '../../ui/dropdown_menu';
-import IconButton from '../../ui/icon_button';
-import printOrder from '../../utils/print_order';
-import formatRs from '../../utils/format_rs';
 import lineDetails from '../../utils/line_details';
 import formatTime from '../../utils/format_time';
 import DeliveryInfo from './delivery_info';
 import ElapsedChip from './elapsed_chip';
-import OrderCardActions from './order_card_actions';
-import OrderDetailsDrawer from './order_details_drawer';
+import OrderCardFooter from './order_card_footer';
 
 interface OrderCardProps {
   order: Order;
@@ -31,7 +25,7 @@ export default function OrderCard({ order, onOrderUpdated }: OrderCardProps) {
           <p className="text-display leading-none tabular-nums text-ink">
             <span className="sr-only">Token </span>#{order.dailyToken}
           </p>
-          <p className="mt-1.5 truncate text-xs font-medium text-muted">
+          <p className="mt-1.5 text-xs font-medium text-muted">
             {ORDER_TYPE_LABELS[order.type]}
             {order.tableName && ` · Table ${order.tableName}`}
           </p>
@@ -54,21 +48,7 @@ export default function OrderCard({ order, onOrderUpdated }: OrderCardProps) {
         ))}
       </ul>
       {order.type === 'delivery' && <DeliveryInfo order={order} />}
-      <div className="-mb-1 flex items-center gap-2 border-t border-border pt-2">
-        <span className="font-semibold whitespace-nowrap tabular-nums text-ink">
-          {formatRs(order.total)}
-          {!order.paymentMethod && <span className="block text-xs font-normal text-muted">+ tax when paid</span>}
-        </span>
-        <OrderDetailsDrawer order={order} />
-        <DropdownMenu
-          trigger={<IconButton icon={Printer} aria-label={`Print order ${order.dailyToken}`} aria-haspopup="menu" className="size-11" />}
-          items={[
-            { label: 'Kitchen slip', icon: ChefHat, onClick: () => printOrder(order, 'kitchen') },
-            { label: 'Receipt', icon: Receipt, onClick: () => printOrder(order, 'receipt') },
-          ]}
-        />
-      </div>
-      <OrderCardActions order={order} onOrderUpdated={onOrderUpdated} />
+      <OrderCardFooter order={order} onOrderUpdated={onOrderUpdated} />
     </li>
   );
 }

@@ -1,5 +1,6 @@
 import { MessageCircle, Phone, Plus } from 'lucide-react';
 import { Link } from 'react-router';
+import Can from '../../components/can';
 import type Customer from '../../types/customer';
 import Avatar from '../../ui/avatar';
 import Badge from '../../ui/badge';
@@ -35,7 +36,9 @@ export default function ProfileHeader({ customer, onCustomer }: ProfileHeaderPro
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <Button as={Link} to="/orders/new" icon={Plus} className="min-h-11 flex-1 sm:flex-none">New order</Button>
+        <Can permission="orders:create">
+          <Button as={Link} to={`/orders/new?customer=${customer._id}`} icon={Plus} className="min-h-11 flex-1 sm:flex-none">New order</Button>
+        </Can>
         <IconButton as="a" href={`tel:${customer.phone.replace(/[^\d+]/g, '')}`} icon={Phone} variant="outline" size="lg" aria-label={`Call ${customer.name}`} />
         <IconButton as="a" href={waLink(customer.phone)} target="_blank" rel="noopener noreferrer" icon={MessageCircle} variant="outline" size="lg" aria-label={`WhatsApp ${customer.name}`} />
         <CustomerAdminActions customer={customer} onCustomer={onCustomer} />

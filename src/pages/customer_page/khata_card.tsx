@@ -1,6 +1,9 @@
 import api from '../../config/api';
+import Can from '../../components/can';
 import FormDrawer from '../../components/form_drawer';
+import getCache from '../../store/get_cache';
 import type Customer from '../../types/customer';
+import type KhataEntry from '../../types/khata_entry';
 import Button from '../../ui/button';
 import Input from '../../ui/input';
 import fieldError from '../../utils/field_error';
@@ -28,31 +31,36 @@ export default function KhataCard({ customer, onSaved }: KhataCardProps) {
           <span className="text-body">{customer.khataBalance < 0 ? `${formatRs(-customer.khataBalance)} paid in advance` : 'Nothing due'}</span>
         )}
       </p>
-      <FormDrawer
-        title={`Payment from ${customer.name}`}
-        schema={paymentSchema}
-        defaultValues={{ amount: owes ? customer.khataBalance : '' }}
-        submitLabel="Record payment"
-        onSave={(values) =>
-          api
-            .post(`/customers/${customer._id}/khata`, {
-              type: 'payment',
-              amount: Number(values.amount),
-              note: values.note,
-            })
-            .then((res) => {
-              toast.success(`${formatRs(Number(values.amount))} received from ${customer.name}`);
-              onSaved(res.data.customer ?? { ...customer, khataBalance: customer.khataBalance - Number(values.amount) });
-            })
-        }
-        fields={({ register, errors }) => (
-          <>
-            <Input label="Amount received (Rs)" inputMode="numeric" autoFocus required {...register('amount')} error={fieldError(errors, 'amount')} />
-            <Input label="Note (optional)" dir="auto" placeholder="e.g. JazzCash, cash at counter" {...register('note')} error={fieldError(errors, 'note')} />
-          </>
-        )}
-        component={({ open }) => <Button variant={owes ? 'primary' : 'ghost'} className="min-h-11 shrink-0" onClick={open}>Record payment</Button>}
-      />
+      <Can permission="customers:khata">
+        <FormDrawer
+          title={`Payment from ${customer.name}`}
+          schema={paymentSchema}
+          defaultValues={{ amount: owes ? customer.khataBalance : '' }}
+          submitLabel="Record payment"
+          onSave={(values) =>
+            api
+              .post(`/customers/${customer._id}/khata`, {
+                type: 'payment',
+                amount: Number(values.amount),
+                note: values.note,
+              })
+              .then((res) => {
+                const { customer: saved, ...entry } = res.data;
+                toast.success(`${formatRs(Number(values.amount))} received from ${customer.name}`);
+                // The Khata tab shows the payment at once, on top, without loading the list again.
+                getCache.update<KhataEntry[]>(getCache.keyOf(`/customers/${customer._id}/khata`), (list) => (list ? [entry, ...list] : list));
+                onSaved(saved ?? { ...customer, khataBalance: customer.khataBalance - Number(values.amount) });
+              })
+          }
+          fields={({ register, errors }) => (
+            <>
+              <Input label="Amount received (Rs)" inputMode="numeric" autoFocus required {...register('amount')} error={fieldError(errors, 'amount')} />
+              <Input label="Note (optional)" dir="auto" placeholder="e.g. JazzCash, cash at counter" {...register('note')} error={fieldError(errors, 'note')} />
+            </>
+          )}
+          component={({ open }) => <Button variant={owes ? 'primary' : 'ghost'} className="min-h-11 shrink-0" onClick={open}>Record payment</Button>}
+        />
+      </Can>
     </div>
   );
 }

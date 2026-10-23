@@ -1,9 +1,11 @@
-import { Plus, Printer, Rows3 } from 'lucide-react';
-import { Link } from 'react-router';
+import { MoreHorizontal, Plus, Printer, Rows3 } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import api from '../../config/api';
 import FormDrawer from '../../components/form_drawer';
 import type Table from '../../types/table';
 import Button from '../../ui/button';
+import DropdownMenu from '../../ui/dropdown_menu';
+import IconButton from '../../ui/icon_button';
 import toast from '../../utils/toast';
 import BatchFields from './batch_fields';
 import batchSchema from './batch_schema';
@@ -17,15 +19,14 @@ interface AddTableButtonsProps {
   onAdded: (...tables: Table[]) => void;
 }
 
-/** The header's actions for people who manage tables: print every QR card, add many tables at once, add one. */
+/**
+ * The header's actions for people who manage tables: Add table, and a menu with adding many at once and printing every
+ * QR card. Two buttons, so they stay on one line beside the title on a phone.
+ */
 export default function AddTableButtons({ sections, hasTables, onAdded }: AddTableButtonsProps) {
+  const navigate = useNavigate();
   return (
     <>
-      {hasTables && (
-        <Button as={Link} to="/print/tables" variant="ghost" icon={Printer}>
-          Print QR cards
-        </Button>
-      )}
       <FormDrawer
         title="Add many tables"
         submitLabel="Add tables"
@@ -41,9 +42,13 @@ export default function AddTableButtons({ sections, hasTables, onAdded }: AddTab
         }}
         fields={(form) => <BatchFields {...form} sections={sections} />}
         component={({ open }) => (
-          <Button variant="outline" icon={Rows3} onClick={open}>
-            Add many
-          </Button>
+          <DropdownMenu
+            trigger={(isOpen) => <IconButton icon={MoreHorizontal} variant="outline" size="lg" aria-label="More table actions" aria-haspopup="menu" aria-expanded={isOpen} />}
+            items={[
+              { label: 'Add many tables', icon: Rows3, onClick: open },
+              ...(hasTables ? [{ label: 'Print QR cards', icon: Printer, onClick: () => navigate('/print/tables') }] : []),
+            ]}
+          />
         )}
       />
       <FormDrawer

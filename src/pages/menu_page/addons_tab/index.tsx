@@ -1,4 +1,5 @@
 import { ListPlus, Plus } from 'lucide-react';
+import Can from '../../../components/can';
 import EmptyState from '../../../components/empty_state';
 import FormDrawer from '../../../components/form_drawer';
 import SectionCard from '../../../components/section_card';
@@ -28,18 +29,20 @@ export default function AddonsTab({ menu, onUpdate }: MenuTabProps) {
       description="Extras or choices offered with dishes, like Raita +Rs 100 or a spice level. Pick them for each dish when you edit it."
       flush
       action={
-        <FormDrawer
-          title="Add add-on group"
-          schema={addonGroupSchema}
-          defaultValues={{ min: '0', max: '1', options: [{ name: '', price: '0' }] }}
-          onSave={(values) => api.post('/menu/addon-groups', values).then((res) => save(res.data))}
-          fields={(form) => <AddonGroupFields {...form} />}
-          component={({ open }) => (
-            <Button icon={Plus} onClick={open}>
-              Add group
-            </Button>
-          )}
-        />
+        <Can permission="menu:update">
+          <FormDrawer
+            title="Add add-on group"
+            schema={addonGroupSchema}
+            defaultValues={{ min: '0', max: '1', options: [{ name: '', price: '0' }] }}
+            onSave={(values) => api.post('/menu/addon-groups', values).then((res) => save(res.data))}
+            fields={(form) => <AddonGroupFields {...form} />}
+            component={({ open }) => (
+              <Button icon={Plus} onClick={open}>
+                Add group
+              </Button>
+            )}
+          />
+        </Can>
       }
     >
       {addonGroups.length === 0 ? (

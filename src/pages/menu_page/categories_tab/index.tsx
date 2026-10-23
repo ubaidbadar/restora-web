@@ -1,4 +1,5 @@
 import { FolderOpen, Plus } from 'lucide-react';
+import Can from '../../../components/can';
 import EmptyState from '../../../components/empty_state';
 import FormDrawer from '../../../components/form_drawer';
 import SectionCard from '../../../components/section_card';
@@ -36,17 +37,19 @@ export default function CategoriesTab({ menu, onUpdate }: MenuTabProps) {
       description="The sections of your menu, in this order on the New order screen and the QR menu."
       flush
       action={
-        <FormDrawer
-          title="Add category"
-          schema={categorySchema}
-          onSave={(values) => api.post('/menu/categories', { name: values.name, sortOrder: categories.length }).then((res) => save(res.data))}
-          fields={(form) => <CategoryFields {...form} />}
-          component={({ open }) => (
-            <Button icon={Plus} onClick={open}>
-              Add category
-            </Button>
-          )}
-        />
+        <Can permission="menu:update">
+          <FormDrawer
+            title="Add category"
+            schema={categorySchema}
+            onSave={(values) => api.post('/menu/categories', { name: values.name, sortOrder: categories.length }).then((res) => save(res.data))}
+            fields={(form) => <CategoryFields {...form} />}
+            component={({ open }) => (
+              <Button icon={Plus} onClick={open}>
+                Add category
+              </Button>
+            )}
+          />
+        </Can>
       }
     >
       {categories.length === 0 ? (
