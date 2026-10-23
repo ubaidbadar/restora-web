@@ -52,11 +52,11 @@ export default function ReservationActions({ reservation, onSaved }: Reservation
     <div className="flex flex-wrap items-center gap-2 md:justify-end">
       {pending && phone && <WhatsAppLink phone={phone} message={message}>Confirm on WhatsApp</WhatsAppLink>}
       {pending && (
-        <Button variant="outline" icon={Check} className="min-h-11" onClick={() => updateStatus('confirmed', `${name}'s booking confirmed`)}>
+        <Button variant="outline" icon={Check} onClick={() => updateStatus('confirmed', `${name}'s booking confirmed`)}>
           Mark confirmed
         </Button>
       )}
-      <Button variant="outline" className="min-h-11" onClick={() => updateStatus('seated', `${name} seated`)}>
+      <Button variant="outline" onClick={() => updateStatus('seated', `${name} seated`)}>
         Mark seated
       </Button>
       <FormDrawer
@@ -77,7 +77,7 @@ export default function ReservationActions({ reservation, onSaved }: Reservation
             })
         }
         fields={(form) => <ReservationFields {...form} editing />}
-        component={({ open }) => <IconButton icon={Pencil} variant="outline" aria-label={`Edit reservation for ${name}`} className="size-11" onClick={open} />}
+        component={({ open }) => <IconButton icon={Pencil} variant="outline" aria-label={`Edit reservation for ${name}`} onClick={open} />}
       />
       <AlertModal
         title={`Cancel ${name}'s booking?`}
@@ -86,7 +86,7 @@ export default function ReservationActions({ reservation, onSaved }: Reservation
         cancelText="Keep it"
         onConfirm={() => updateStatus('cancelled', `${name}'s booking cancelled`)}
         component={({ open }) => (
-          <IconButton icon={X} variant="outline" aria-label={`Cancel reservation for ${name}`} className="size-11 hover:border-danger-300 hover:bg-danger-50 hover:text-danger-700" onClick={open} />
+          <IconButton icon={X} variant="outline" aria-label={`Cancel reservation for ${name}`} className="hover:border-danger-300 hover:bg-danger-50 hover:text-danger-700" onClick={open} />
         )}
       />
     </div>

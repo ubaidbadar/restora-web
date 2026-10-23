@@ -36,7 +36,7 @@ export default function NotesTab({ customer, onCustomer }: NotesTabProps) {
             <Textarea label="Notes" dir="auto" rows={4} readOnly={!canEdit} placeholder="Allergies, favourite table, how they like their karahi…" {...register('notes')} />
             {canEdit && (
               <div className="flex items-center gap-3">
-                <Button type="submit" disabled={loading} className="min-h-11">Save notes</Button>
+                <Button type="submit" disabled={loading}>Save notes</Button>
                 <span role="status" className="text-sm font-medium text-success-700">{message}</span>
               </div>
             )}

@@ -45,7 +45,7 @@ export default function DeviceRow({ device, onSaved, onRemoved }: DeviceRowProps
               })
           }
           fields={(form) => <DeviceFields {...form} />}
-          component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${device.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${device.name}`} onClick={open} />}
         />
         <AlertModal
           title={`Remove ${device.name}?`}
@@ -59,7 +59,7 @@ export default function DeviceRow({ device, onSaved, onRemoved }: DeviceRowProps
                 toast.success(`${device.name} removed`);
               }).catch((err) => toast.error(getAxiosMessage(err)))
           }
-          component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Remove ${device.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Trash2} className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Remove ${device.name}`} onClick={open} />}
         />
       </span>
     </li>

@@ -84,6 +84,9 @@
   --radius-panel: 1rem;      /* dialogs, drawers' sheet edge, bottom sheet */
   --radius-card: 0.75rem;    /* cards, panels, list rows */
   --radius-control: 0.5rem;  /* buttons, inputs, chips, menus, toasts */
+  /* One height for every control on a row: inputs, selects, buttons, icon buttons, chips, segmented pickers and tabs
+     (h-control, min-h-control, size-control). 44px for fingers; 40px with a mouse on a wide screen (below). */
+  --spacing-control: 2.75rem;
   --radius-small: 0.375rem;  /* badges, tooltips, compact controls, menu items */
   --radius-chip: 0.25rem;    /* checkboxes, tiny markers */
 
@@ -154,6 +157,11 @@
 
 /* Spacing convention (Tailwind's 4px scale): page gutter 4 / sm:6 / lg:8, page sections gap-6,
    card padding 4 / sm:5, form fields gap-4, rows py-3, chip rows gap-2. */
+
+/* Wide screens with a mouse: controls are a little smaller; touch screens (phones, tablets) keep 44px. */
+@media (pointer: fine) and (width >= 64rem) {
+  :root { --spacing-control: 2.5rem; }
+}
 
 /* Outside @theme so it is always emitted. */
 @keyframes pop-in {

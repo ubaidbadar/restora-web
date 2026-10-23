@@ -43,7 +43,7 @@ export default function AddTableButtons({ sections, hasTables, onAdded }: AddTab
         fields={(form) => <BatchFields {...form} sections={sections} />}
         component={({ open }) => (
           <DropdownMenu
-            trigger={(isOpen) => <IconButton icon={MoreHorizontal} variant="outline" size="lg" aria-label="More table actions" aria-haspopup="menu" aria-expanded={isOpen} />}
+            trigger={(isOpen) => <IconButton icon={MoreHorizontal} variant="outline" aria-label="More table actions" aria-haspopup="menu" aria-expanded={isOpen} />}
             items={[
               { label: 'Add many tables', icon: Rows3, onClick: open },
               ...(hasTables ? [{ label: 'Print QR cards', icon: Printer, onClick: () => navigate('/print/tables') }] : []),

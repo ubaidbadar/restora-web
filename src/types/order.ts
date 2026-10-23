@@ -1,3 +1,4 @@
+import type OrderCancellation from './order_cancellation';
 import type OrderCustomer from './order_customer';
 import type OrderItem from './order_item';
 import type OrderStatus from './order_status';
@@ -36,6 +37,8 @@ export default interface Order {
   takenBy?: string;
   /** The Pakistan-time day it counts on (YYYY-MM-DD). */
   dayKey?: string;
+  /** Set when the order was cancelled: who, when and why. */
+  cancellation?: OrderCancellation;
   createdAt: string;
   /** Taken without internet and still waiting on this device to be sent. */
   pendingSync?: boolean;

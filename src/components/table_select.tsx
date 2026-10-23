@@ -21,7 +21,7 @@ export default function TableSelect({ register, errors, required = false, allowT
     return (
       <div role="status" aria-label="Loading tables" className="flex flex-col gap-2">
         <Skeleton className="h-4 w-12" />
-        <Skeleton className="h-11 w-full rounded-control" />
+        <Skeleton className="h-control w-full rounded-control" />
       </div>
     );
   }

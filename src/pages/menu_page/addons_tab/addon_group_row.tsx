@@ -46,7 +46,7 @@ export default function AddonGroupRow({ group, dishes, onSaved, onDeleted }: Add
           defaultValues={{ name: group.name, min: String(group.min), max: String(group.max), options: group.options.map((option) => ({ _id: option._id, name: option.name, price: String(option.price) })) }}
           onSave={(values) => api.patch(`/menu/addon-groups/${group._id}`, values).then((res) => onSaved(res.data))}
           fields={(form) => <AddonGroupFields {...form} />}
-          component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${group.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${group.name}`} onClick={open} />}
         />
         <AlertModal
           title={`Delete ${group.name}?`}
@@ -54,7 +54,7 @@ export default function AddonGroupRow({ group, dishes, onSaved, onDeleted }: Add
           confirmText="Delete group"
           cancelText="Keep it"
           onConfirm={remove}
-          component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${group.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Trash2} className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${group.name}`} onClick={open} />}
         />
       </Can>
     </li>

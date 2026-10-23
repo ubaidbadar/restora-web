@@ -6,7 +6,7 @@ import type DashboardStats from './dashboard_stats';
 export default interface DashboardAnswer {
   stats: DashboardStats;
   /** Filled only for "All branches". */
-  perBranch: { branch: Branch; sales: number; orderCount: number }[];
+  perBranch: { branch: Branch; sales: number; orderCount: number; cancelledCount?: number }[];
   /** The top customers who have not ordered for 30 days. */
   slipping: Customer[];
   slippingTotal: number;

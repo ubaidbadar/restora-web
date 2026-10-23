@@ -60,7 +60,7 @@ export default function Tabs({ tabs, activeTabId, defaultTabId, onChange, classN
               // On a narrow screen the open tab may sit past the edge (e.g. ?tab=account): bring it into view.
               ref={isActive ? (element) => element?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) : undefined}
               onClick={() => setSelectedId(tab.id)}
-              className={`-mb-px min-h-11 px-1 text-sm whitespace-nowrap transition-colors border-b-2 -outline-offset-2 rounded-t-small ${
+              className={`-mb-px min-h-control px-1 text-sm whitespace-nowrap transition-colors border-b-2 -outline-offset-2 rounded-t-small ${
                 isActive
                   ? 'border-primary font-semibold text-ink cursor-default'
                   : 'border-transparent font-medium text-muted hover:text-ink hover:border-border-strong cursor-pointer'

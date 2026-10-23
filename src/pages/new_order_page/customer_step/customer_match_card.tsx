@@ -31,7 +31,7 @@ export default function CustomerMatchCard({ customer, onClear }: CustomerMatchCa
         </p>
       </div>
       {customer.khataBalance > 0 && <Badge variant="warning" className="shrink-0">Owes {formatRs(customer.khataBalance)}</Badge>}
-      <IconButton icon={X} aria-label={`Remove ${customer.name}`} className="size-11" onClick={onClear} />
+      <IconButton icon={X} aria-label={`Remove ${customer.name}`} onClick={onClear} />
     </div>
   );
 }

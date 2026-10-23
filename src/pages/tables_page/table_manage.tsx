@@ -54,7 +54,7 @@ export default function TableManage({ table, sections, onSaved, onArchived }: Ta
               onConfirm={() => void archive()}
               component={({ open: confirmArchive }) => (
                 <DropdownMenu
-                  trigger={<IconButton icon={Ellipsis} size="lg" aria-label={`Manage table ${table.name}`} aria-haspopup="menu" />}
+                  trigger={<IconButton icon={Ellipsis} aria-label={`Manage table ${table.name}`} aria-haspopup="menu" />}
                   items={[
                     { label: 'Edit table', icon: Pencil, onClick: edit },
                     { label: 'QR code', icon: QrIcon, onClick: showQr },

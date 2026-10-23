@@ -39,7 +39,7 @@ export default function TeamRow({ team, members, onSaved, onDeleted }: TeamRowPr
               })
           }
           fields={(form) => <TeamFields {...form} members={members} />}
-          component={({ open }) => <IconButton icon={Pencil} size="lg" aria-label={`Edit ${team.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${team.name}`} onClick={open} />}
         />
         <AlertModal
           title={`Delete ${team.name}?`}
@@ -53,7 +53,7 @@ export default function TeamRow({ team, members, onSaved, onDeleted }: TeamRowPr
                 toast.success(`${team.name} deleted`);
               }).catch((err) => toast.error(getAxiosMessage(err)))
           }
-          component={({ open }) => <IconButton icon={Trash2} size="lg" className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${team.name}`} onClick={open} />}
+          component={({ open }) => <IconButton icon={Trash2} className="hover:bg-danger-50 hover:text-danger-700" aria-label={`Delete ${team.name}`} onClick={open} />}
         />
       </span>
     </li>

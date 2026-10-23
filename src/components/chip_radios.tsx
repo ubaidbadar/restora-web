@@ -18,7 +18,7 @@ export default function ChipRadios({ register, name, label, options, defaultValu
       {options.map((option) => (
         <label
           key={option.value}
-          className={`inline-flex cursor-pointer items-center rounded-control border border-border-strong bg-surface text-sm font-medium ${compact ? 'min-h-9 px-2.5' : 'min-h-11 px-3.5 lg:min-h-10'} whitespace-nowrap text-body transition-colors hover:bg-sunken has-checked:border-primary has-checked:bg-primary has-checked:text-on-primary has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus`}
+          className={`inline-flex cursor-pointer items-center rounded-control border border-border-strong bg-surface text-sm font-medium ${compact ? 'min-h-9 px-2.5' : 'min-h-control px-3.5'} whitespace-nowrap text-body transition-colors hover:bg-sunken has-checked:border-primary has-checked:bg-primary has-checked:text-on-primary has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus`}
         >
           <input type="radio" value={option.value} defaultChecked={option.value === defaultValue} className="sr-only" {...register(name)} />
           {option.label}

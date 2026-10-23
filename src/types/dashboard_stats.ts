@@ -1,3 +1,4 @@
+import type CancelReason from './cancel_reason';
 import type OrderType from './order_type';
 
 export default interface DashboardStats {
@@ -12,4 +13,6 @@ export default interface DashboardStats {
   newCustomers: number;
   khataTotal: number;
   khataCustomers: number;
+  /** Today's cancelled orders, left out of everything above: how many, what they were worth, and why. */
+  cancelled?: { count: number; value: number; byReason: { reason: CancelReason | null; count: number; value: number }[] };
 }

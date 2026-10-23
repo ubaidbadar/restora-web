@@ -17,7 +17,7 @@ export default function PeoplePicker({ people }: PeoplePickerProps) {
     return (
       <div className="flex flex-col gap-4">
         <PinForm key={picked.membershipId} person={picked} />
-        <Button variant="ghost" className="min-h-11" onClick={() => setPicked(null)}>Someone else</Button>
+        <Button variant="ghost" onClick={() => setPicked(null)}>Someone else</Button>
       </div>
     );
   }
