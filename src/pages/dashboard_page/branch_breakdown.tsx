@@ -2,7 +2,7 @@ import formatRs from '../../utils/format_rs';
 import type Branch from '../../types/branch';
 
 interface BranchBreakdownProps {
-  rows: { branch: Branch; sales: number; orderCount: number }[];
+  rows: { branch: Branch; sales: number; orderCount: number; cancelledCount?: number }[];
 }
 
 /** Today's sales branch by branch, shown in the all-branches view. */
@@ -15,7 +15,10 @@ export default function BranchBreakdown({ rows }: BranchBreakdownProps) {
           {rows.map((row) => (
             <tr key={row.branch._id} className="border-b border-border last:border-0">
               <th scope="row" dir="auto" className="py-2.5 text-start font-medium text-ink">{row.branch.name}</th>
-              <td className="py-2.5 text-end whitespace-nowrap tabular-nums text-muted">{row.orderCount === 1 ? '1 order' : `${row.orderCount} orders`}</td>
+              <td className="py-2.5 text-end whitespace-nowrap tabular-nums text-muted">
+                {row.orderCount === 1 ? '1 order' : `${row.orderCount} orders`}
+                {Boolean(row.cancelledCount) && <span className="block text-xs text-danger-700">{row.cancelledCount} cancelled</span>}
+              </td>
               <td className="w-28 py-2.5 text-end font-semibold whitespace-nowrap tabular-nums text-ink">{formatRs(row.sales)}</td>
             </tr>
           ))}
