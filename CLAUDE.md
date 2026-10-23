@@ -40,7 +40,7 @@ toast; a few screens (menu, tables, one customer, settings forms) also update th
   props down (`{...props}`), `register` every input, `setValue` for values that are not inputs, `useWatch` narrowly.
 - Search text, filters, tabs and dates live in the URL: `useSearchParams` with `utils/with_param` to set one value. Local UI state stays in the section that uses it.
 - **Menu:** `DEMO_MENU` is `{ categories, addonGroups, items }`. A dish has `sizes` (one with an empty name = one price) and `addonGroupIds`. Cart lines are `types/cart_item` (same dish + size + add-ons + note = one line, `utils/cart_item_of`). Order totals: `utils/order_totals_of`.
-- **Tables and QR:** tables are per branch (Settings → Tables, `/print/tables` for A4 cards). A table's QR opens `/t/<code>`, the guest page outside the app. Staff see the floor and guest calls on `/tables`; `hoc/app_layout/table_calls_pill` shows waiting calls on every page.
+- **Tables and QR:** tables are per branch (Settings → Tables, `/print/tables` for A4 cards). A table's QR opens `/t/<code>`, the guest page outside the app. Staff see the floor and guest calls on `/tables`; `hoc/app_layout/table_calls_banner` shows waiting calls at the top of every page.
 - **POS terminals:** `/pos` is the lock screen; any PIN of the right shape opens New order.
 - Overlays (modal, drawer, sheet, confirm, alert) are built with `withOverlay`, never with local `isOpen` state.
 - No manual `useMemo`/`useCallback`/`memo`: the React Compiler does it.

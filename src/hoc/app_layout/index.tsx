@@ -1,10 +1,11 @@
 import { Outlet, useNavigate } from 'react-router';
 import BottomNav from './bottom_nav';
 import SideNav from './side_nav';
-import TableCallsPill from './table_calls_pill';
+import TableCallsBanner from './table_calls_banner';
 import LiveUpdates from './live_updates';
 import { useEffect, useEffectEvent } from 'react';
 import useAuthStore from '../../store/auth_store';
+import can from '@shared/can';
 import Can from '../../components/can';
 import PosIdleLock from './pos_idle_lock';
 import SyncStatus from './sync_status';
@@ -22,7 +23,7 @@ export default function AppLayout() {
   const onKey = useEffectEvent((event: KeyboardEvent) => {
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     if (event.target instanceof Element && event.target.closest(TYPING)) return;
-    if (event.key.toLowerCase() === 'n') {
+    if (event.key.toLowerCase() === 'n' && can(me?.workplace, 'orders:create')) {
       event.preventDefault();
       navigate('/orders/new');
     }
@@ -47,13 +48,13 @@ export default function AppLayout() {
       {lg && <SideNav />}
       <main id="main" className="mx-auto min-h-dvh w-full max-w-7xl flex flex-col px-4 pt-5 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
         <SyncStatus />
+        <Can permission="tables:view">
+          <TableCallsBanner key={place} />
+        </Can>
         <div key={place} className="contents">
           <Outlet />
         </div>
       </main>
-      <Can permission="tables:view">
-        <TableCallsPill key={place} />
-      </Can>
       <Can permission="orders:view">
         <LiveUpdates key={place} />
       </Can>
