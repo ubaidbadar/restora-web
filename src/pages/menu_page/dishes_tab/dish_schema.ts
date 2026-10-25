@@ -11,6 +11,7 @@ const sizeRow = z.object({ _id: z.string().optional(), name: z.string().trim().m
 const dishSchema = z.object({
   name: requiredText('Enter the dish name').pipe(z.string().max(80)),
   categoryId: requiredText('Pick a category'),
+  photo: z.string().nullish(),
   description: z.string().trim().max(200).default(''),
   sizes: z
     .array(sizeRow)

@@ -5,6 +5,7 @@ export default function dishFormValues(dish: MenuItem) {
   return {
     name: dish.name,
     categoryId: dish.categoryId,
+    photo: dish.photo,
     description: dish.description ?? '',
     sizes: dish.sizes.map((size) => ({ _id: size._id, name: size.name, price: String(size.price) })),
     addonGroupIds: dish.addonGroupIds,

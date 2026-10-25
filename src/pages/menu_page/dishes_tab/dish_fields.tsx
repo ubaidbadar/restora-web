@@ -7,6 +7,7 @@ import Select from '../../../ui/select';
 import Textarea from '../../../ui/textarea';
 import Toggle from '../../../ui/toggle';
 import fieldError from '../../../utils/field_error';
+import DishPhotoField from './dish_photo_field';
 import SizeRows from './size_rows';
 
 interface DishFieldsProps extends FormComponentProps {
@@ -17,6 +18,7 @@ export default function DishFields({ menu, ...form }: DishFieldsProps) {
   const { register, errors } = form;
   return (
     <>
+      <DishPhotoField {...form} />
       <Input label="Name" required autoFocus {...register('name')} error={fieldError(errors, 'name')} />
       <Select
         label="Category"
