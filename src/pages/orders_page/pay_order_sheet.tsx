@@ -61,6 +61,28 @@ export default function PayOrderSheet({ order, onOrderUpdated, className = '' }:
               <span className="tabular-nums">{formatRs(totalBy(method))}</span>
             </Button>
           ))}
+          {order.customerId && (
+            <div className="mt-2 border-t border-border pt-2">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  api
+                    .post(`/orders/${order._id}/payment`, { paymentMethod: 'cash', paymentStatus: 'khata' })
+                    .then((res) => {
+                      close();
+                      onOrderUpdated?.(res.data);
+                      toast.success(`Order #${order.dailyToken} added to khata`);
+                    })
+                    .catch((err) => toast.error(getAxiosMessage(err)));
+                }}
+              >
+                <span className="flex-1 text-start">Add to khata</span>
+                <span className="tabular-nums">{formatRs(totalBy('cash'))}</span>
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </BottomSheet>

@@ -61,7 +61,7 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
   // Dishes can change until the order is on the way or done, while the bill is still open.
   const editable = canMove && active && order.status !== 'out_for_delivery' && order.paymentStatus === 'unpaid';
   // Payments change what customers owe, so they wait for internet. A guest's order is accepted before it is paid.
-  const payable = can(workplace, 'orders:payment') && active && order.paymentStatus === 'unpaid' && !order.pendingSync && !pending;
+  const payable = can(workplace, 'orders:payment') && order.status !== 'cancelled' && order.paymentStatus === 'unpaid' && !order.pendingSync && !pending;
   const button = 'min-w-0 flex-1 basis-full whitespace-nowrap @[15rem]:basis-0';
 
   /**
@@ -90,6 +90,8 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
   return (
     <OrderDetailsDrawer
       order={order}
+      payable={payable}
+      onOrderUpdated={onOrderUpdated}
       trigger={(showDetails) => (
         <CancelOrder
           order={order}

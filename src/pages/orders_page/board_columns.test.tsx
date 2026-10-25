@@ -77,4 +77,35 @@ describe('Orders board', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel order' }));
     await waitFor(() => expect(api.request).toHaveBeenCalledWith({ method: 'post', url: '/orders/a/cancel', data: { reason: 'other', note: 'Guest paid at another counter' } }));
   });
+
+  it('allows recording payment for completed orders that are unpaid', async () => {
+    setWide(false);
+    const onOrderUpdated = vi.fn();
+    vi.mocked(api.post).mockResolvedValue({ data: { ...ORDERS[4], paymentStatus: 'paid', paymentMethod: 'cash' } });
+
+    render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /Done/ }));
+    expect(tokensShown()).toEqual(['#5']);
+    expect(screen.getByText('Unpaid')).toBeTruthy();
+
+    const payButton = screen.getByRole('button', { name: 'Record payment for order 5' });
+    expect(payButton).toBeTruthy();
+    fireEvent.click(payButton);
+
+    expect(await screen.findByText('Cash')).toBeTruthy();
+    fireEvent.click(screen.getByText('Cash'));
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/orders/e/payment', { paymentMethod: 'cash' }));
+    expect(onOrderUpdated).toHaveBeenCalledWith({ ...ORDERS[4], paymentStatus: 'paid', paymentMethod: 'cash' });
+  });
+
+  it('does not show pay button for completed orders that are already paid', () => {
+    setWide(false);
+    const paidCompleted = { ...ORDERS[4], paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
+    render(<MemoryRouter><BoardColumns orders={[...ORDERS.slice(0, 4), paidCompleted]} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /Done/ }));
+    expect(tokensShown()).toEqual(['#5']);
+    expect(screen.getByText('Paid')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Record payment for order 5' })).toBeNull();
+  });
 });
