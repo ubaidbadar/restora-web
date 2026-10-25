@@ -14,7 +14,7 @@ interface SegmentedRadiosProps extends Pick<FormComponentProps, 'register'> {
  */
 export default function SegmentedRadios({ register, name, label, options, defaultValue }: SegmentedRadiosProps) {
   return (
-    <fieldset>
+    <fieldset className='text-nowrap'>
       <legend className="sr-only">{label}</legend>
       {/* A fieldset can't be a grid in every browser, so the track is the div inside it. */}
       <div className="grid h-control auto-cols-fr grid-flow-col gap-1 rounded-control bg-sunken p-1">

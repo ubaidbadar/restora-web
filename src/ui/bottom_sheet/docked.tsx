@@ -30,7 +30,7 @@ export default function DockedSheet({ label, component, children, className = ''
   }
   return (
     <>
-      <section aria-label={label} className={`fixed bottom-8 top-4 flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-card bg-surface shadow-card lg:top-8 ${className}`}>
+      <section aria-label={label} className={`fixed w-90 bottom-8 top-4 flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-card bg-surface shadow-card lg:top-8 ${className}`}>
         {children}
       </section>
     </>
