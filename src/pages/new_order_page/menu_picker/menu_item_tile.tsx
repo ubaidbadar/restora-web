@@ -44,7 +44,7 @@ export default function MenuItemTile({ dish, groups, lines, onAdd }: MenuItemTil
           groups={groups}
           onAdd={onAdd}
           component={({ open }) => (
-            <IconButton icon={SlidersHorizontal} size="sm" aria-label={`Options for ${dish.name}`} aria-haspopup="dialog" title="Size and add-ons" className="absolute end-1 top-1" onClick={open} />
+            <IconButton type='button' icon={SlidersHorizontal} size="sm" aria-label={`Options for ${dish.name}`} aria-haspopup="dialog" title="Size and add-ons" className="absolute end-1 top-1" onClick={open} />
           )}
         />
       )}
