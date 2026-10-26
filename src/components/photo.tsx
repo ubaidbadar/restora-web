@@ -26,8 +26,8 @@ export default function Photo({ src, sizes, shownAt, alt = '', className = '' }:
       alt={alt}
       loading="lazy"
       decoding="async"
-      style={sizes ? { backgroundImage: `url(${sizes.blur})`, backgroundSize: 'cover' } : undefined}
-      className={`object-cover ${className}`}
+      style={sizes ? { backgroundImage: `url(${sizes.blur})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+      className={`aspect-square object-cover object-center ${className}`}
     />
   );
 }

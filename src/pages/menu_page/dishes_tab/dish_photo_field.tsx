@@ -43,9 +43,9 @@ export default function DishPhotoField({ control, setValue }: FormComponentProps
     <div className="flex flex-col gap-2">
       <span className="text-sm font-medium text-ink">Photo (optional)</span>
       <div className="flex items-center gap-4">
-        <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-card border border-border bg-sunken">
+        <div className="grid size-20 shrink-0 aspect-square place-items-center overflow-hidden rounded-card border border-border bg-sunken">
           {photo ? (
-            <img src={photo} alt="Dish preview" className="size-full object-cover" />
+            <img src={photo} alt="Dish preview" className="size-full aspect-square object-cover object-center" />
           ) : (
             <ImagePlus size={28} className="text-muted" aria-hidden="true" />
           )}
