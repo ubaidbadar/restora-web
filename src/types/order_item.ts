@@ -7,6 +7,8 @@ export default interface OrderItem {
   sizeName?: string;
   addonIds?: string[];
   addons?: { name: string; price: number }[];
+  /** A deal: the dishes in one deal, as they were when ordered. */
+  includes?: { name: string; sizeName?: string; qty: number }[];
   note?: string;
   price: number;
   qty: number;

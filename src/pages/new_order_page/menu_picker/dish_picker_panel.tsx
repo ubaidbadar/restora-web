@@ -16,11 +16,13 @@ interface DishPickerPanelProps extends OverlayProps {
   dish: MenuItem;
   /** The dish's add-on groups, in its order. */
   groups: AddonGroup[];
+  /** What is in a deal; '' for a dish. */
+  contents: string;
   onAdd: (item: CartItem) => void;
 }
 
 /** Size, add-ons and a note for one dish, with the price as it adds up. "Add" puts one in the cart. */
-export default function DishPickerPanel({ dish, groups, onAdd, ...overlay }: DishPickerPanelProps) {
+export default function DishPickerPanel({ dish, groups, contents, onAdd, ...overlay }: DishPickerPanelProps) {
   const defaultSizeId = dish.sizes[0]?._id ?? '';
   const defaultAddonIds = groups.flatMap((group) =>
     group.min > 0 && group.options.length > 0 ? [group.options[0]!._id] : []
@@ -34,6 +36,7 @@ export default function DishPickerPanel({ dish, groups, onAdd, ...overlay }: Dis
   return (
     <Modal {...overlay} title={dish.name}>
       <div className="flex flex-col gap-5">
+        {contents && <p className="-mt-2 text-sm text-muted">{contents}</p>}
         {dish.sizes.length > 1 && (
           <section>
             <h3 className="mb-1 text-sm font-semibold text-ink">Size</h3>

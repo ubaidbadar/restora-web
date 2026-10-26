@@ -10,6 +10,8 @@ import DishPicker from './dish_picker';
 interface MenuItemTileProps {
   dish: MenuItem;
   groups: AddonGroup[];
+  /** What is in a deal; '' for a dish. */
+  contents: string;
   /** This dish's lines in the cart. */
   lines: CartItem[];
   onAdd: (item: CartItem) => void;
@@ -23,7 +25,7 @@ const tileButton = 'flex min-h-0 flex-1 cursor-pointer flex-col items-start roun
  * Tap a dish to add one with default options immediately; a dish with sizes or add-ons also provides an Options button.
  * Once in the order, a dish is outlined with its count; quantities change in the order panel.
  */
-export default function MenuItemTile({ dish, groups, lines, onAdd }: MenuItemTileProps) {
+export default function MenuItemTile({ dish, groups, contents, lines, onAdd }: MenuItemTileProps) {
   const plain = dish.sizes.length === 1 && groups.length === 0;
   const qty = lines.reduce((sum, line) => sum + line.qty, 0);
 
@@ -33,7 +35,7 @@ export default function MenuItemTile({ dish, groups, lines, onAdd }: MenuItemTil
 
   return (
     <li className={`relative flex h-24 flex-col rounded-card bg-surface shadow-card transition-shadow ${qty ? 'ring-2 ring-primary' : 'hover:shadow-lg'}`}>
-      <button type="button" onClick={handleAddDefault} className={tileButton}>
+      <button type="button" onClick={handleAddDefault} title={contents || undefined} className={tileButton}>
         <span className={`line-clamp-2 text-sm leading-5 font-medium text-ink ${plain ? '' : 'pe-7'}`}>{dish.name}</span>
         <span className={`mt-auto truncate text-sm font-semibold tabular-nums text-ink ${qty ? 'max-w-[calc(100%-2.25rem)]' : 'max-w-full'}`}>{priceRange(dish.sizes)}</span>
       </button>
@@ -42,6 +44,7 @@ export default function MenuItemTile({ dish, groups, lines, onAdd }: MenuItemTil
         <DishPicker
           dish={dish}
           groups={groups}
+          contents={contents}
           onAdd={onAdd}
           component={({ open }) => (
             <IconButton type='button' icon={SlidersHorizontal} size="sm" aria-label={`Options for ${dish.name}`} aria-haspopup="dialog" title="Size and add-ons" className="absolute end-1 top-1" onClick={open} />
