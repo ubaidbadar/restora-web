@@ -10,6 +10,7 @@ type ButtonBaseProps<T extends ElementType> = {
   size?: keyof typeof buttonSizes;
   className?: string;
   iconPosition?: 'left' | 'right';
+  disabled?: boolean;
 };
 
 type ButtonProps<T extends ElementType = 'button'> = ButtonBaseProps<T> & Omit<ComponentProps<T>, keyof ButtonBaseProps<T>>;
