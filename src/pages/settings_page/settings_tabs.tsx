@@ -8,6 +8,7 @@ import AccountTab from './account/account_tab';
 import ActivityCard from './activity/activity_card';
 import BranchesCard from './branches/branches_card';
 import DevicesTab from './devices/devices_tab';
+import PrintersTab from './printers/printers_tab';
 import RestaurantTab from './restaurant_tab';
 import RolesCard from './roles/roles_card';
 import SettingsSection from './settings_section';
@@ -24,6 +25,7 @@ const TABS: (Tab & { permission?: Permission })[] = [
   { id: 'roles', label: 'Roles', content: <RolesCard />, permission: 'roles:manage' },
   { id: 'teams', label: 'Teams', content: <TeamsTab />, permission: 'teams:manage' },
   { id: 'devices', label: 'Devices', content: <DevicesTab />, permission: 'devices:manage' },
+  { id: 'printers', label: 'Printers', content: <PrintersTab />, permission: 'devices:manage' },
   { id: 'activity', label: 'Activity', content: <ActivityCard />, permission: 'audit:view' },
   { id: 'account', label: 'My account', content: <AccountTab /> },
 ];
