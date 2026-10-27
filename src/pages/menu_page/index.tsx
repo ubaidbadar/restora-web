@@ -16,11 +16,16 @@ export default function MenuPage() {
         <SkeletonList rows={6} />
       </div>
     ) : <LoadFailed what="the menu" onRetry={() => get()} />;
+  const deals = menu.items.filter((item) => item.includes.length > 0).length;
+  const dishes = menu.items.length - deals;
   const onUpdate = (changes: Partial<Menu>) => update((current) => (current ? { ...current, ...changes } : current));
 
   return (
     <>
-      <PageHeader title="Menu" subtitle={`${menu.items.length} ${menu.items.length === 1 ? 'dish' : 'dishes'} in ${menu.categories.length} ${menu.categories.length === 1 ? 'category' : 'categories'}`} />
+      <PageHeader
+        title="Menu"
+        subtitle={`${dishes} ${dishes === 1 ? 'dish' : 'dishes'}${deals ? ` and ${deals} ${deals === 1 ? 'deal' : 'deals'}` : ''} in ${menu.categories.length} ${menu.categories.length === 1 ? 'category' : 'categories'}`}
+      />
       <MenuTabs menu={menu} onUpdate={onUpdate} />
     </>
   );

@@ -29,8 +29,8 @@ const MENU: Menu = {
   categories: [{ _id: 'c1', name: 'Karahi', sortOrder: 0 }],
   addonGroups: [{ _id: 'g1', name: 'Raita', min: 0, max: 1, options: [{ _id: 'o1', name: 'Raita', price: 50 }] }],
   items: [
-    { _id: 'd1', categoryId: 'c1', name: 'Chicken Karahi', sizes: [{ _id: 's1', name: '', price: 1000 }], addonGroupIds: [], soldOut: false, hidden: false },
-    { _id: 'd2', categoryId: 'c1', name: 'Biryani', sizes: [{ _id: 's2', name: 'Half', price: 300 }, { _id: 's3', name: 'Full', price: 550 }], addonGroupIds: ['g1'], soldOut: false, hidden: false },
+    { _id: 'd1', categoryId: 'c1', name: 'Chicken Karahi', sizes: [{ _id: 's1', name: '', price: 1000 }], addonGroupIds: [], includes: [], days: [], from: '', to: '', soldOut: false, hidden: false },
+    { _id: 'd2', categoryId: 'c1', name: 'Biryani', sizes: [{ _id: 's2', name: 'Half', price: 300 }, { _id: 's3', name: 'Full', price: 550 }], addonGroupIds: ['g1'], includes: [], days: [], from: '', to: '', soldOut: false, hidden: false },
   ],
 };
 const CUSTOMERS: Customer[] = [

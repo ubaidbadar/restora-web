@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import ALL_CATEGORIES from '../../../constants/all_categories';
 import type Menu from '../../../types/menu';
+import type MenuItem from '../../../types/menu_item';
 import SearchInput from '../../../components/search_input';
 import type FormComponentProps from '../../../types/form_component_props';
 import CategoryChips from '../../../components/category_chips';
@@ -9,6 +10,8 @@ import MenuGrid from './menu_grid';
 interface MenuPickerBodyProps extends FormComponentProps {
   /** What can be ordered now (hidden and sold-out dishes are left out). */
   menu: Menu;
+  /** Every dish, hidden ones too, to name what is in a deal. */
+  allItems: MenuItem[];
 }
 
 /** Search and category are not order fields: they stay local, so filtering re-renders this section only. */

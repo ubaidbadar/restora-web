@@ -56,6 +56,10 @@ describe('dishFormValues', () => {
       photo: 'https://example.com/photo.webp',
       sizes: [{ _id: 'size_1', name: 'Regular', price: 500 }],
       addonGroupIds: [],
+      includes: [],
+      days: [],
+      from: '',
+      to: '',
       soldOut: false,
       hidden: false,
     };
@@ -71,6 +75,10 @@ describe('dishFormValues', () => {
       name: 'Raita',
       sizes: [{ _id: 'size_2', name: 'Bowl', price: 100 }],
       addonGroupIds: [],
+      includes: [],
+      days: [],
+      from: '',
+      to: '',
       soldOut: false,
       hidden: false,
     };
