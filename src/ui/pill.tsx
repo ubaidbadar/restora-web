@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 const baseClasses =
-  'text-xs px-3 py-1.5 rounded-control border transition-colors inline-flex items-center justify-center font-medium';
+  'text-xs px-3.5 py-1.5 rounded-full border transition-colors inline-flex items-center justify-center font-medium';
 const activeClasses = 'border-primary bg-primary text-on-primary';
 const inactiveClasses = 'border-border-strong bg-surface text-body';
 

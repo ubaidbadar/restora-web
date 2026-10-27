@@ -11,7 +11,6 @@ import toast from '../../../utils/toast';
 import DishFields from './dish_fields';
 import api from '../../../config/api';
 import getAxiosMessage from '../../../utils/get_axios_message';
-import DishPhoto from './dish_photo';
 import DishThumb from './dish_thumb';
 import dishFormValues from './dish_form_values';
 import dishSchema from './dish_schema';
@@ -39,15 +38,9 @@ export default function DishRow({ dish, menu, onSaved, onDeleted }: DishRowProps
 
   return (
     <div className={`flex h-18 items-center gap-1 rounded-card ps-2 pe-2 shadow-card ${dish.hidden || dish.soldOut ? 'bg-sunken' : 'bg-surface'}`}>
-      <DishPhoto
-        dish={dish}
-        onSaved={onSaved}
-        component={({ open }) => (
-          <button type="button" onClick={open} aria-label={`${dish.photo ? 'Change' : 'Add'} photo of ${dish.name}`} className="shrink-0 cursor-pointer rounded-small">
-            <DishThumb dish={dish} />
-          </button>
-        )}
-      />
+      <div className="shrink-0">
+        <DishThumb dish={dish} />
+      </div>
       <div className="ms-2 min-w-0 flex-1">
         <p className="flex items-baseline gap-2 font-medium text-ink">
           <span className="truncate">{dish.name}</span>

@@ -101,7 +101,8 @@ describe('Orders board', () => {
 
   it('does not show pay button for completed orders that are already paid', () => {
     setWide(false);
-    const paidCompleted = { ...ORDERS[4], paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
+    const order4 = ORDERS[4]!;
+    const paidCompleted: Order = { ...order4, paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
     render(<MemoryRouter><BoardColumns orders={[...ORDERS.slice(0, 4), paidCompleted]} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: /Done/ }));
     expect(tokensShown()).toEqual(['#5']);

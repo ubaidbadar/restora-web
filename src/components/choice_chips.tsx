@@ -26,11 +26,11 @@ export default function ChoiceChips<T extends string>({ label, options, value, o
           key={option.value}
           isActive={option.value === value}
           onClick={() => onChange(option.value)}
-          className="min-h-control shrink-0 px-3.5! text-sm! whitespace-nowrap"
+          className="min-h-control shrink-0 px-3.5! text-sm! whitespace-nowrap rounded-full"
         >
           {option.label}
           {option.count !== undefined && (
-            <span className={`ms-2 min-w-5 rounded-small px-1 text-xs tabular-nums ${option.value === value ? 'bg-on-primary/15' : 'bg-sunken text-muted'}`}>{option.count}</span>
+            <span className={`ms-2 min-w-5 rounded-full px-1.5 text-xs tabular-nums ${option.value === value ? 'bg-on-primary/15' : 'bg-sunken text-muted'}`}>{option.count}</span>
           )}
         </Pill>
       ))}

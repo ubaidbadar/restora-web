@@ -57,8 +57,8 @@ export default function LogoField({ control, setValue }: FormComponentProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-4">
-      <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-card border border-border bg-sunken">
-        {logo ? <img src={logo} alt="Restaurant logo" className="size-full object-contain" /> : <Store size={28} className="text-muted" aria-hidden="true" />}
+      <div className="grid size-20 shrink-0 aspect-square place-items-center overflow-hidden rounded-card border border-border bg-sunken">
+        {logo ? <img src={logo} alt="Restaurant logo" className="size-full aspect-square object-cover object-center" /> : <Store size={28} className="text-muted" aria-hidden="true" />}
       </div>
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap gap-2">

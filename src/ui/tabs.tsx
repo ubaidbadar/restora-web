@@ -41,7 +41,7 @@ export default function Tabs({ tabs, activeTabId, defaultTabId, onChange, classN
   return (
     <div className={`w-full ${className}`}>
       <div
-        className="flex gap-4 border-b border-border overflow-x-auto hide-scrollbar max-sm:[mask-image:linear-gradient(to_right,black_85%,transparent)] max-sm:pe-12 max-sm:scroll-pe-12"
+        className="flex gap-2 border-b border-border pb-3 overflow-x-auto hide-scrollbar max-sm:[mask-image:linear-gradient(to_right,black_85%,transparent)] max-sm:pe-12 max-sm:scroll-pe-12"
         role="tablist"
         aria-orientation="horizontal"
         onKeyDown={handleKeyDown}
@@ -60,10 +60,10 @@ export default function Tabs({ tabs, activeTabId, defaultTabId, onChange, classN
               // On a narrow screen the open tab may sit past the edge (e.g. ?tab=account): bring it into view.
               ref={isActive ? (element) => element?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) : undefined}
               onClick={() => setSelectedId(tab.id)}
-              className={`-mb-px min-h-control px-1 text-sm whitespace-nowrap transition-colors border-b-2 -outline-offset-2 rounded-t-small ${
+              className={`inline-flex min-h-control items-center px-4 text-sm font-semibold whitespace-nowrap rounded-full border transition-all cursor-pointer ${
                 isActive
-                  ? 'border-primary font-semibold text-ink cursor-default'
-                  : 'border-transparent font-medium text-muted hover:text-ink hover:border-border-strong cursor-pointer'
+                  ? 'border-primary bg-primary text-on-primary shadow-xs'
+                  : 'border-border bg-surface text-muted hover:border-border-strong hover:text-ink'
               }`}
             >
               {tab.label}
