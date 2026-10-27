@@ -16,7 +16,9 @@ export default function MenuPage() {
       <SkeletonList rows={6} />
     </div>
   ) : <LoadFailed what="the menu" onRetry={() => get()} />;
-  console.log(menu)
+  if (!menu.items) {
+    menu.items = []
+  }
   const deals = menu.items.filter((item) => item.includes.length > 0).length;
   const dishes = menu.items.length - deals;
   const onUpdate = (changes: Partial<Menu>) => update((current) => (current ? { ...current, ...changes } : current));
