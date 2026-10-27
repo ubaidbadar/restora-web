@@ -10,7 +10,7 @@ import useRestaurantSettings from '../../hooks/useRestaurantSettings';
 import lockTerminal from '../../utils/lock_terminal';
 import api from '../../config/api';
 import toast from '../../utils/toast';
-import printOrder from '../../utils/print_order';
+import printSlip from '../../utils/print_slip';
 import PageHeader from '../../components/page_header';
 import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
@@ -170,7 +170,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             const token = order.dailyToken;
             const done = (message: string, saved: Order) => {
               onSuccess('');
-              toast.success(message, { label: 'Print slip', onClick: () => printOrder(saved, 'kitchen') });
+              toast.success(message, { label: 'Print slip', onClick: () => printSlip(saved, 'kitchen') });
               navigate('/orders');
             };
             // The order as the board will show it, worked out here from the form and the menu prices.

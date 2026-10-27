@@ -10,7 +10,7 @@ import Button from '../../ui/button';
 import DropdownMenu from '../../ui/dropdown_menu';
 import IconButton from '../../ui/icon_button';
 import formatRs from '../../utils/format_rs';
-import printOrder from '../../utils/print_order';
+import printSlip from '../../utils/print_slip';
 import toast from '../../utils/toast';
 import OrderDetailsDrawer from './order_details_drawer';
 import PayOrderSheet from './pay_order_sheet';
@@ -107,8 +107,8 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
                   trigger={(isOpen) => <IconButton icon={MoreHorizontal} variant="ghost" aria-label={`More for order ${token}`} aria-haspopup="menu" aria-expanded={isOpen} />}
                   items={[
                     { label: 'Details', icon: FileText, onClick: showDetails },
-                    { label: 'Print kitchen slip', icon: ChefHat, onClick: () => printOrder(order, 'kitchen') },
-                    { label: 'Print receipt', icon: Receipt, onClick: () => printOrder(order, 'receipt') },
+                    { label: 'Print kitchen slip', icon: ChefHat, onClick: () => printSlip(order, 'kitchen') },
+                    { label: 'Print receipt', icon: Receipt, onClick: () => printSlip(order, 'receipt') },
                     ...(editable ? [{ label: 'Edit order', icon: Pencil, onClick: () => navigate(`/orders/${order._id}/edit`) }] : []),
                     ...(canCancel && active && !pending ? [{ label: 'Cancel order', icon: X, danger: true, onClick: askCancel }] : []),
                   ]}
