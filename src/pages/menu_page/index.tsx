@@ -10,12 +10,13 @@ import MenuTabs from './menu_tabs';
 export default function MenuPage() {
   const { data: menu, loading, get, update } = useGet<Menu>('/menu');
   if (!menu) return loading ? (
-      <div role="status" aria-label="Loading the menu" className="flex flex-col gap-5">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-control w-72 rounded-control" />
-        <SkeletonList rows={6} />
-      </div>
-    ) : <LoadFailed what="the menu" onRetry={() => get()} />;
+    <div role="status" aria-label="Loading the menu" className="flex flex-col gap-5">
+      <Skeleton className="h-8 w-40" />
+      <Skeleton className="h-control w-72 rounded-control" />
+      <SkeletonList rows={6} />
+    </div>
+  ) : <LoadFailed what="the menu" onRetry={() => get()} />;
+  console.log(menu)
   const deals = menu.items.filter((item) => item.includes.length > 0).length;
   const dishes = menu.items.length - deals;
   const onUpdate = (changes: Partial<Menu>) => update((current) => (current ? { ...current, ...changes } : current));
