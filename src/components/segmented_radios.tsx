@@ -9,7 +9,8 @@ interface SegmentedRadiosProps extends Pick<FormComponentProps, 'register'> {
 }
 
 /**
- * A registered radio group drawn as one segmented control: equal parts in a sunken track, the picked one raised.
+ * A registered radio group drawn as one segmented control: equal parts in a sunken track, each with the same hairline border,
+ * the picked one raised.
  * The track is as tall as an input. For two to four short choices; more, or long labels, belong in ChipRadios.
  */
 export default function SegmentedRadios({ register, name, label, options, defaultValue }: SegmentedRadiosProps) {
@@ -21,7 +22,7 @@ export default function SegmentedRadios({ register, name, label, options, defaul
         {options.map((option) => (
           <label
             key={option.value}
-            className="flex cursor-pointer items-center justify-center rounded-small px-2 text-center text-sm font-medium text-body transition-colors hover:text-ink has-checked:bg-surface has-checked:font-semibold has-checked:text-ink has-checked:shadow-card has-focus-visible:outline-2 has-focus-visible:outline-offset-1 has-focus-visible:outline-focus"
+            className="flex cursor-pointer items-center justify-center rounded-small px-2 text-center text-sm font-medium text-body shadow-card transition-colors hover:text-ink has-checked:bg-surface has-checked:font-semibold has-checked:text-ink has-focus-visible:outline-2 has-focus-visible:outline-offset-1 has-focus-visible:outline-focus"
           >
             <input type="radio" value={option.value} defaultChecked={option.value === defaultValue} className="sr-only" {...register(name)} />
             {option.label}
