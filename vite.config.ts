@@ -70,6 +70,8 @@ export default defineConfig(({ mode }) => {
           globIgnores: ['screenshots/**', 'og-image.png'],
           navigateFallback: 'index.html',
           cleanupOutdatedCaches: true,
+          // Alerts for guests' orders and calls (web push).
+          importScripts: ['/push_sw.js'],
         },
       }),
     ],
