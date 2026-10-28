@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm install && npm run build
         env:
-          VITE_API_URL: https://restora.live
+          VITE_API_URL: ${{ github.base_ref == 'dev' && 'https://dev.restora.live' || 'https://restora.live' }}
           VITE_APP_URL: https://app.restora.live
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
