@@ -23,9 +23,9 @@ export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
   const search = params.get('q') ?? '';
   const setSearch = (value: string) => setParams((prev) => withParam(prev, 'q', value, ''), { replace: true });
   const setTab = (value: string) => setParams((prev) => withParam(prev, 'tab', value, 'dishes'), { replace: true });
-  const shown = filterMenu({ ...menu, items: menu.items.filter((item) => item.includes.length > 0) }, search, ALL_CATEGORIES);
+  const shown = filterMenu({ ...menu, items: menu.items.filter((item) => (item.includes?.length ?? 0) > 0) }, search, ALL_CATEGORIES);
   const save = (deal: MenuItem) => onUpdate({ items: upsertById(menu.items, deal) });
-  const dishes = menu.items.filter((item) => !item.includes.length);
+  const dishes = menu.items.filter((item) => !item.includes?.length);
 
   if (!menu.categories.length || !dishes.length) {
     return (

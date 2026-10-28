@@ -31,7 +31,7 @@ export default function DishesTab({ menu, onUpdate }: MenuTabProps) {
   const setCategory = setParam('cat', ALL_CATEGORIES);
   const setTab = setParam('tab', 'dishes');
   // Deals have their own tab.
-  const shown = filterMenu({ ...menu, items: menu.items.filter((item) => !item.includes.length) }, search, category);
+  const shown = filterMenu({ ...menu, items: menu.items.filter((item) => !item.includes?.length) }, search, category);
   const save = (dish: MenuItem) => onUpdate({ items: upsertById(menu.items, dish) });
 
   if (!menu.categories.length) {

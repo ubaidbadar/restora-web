@@ -41,7 +41,7 @@ export default function DealFields({ menu, ...form }: DealFieldsProps) {
         error={fieldError(errors, 'categoryId')}
       />
       <Input label="Deal price (Rs)" required inputMode="numeric" {...register('price')} error={fieldError(errors, 'price')} />
-      <DealPartRows dishes={menu.items.filter((item) => !item.includes.length)} {...form} />
+      <DealPartRows dishes={menu.items.filter((item) => !item.includes?.length)} {...form} />
       {menu.addonGroups.length > 0 && (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2">Choices (optional)</legend>
