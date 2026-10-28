@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "restora-live"
+  },
+  "targets": {
+    "restora-live": {
+      "hosting": {
+        "prod": [
+          "restora-live"
+        ],
+        "dev": [
+          "restora-live-dev"
+        ]
+      }
+    }
   }
 }
