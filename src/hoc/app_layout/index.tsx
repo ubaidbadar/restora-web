@@ -10,6 +10,7 @@ import Can from '../../components/can';
 import PosIdleLock from './pos_idle_lock';
 import SyncStatus from './sync_status';
 import useBreakpoint from '../../hooks/useBreakpoint';
+import api from '../../config/api';
 
 /** Sidebar on desktop, bottom bar on phones and tablets: only the one in use is rendered. */
 export default function AppLayout() {
@@ -34,6 +35,15 @@ export default function AppLayout() {
       search.focus();
     }
   });
+
+  // Alerts turned on in this browser follow the restaurant and branch open (the server moves them along).
+  useEffect(() => {
+    navigator.serviceWorker
+      ?.getRegistration()
+      .then((registration) => registration?.pushManager?.getSubscription())
+      .then((subscription) => subscription && api.post('/push-devices', { kind: 'web', ...subscription.toJSON() }))
+      .catch(() => {});
+  }, [place]);
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => onKey(event);
