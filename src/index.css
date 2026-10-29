@@ -182,7 +182,7 @@
   :root {
     color-scheme: light;
     /* Toasts sit above the phone bottom bar; the sidebar layout starts at lg (64rem). */
-    --toast-bottom: 5.5rem;
+    --toast-bottom: calc(5.5rem + env(safe-area-inset-bottom));
     @media (width >= 64rem) {
       --toast-bottom: 1.25rem;
     }
@@ -311,4 +311,14 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Phones: what sits at the bottom of the screen (a sheet's last button, a modal, a floating bar) stays clear of the home
+   indicator or gesture bar: the safe-area inset plus 12px, never less than 16px. Needs viewport-fit=cover (index.html). */
+@utility pb-safe {
+  padding-bottom: max(1rem, calc(env(safe-area-inset-bottom) + 0.75rem));
+}
+
+@utility bottom-safe {
+  bottom: max(1rem, calc(env(safe-area-inset-bottom) + 0.75rem));
 }

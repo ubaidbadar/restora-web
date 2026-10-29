@@ -1,4 +1,4 @@
-import ChipRadios from '../../components/chip_radios';
+import Tabs from '../../ui/tabs';
 import SectionCard from '../../components/section_card';
 import IMPORT_FIELDS from '../../constants/import_fields';
 import type ImportAnswer from '../../types/import_answer';
@@ -67,7 +67,7 @@ export default function ImportMapping({ sheet, onDone, onBack }: ImportMappingPr
             </div>
             <fieldset className="mt-5 flex flex-col gap-2">
               <legend className="mb-2">People already saved (same mobile number)</legend>
-              <ChipRadios register={form.register} name="onExisting" label="People already saved" options={EXISTING} defaultValue="skip" />
+              <Tabs register={form.register} name="onExisting" label="People already saved" options={EXISTING} value="skip" wrap />
             </fieldset>
           </SectionCard>
           <ImportPreview sheet={sheet} control={form.control} />
