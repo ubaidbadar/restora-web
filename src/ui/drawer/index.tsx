@@ -31,10 +31,12 @@ export default function Drawer({ state, close, title, children, footer, width = 
       from="right"
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
-      className={`flex h-dvh w-full ${widthClasses[width]} flex-col bg-surface shadow-lg`}
+      // Full height on a phone: the title stays below the notch, the last button above the home indicator, and a
+      // landscape notch off the sides.
+      className={`flex h-dvh w-full ${widthClasses[width]} flex-col bg-surface pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] shadow-lg`}
     >
       <DialogHeader title={title} titleId={titleId} closeLabel="Close drawer" close={close} />
-      <div className="flex flex-1 flex-col overflow-y-auto p-5 sm:p-6">{children}</div>
+      <div className="flex flex-1 flex-col overflow-y-auto overscroll-contain p-5 sm:p-6">{children}</div>
       {footer && <DialogFooter>{typeof footer === 'function' ? footer(close) : footer}</DialogFooter>}
     </OverlayPanel>
   );

@@ -102,7 +102,7 @@ describe('New order (desktop)', () => {
     await screen.findByText('Biryani');
     fireEvent.click(dishTile('Biryani'));
     fireEvent.click(screen.getByRole('button', { name: 'Options for Biryani' }));
-    fireEvent.click(await screen.findByRole('button', { name: /Full · Rs 550/ }));
+    fireEvent.click(await screen.findByRole('radio', { name: /Full · Rs 550/ }));
     fireEvent.click(screen.getByRole('button', { name: /^Raita/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Add · Rs 600' }));
     await waitFor(() => expect(screen.getByText('2 items')).toBeTruthy());

@@ -2,9 +2,9 @@ import { useEffect, useRef, type HTMLAttributes, type KeyboardEvent, type ReactN
 import { createPortal } from 'react-dom';
 import type OverlayProps from '../types/overlay_props';
 
-// Where the panel sits, and the offset it enters from (@starting-style) and leaves to (the 'close' state).
+// Where the panel sits (a phone's modal clear of the notch and the home indicator), and the offset it enters from (@starting-style) and leaves to (the 'close' state).
 const placements = {
-  center: { container: 'items-end justify-center p-3 sm:items-center sm:p-6', enter: 'starting:scale-97 starting:opacity-0', exit: 'scale-97 opacity-0' },
+  center: { container: 'items-end justify-center p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-safe sm:items-center sm:p-6', enter: 'starting:scale-97 starting:opacity-0', exit: 'scale-97 opacity-0' },
   right: { container: 'justify-end', enter: 'starting:translate-x-full', exit: 'translate-x-full' },
   bottom: { container: 'flex-col justify-end', enter: 'starting:translate-y-full', exit: 'translate-y-full' },
 };

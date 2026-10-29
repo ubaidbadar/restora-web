@@ -1,86 +1,55 @@
-import { useId, useState, type KeyboardEvent } from 'react';
-import type Tab from '../types/tab';
+import type FormComponentProps from '../types/form_component_props';
 
-const ARROW_STEPS: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1 };
-
-interface TabsProps {
-  tabs: Tab[];
-  activeTabId?: string;
-  defaultTabId?: string;
-  onChange?: (id: string) => void;
+interface TabsProps<T extends string> {
+  /** The radio group's name; with `register`, the form field. */
+  name: string;
+  label: string;
+  options: { value: T; label: string; count?: number }[];
+  /** The picked option. With `register` it is only the one checked at the start; the form keeps it after that. */
+  value: T;
+  onChange?: (value: T) => void;
+  /** Makes the group a form field instead of calling `onChange`. */
+  register?: FormComponentProps['register'];
+  /** Wrap onto more lines instead of scrolling sideways. */
+  wrap?: boolean;
+  /** Stretch across the row, the options sharing the width (a form's segmented choice). */
+  fill?: boolean;
   className?: string;
 }
 
-export default function Tabs({ tabs, activeTabId, defaultTabId, onChange, className = '' }: TabsProps) {
-  const idPrefix = useId();
-  // Owned by the parent when `activeTabId` is given, here otherwise.
-  const [internalId, setInternalId] = useState(defaultTabId || tabs[0]?.id || '');
-  const selectedId = activeTabId ?? internalId;
-  const setSelectedId = (id: string) => {
-    if (activeTabId === undefined) setInternalId(id);
-    onChange?.(id);
-  };
-  const activeIndex = Math.max(0, tabs.findIndex((tab) => tab.id === selectedId));
-  const activeTab = tabs[activeIndex];
-
-  if (!activeTab) return null;
-
-  const tabId = (id: string) => `${idPrefix}-tab-${id}`;
-  const panelId = (id: string) => `${idPrefix}-tabpanel-${id}`;
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const step = ARROW_STEPS[e.key];
-    const nextTab = step ? tabs[(activeIndex + step + tabs.length) % tabs.length] : undefined;
-    if (!nextTab) return;
-
-    e.preventDefault();
-    setSelectedId(nextTab.id);
-    document.getElementById(tabId(nextTab.id))?.focus();
-  };
-
+/**
+ * The one tab strip of the app: page tabs, filters and picked-one choices in forms. A light primary track with the
+ * picked option filled in primary. Built from radios, so arrow keys move between options.
+ */
+export default function Tabs<T extends string>({ name, label, options, value, onChange, register, wrap = false, fill = false, className = '' }: TabsProps<T>) {
   return (
-    <div className={`w-full ${className}`}>
-      <div
-        className="flex gap-2 border-b border-border pb-3 overflow-x-auto hide-scrollbar max-sm:[mask-image:linear-gradient(to_right,black_85%,transparent)] max-sm:pe-12 max-sm:scroll-pe-12"
-        role="tablist"
-        aria-orientation="horizontal"
-        onKeyDown={handleKeyDown}
-      >
-        {tabs.map((tab) => {
-          const isActive = tab.id === activeTab.id;
-          return (
-            <button
-              type="button"
-              key={tab.id}
-              role="tab"
-              aria-selected={isActive}
-              aria-controls={panelId(tab.id)}
-              id={tabId(tab.id)}
-              tabIndex={isActive ? 0 : -1}
-              // On a narrow screen the open tab may sit past the edge (e.g. ?tab=account): bring it into view.
-              ref={isActive ? (element) => element?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) : undefined}
-              onClick={() => setSelectedId(tab.id)}
-              className={`inline-flex min-h-control items-center px-4 text-sm font-semibold whitespace-nowrap rounded-full border transition-all cursor-pointer ${
-                isActive
-                  ? 'border-primary bg-primary text-on-primary shadow-xs'
-                  : 'border-border bg-surface text-muted hover:border-border-strong hover:text-ink'
-              }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
+    <fieldset className={`min-w-0 ${className}`}>
+      <legend className="sr-only">{label}</legend>
+      {/* A fieldset can't be a flex box in every browser, so the track is the div inside it. */}
+      <div className={`flex max-w-full gap-1 rounded-control bg-primary-soft p-1 ${fill ? '' : 'w-fit'} ${wrap ? 'flex-wrap' : 'hide-scrollbar overflow-x-auto'}`}>
+        {options.map((option) => (
+          <label
+            key={option.value}
+            // On a narrow screen the picked tab may sit past the edge (e.g. ?tab=account): bring it into view.
+            ref={!register && option.value === value ? (element) => element?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) : undefined}
+            // `relative` holds the sr-only radio inside its label: otherwise, past the edge of a scrolling strip, it widens the page.
+            className="group relative flex min-h-9 shrink-0 grow cursor-pointer items-center justify-center gap-2 rounded-small px-3 py-1.5 text-center text-sm font-medium whitespace-nowrap text-body transition-colors hover:text-ink has-checked:bg-primary has-checked:font-semibold has-checked:text-on-primary has-focus-visible:outline-2 has-focus-visible:outline-offset-1 has-focus-visible:outline-focus"
+          >
+            <input
+              type="radio"
+              value={option.value}
+              className="sr-only"
+              {...(register
+                ? { defaultChecked: option.value === value, ...register(name) }
+                : { name, checked: option.value === value, onChange: () => onChange?.(option.value) })}
+            />
+            {option.label}
+            {option.count !== undefined && (
+              <span className="min-w-5 rounded-pill bg-surface px-1.5 text-xs text-muted tabular-nums group-has-checked:bg-on-primary/20 group-has-checked:text-on-primary">{option.count}</span>
+            )}
+          </label>
+        ))}
       </div>
-
-      <div
-        className="py-4 rounded-small"
-        role="tabpanel"
-        tabIndex={0}
-        id={panelId(activeTab.id)}
-        aria-labelledby={tabId(activeTab.id)}
-      >
-        {activeTab.content}
-      </div>
-    </div>
+    </fieldset>
   );
 }

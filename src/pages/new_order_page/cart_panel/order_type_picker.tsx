@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import ORDER_TYPE_LABELS from '../../../constants/order_type_labels';
 import ORDER_TYPES from '../../../constants/order_types';
 import type FormComponentProps from '../../../types/form_component_props';
-import SegmentedRadios from '../../../components/segmented_radios';
+import Tabs from '../../../ui/tabs';
 import TableSelect from '../../../components/table_select';
 import DeliveryFields from './delivery_fields';
 
@@ -21,7 +21,7 @@ export default function OrderTypePicker(props: FormComponentProps) {
       <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">Order type</h3>
       {/* Starts from the form's value, not a fixed default: the phone sheet mounts these again each time it opens, and an
           edited order starts with its own type. */}
-      <SegmentedRadios register={props.register} name="type" label="Order type" options={TYPES} defaultValue={type} />
+      <Tabs register={props.register} name="type" label="Order type" options={TYPES} value={type} fill />
       {type === 'dine_in' && <TableSelect register={props.register} errors={props.errors} required allowTyped defaultTableId={table} />}
       {type === 'delivery' && <DeliveryFields {...props} />}
     </section>
