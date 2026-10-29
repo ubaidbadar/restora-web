@@ -14,7 +14,7 @@ export default function TypeBreakdown({ byType }: TypeBreakdownProps) {
         <tbody>
           {byType.map((row) => (
             <tr key={row.type} className="border-b border-border last:border-0">
-              <th scope="row" className="py-2.5 text-start font-medium text-ink">{ORDER_TYPE_LABELS[row.type]}</th>
+              <th scope="row" className="py-2.5 text-start font-medium text-ink">{row.type === 'cancelled' ? 'Cancelled' : ORDER_TYPE_LABELS[row.type]}</th>
               <td className="py-2.5 text-end whitespace-nowrap tabular-nums text-muted">{row.count === 1 ? '1 order' : `${row.count} orders`}</td>
               <td className="w-28 py-2.5 text-end font-semibold whitespace-nowrap tabular-nums text-ink">{formatRs(row.sales)}</td>
             </tr>
