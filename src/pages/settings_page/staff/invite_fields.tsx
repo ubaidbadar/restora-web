@@ -1,4 +1,4 @@
-import ChipRadios from '../../../components/chip_radios';
+import Tabs from '../../../ui/tabs';
 import type FormComponentProps from '../../../types/form_component_props';
 import type Role from '../../../types/role';
 import Input from '../../../ui/input';
@@ -14,7 +14,7 @@ const CHANNELS = [
 export default function InviteFields({ roles, ...form }: FormComponentProps & { roles: Role[] }) {
   return (
     <>
-      <ChipRadios register={form.register} name="channel" label="Send the invitation" options={CHANNELS} defaultValue="email" />
+      <Tabs register={form.register} name="channel" label="Send the invitation" options={CHANNELS} value="email" wrap />
       <ContactField {...form} />
       <Input label="Their name (optional)" dir="auto" {...form.register('name')} />
       <AccessFields {...form} roles={roles} />

@@ -1,6 +1,6 @@
 import { Plus, Upload, Users } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
-import ChoiceChips from '../../components/choice_chips';
+import Tabs from '../../ui/tabs';
 import CustomerFields from '../../components/customer_fields';
 import EmptyState from '../../components/empty_state';
 import FormDrawer from '../../components/form_drawer';
@@ -74,7 +74,7 @@ export default function CustomersPage() {
       </PageHeader>
       <div className="mb-4 flex flex-col gap-3">
         <SearchInput label="Search by name or phone" initialValue={search} onSearch={setSearch} />
-        <ChoiceChips label="Show" options={FILTERS} value={filter} onChange={setFilter} wrap />
+        <Tabs name="filter" label="Show" options={FILTERS} value={filter} onChange={setFilter} wrap />
       </div>
       {loading && <SkeletonList rows={8} />}
       {!loading && customers.length === 0 && <EmptyState icon={Users} title={search || filter !== 'all' ? 'No customers found' : 'No customers yet'} text={search || filter !== 'all' ? 'Try a different search or filter.' : 'Customers are saved when you add them or place an order with their number.'} />}

@@ -1,4 +1,4 @@
-import ChoiceChips from '../../components/choice_chips';
+import Tabs from '../../ui/tabs';
 import Skeleton from '../../ui/skeleton';
 import StatCard from '../../components/stat_card';
 import useGet from '../../hooks/useGet';
@@ -8,7 +8,6 @@ import BranchBreakdown from './branch_breakdown';
 import PaymentSplit from './payment_split';
 import SlippingList from './slipping_list';
 import TypeBreakdown from './type_breakdown';
-import CancelledBreakdown from './cancelled_breakdown';
 import DateRangeBar from '../../components/date_range_bar';
 import dayKey from '../../utils/day_key';
 
@@ -20,7 +19,7 @@ const SCOPES: { value: DashboardScope; label: string }[] = [
 ];
 
 interface DashboardNumbersProps {
-  /** May see all branches together (`reports:view_all_branches`). */
+  /** May see all branches together (`reports:view_all_branches`) and the restaurant has more than one. */
   allowedAll: boolean;
 }
 
@@ -32,7 +31,7 @@ export default function DashboardNumbers({ allowedAll }: DashboardNumbersProps) 
   const chips = (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <DateRangeBar from={from} to={to} onChange={(from, to) => get({ params: { from, to } })} />
-      {allowedAll && <ChoiceChips label="Show numbers for" options={SCOPES} value={scope} onChange={(value) => get({ params: { scope: value } })} />}
+      {allowedAll && <Tabs name="scope" label="Show numbers for" options={SCOPES} value={scope} onChange={(value) => get({ params: { scope: value } })} />}
     </div>
   );
   if (!data || loading) {
@@ -69,8 +68,6 @@ export default function DashboardNumbers({ allowedAll }: DashboardNumbersProps) 
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
         <TypeBreakdown byType={stats.byType} />
         <PaymentSplit cash={stats.cash} digital={stats.digital} notCollected={stats.notCollected} />
-        {/* An older server sends no cancelled numbers. */}
-        {stats.cancelled && <CancelledBreakdown cancelled={stats.cancelled} boardLink={scope === 'branch' ? `/orders?status=cancelled${isToday ? '' : `&from=${from}&to=${to}`}` : undefined} />}
       </div>
       <SlippingList customers={data.slipping} total={data.slippingTotal} />
     </div>

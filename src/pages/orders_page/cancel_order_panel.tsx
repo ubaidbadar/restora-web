@@ -1,4 +1,4 @@
-import ChipRadios from '../../components/chip_radios';
+import Tabs from '../../ui/tabs';
 import CANCEL_REASON_LABELS from '../../constants/cancel_reason_labels';
 import type Order from '../../types/order';
 import type OrderCancellation from '../../types/order_cancellation';
@@ -40,7 +40,7 @@ export default function CancelOrderPanel({ order, onCancel, ...overlay }: Cancel
             </p>
             <div className="flex flex-col gap-1.5">
               <p className="text-sm font-medium text-ink">Why?</p>
-              <ChipRadios register={register} name="reason" label="Why?" options={REASONS} defaultValue="" />
+              <Tabs register={register} name="reason" label="Why?" options={REASONS} value="" wrap />
               <FieldError>{errors.reason?.message as string | undefined}</FieldError>
             </div>
             <Textarea label="Note" placeholder="Anything the team should know" maxLength={200} className="min-h-20" {...register('note')} error={errors.note?.message as string | undefined} />

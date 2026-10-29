@@ -23,7 +23,11 @@ function setWide(wide: boolean) {
 // Each card's token, without its screen-reader prefix ("Token ").
 const tokensShown = () => screen.queryAllByText(/#\d+$/).map((element) => element.textContent!.replace('Token ', ''));
 
-beforeEach(() => useAuthStore.getState().setMe(sampleMe()));
+beforeEach(() => {
+  useAuthStore.getState().setMe(sampleMe());
+  // jsdom has no scrolling; the status tabs bring the picked one into view.
+  Element.prototype.scrollIntoView = vi.fn();
+});
 afterEach(() => cleanup());
 
 describe('Orders board', () => {
@@ -31,7 +35,7 @@ describe('Orders board', () => {
     setWide(false);
     render(<MemoryRouter><BoardColumns orders={ORDERS} /></MemoryRouter>);
     expect(tokensShown()).toEqual(['#1', '#2']);
-    fireEvent.click(screen.getByRole('button', { name: /Preparing/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Preparing/ }));
     expect(tokensShown()).toEqual(['#3']);
   });
 
@@ -56,7 +60,7 @@ describe('Orders board', () => {
     const cancelled = { ...order('x', 7, 'cancelled'), cancellation: { reason: 'out_of_stock', note: 'No chicken left', byName: 'Sana', at: '2026-10-20T10:30:00.000Z' } } as Order;
     render(<MemoryRouter><BoardColumns orders={[...ORDERS, cancelled]} /></MemoryRouter>);
     expect(tokensShown()).toEqual(['#1', '#2']);
-    fireEvent.click(screen.getByRole('button', { name: /Cancelled/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Cancelled/ }));
     expect(tokensShown()).toEqual(['#7']);
     expect(screen.getByText(/Out of stock · No chicken left · Sana, 3:30 pm/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Pay/ })).toBeNull();
@@ -84,7 +88,7 @@ describe('Orders board', () => {
     vi.mocked(api.post).mockResolvedValue({ data: { ...ORDERS[4], paymentStatus: 'paid', paymentMethod: 'cash' } });
 
     render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
-    fireEvent.click(screen.getByRole('button', { name: /Done/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Done/ }));
     expect(tokensShown()).toEqual(['#5']);
     expect(screen.getByText('Unpaid')).toBeTruthy();
 
@@ -104,7 +108,7 @@ describe('Orders board', () => {
     const order4 = ORDERS[4]!;
     const paidCompleted: Order = { ...order4, paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
     render(<MemoryRouter><BoardColumns orders={[...ORDERS.slice(0, 4), paidCompleted]} /></MemoryRouter>);
-    fireEvent.click(screen.getByRole('button', { name: /Done/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Done/ }));
     expect(tokensShown()).toEqual(['#5']);
     expect(screen.getByText('Paid')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Record payment for order 5' })).toBeNull();

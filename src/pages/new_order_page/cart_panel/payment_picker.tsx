@@ -1,12 +1,14 @@
 import { useWatch } from 'react-hook-form';
-import ChipRadios from '../../../components/chip_radios';
+import Tabs from '../../../ui/tabs';
 import PAYMENT_LABELS from '../../../constants/payment_labels';
 import PAYMENT_METHODS from '../../../constants/payment_methods';
 import type FormComponentProps from '../../../types/form_component_props';
 import fieldError from '../../../utils/field_error';
-import PaymentStatusChips from './payment_status_chips';
+import PAYMENT_STATUS_LABELS from '../../../constants/payment_status_labels';
+import PAYMENT_STATUSES from '../../../constants/payment_statuses';
 
 const METHODS = PAYMENT_METHODS.map((value) => ({ value, label: PAYMENT_LABELS[value] }));
+const STATUSES = PAYMENT_STATUSES.map((value) => ({ value, label: PAYMENT_STATUS_LABELS[value] }));
 
 /**
  * Whether the customer pays now, later (a table pays at the end) or on khata. Nothing is picked for them: "Pay later" is
@@ -22,12 +24,13 @@ export default function PaymentPicker(props: FormComponentProps) {
   return (
     <section aria-label="Payment" className="flex flex-col gap-2">
       <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">Payment</h3>
-      <PaymentStatusChips register={props.register} value={status} />
+      {/* `value` is the form's current one, so a re-mounted group keeps it. */}
+      <Tabs register={props.register} name="paymentStatus" label="Payment" options={STATUSES} value={status} fill />
       {status !== 'unpaid' && (
         <div className="flex flex-col gap-1.5">
           {/* On khata nothing is paid yet: the method only sets the tax, as the customer will pay that way. */}
           <p className="text-sm text-body">{status === 'paid' ? 'Paid by' : 'They will pay by (sets the tax)'}</p>
-          <ChipRadios register={props.register} name="paymentMethod" label={status === 'paid' ? 'Paid by' : 'Tax as for'} options={METHODS} defaultValue={method ?? ''} compact />
+          <Tabs register={props.register} name="paymentMethod" label={status === 'paid' ? 'Paid by' : 'Tax as for'} options={METHODS} value={method ?? ''} wrap />
         </div>
       )}
       {status === 'khata' && !customerId && !newName && !error && <p className="text-sm font-medium text-warning-800">Khata needs a customer: pick one above.</p>}
