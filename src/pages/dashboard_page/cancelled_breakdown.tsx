@@ -5,24 +5,24 @@ import formatRs from '../../utils/format_rs';
 
 interface CancelledBreakdownProps {
   cancelled: NonNullable<DashboardStats['cancelled']>;
-  /** The orders themselves are on this branch's board, so the link shows only for one branch. */
-  linkToBoard: boolean;
+  /** The orders themselves are on this branch's board for the same days, so the link is given only for one branch. */
+  boardLink?: string;
 }
 
-/** Today's cancelled orders by reason: how many and what they were worth (not counted in sales). */
-export default function CancelledBreakdown({ cancelled, linkToBoard }: CancelledBreakdownProps) {
+/** The days' cancelled orders by reason: how many and what they were worth (not counted in sales). */
+export default function CancelledBreakdown({ cancelled, boardLink }: CancelledBreakdownProps) {
   return (
     <div className="rounded-card bg-surface shadow-card p-4 sm:p-5">
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h2 className="text-heading text-ink">Cancelled</h2>
-        {linkToBoard && cancelled.count > 0 && (
-          <Link to="/orders?status=cancelled" className="text-sm font-medium text-accent-text hover:underline">
+        {boardLink && cancelled.count > 0 && (
+          <Link to={boardLink} className="text-sm font-medium text-accent-text hover:underline">
             See them
           </Link>
         )}
       </div>
       {cancelled.count === 0 ? (
-        <p className="text-sm text-muted">No orders cancelled today.</p>
+        <p className="text-sm text-muted">No orders cancelled.</p>
       ) : (
         <>
           <p className="mb-2 text-sm text-body">
