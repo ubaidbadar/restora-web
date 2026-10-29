@@ -7,7 +7,8 @@ import MoreLink from './more_link';
 
 /**
  * On phones: who is signed in (their account menu), the restaurant and branch, then the pages that do not fit the
- * bottom bar, as one list. Every card has the same padding, so the rows line up.
+ * bottom bar, as one list. Every card has the same padding, so the rows line up. On tablets the page uses the full
+ * width: account and restaurant side by side, and each page its own card in a grid.
  */
 export default function MorePage() {
   const { more } = useNavLinks();
@@ -15,19 +16,21 @@ export default function MorePage() {
   return (
     <>
       <PageHeader title="More" />
-      <div className="flex max-w-md flex-col gap-4">
-        <div className="overflow-hidden rounded-card bg-surface p-2 shadow-card">
-          <UserMenu />
+      <div className="flex w-full max-w-md flex-col gap-4 md:max-w-none">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="flex items-center overflow-hidden rounded-card bg-surface p-2 shadow-card">
+            <UserMenu />
+          </div>
+          <section aria-label="Restaurant and branch" className="flex flex-col gap-2 rounded-card bg-surface px-2 py-4 shadow-card">
+            <RestaurantSwitcher />
+            <BranchSwitcher />
+          </section>
         </div>
-        <section aria-label="Restaurant and branch" className="flex flex-col gap-2 rounded-card bg-surface px-2 py-4 shadow-card">
-          <RestaurantSwitcher />
-          <BranchSwitcher />
-        </section>
         {more.length > 0 && (
-          <nav aria-label="More pages" className="overflow-hidden rounded-card bg-surface shadow-card">
-            <ul className="divide-y divide-border">
+          <nav aria-label="More pages" className="overflow-hidden rounded-card bg-surface shadow-card md:overflow-visible md:rounded-none md:bg-transparent md:shadow-none">
+            <ul className="divide-y divide-border md:grid md:grid-cols-2 md:gap-4 md:divide-y-0 lg:grid-cols-3">
               {more.map((link) => (
-                <li key={link.to}>
+                <li key={link.to} className="md:overflow-hidden md:rounded-card md:bg-surface md:shadow-card">
                   <MoreLink {...link} />
                 </li>
               ))}
