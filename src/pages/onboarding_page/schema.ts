@@ -9,6 +9,8 @@ const onboardingSchema = z.object({
   area: optionalText,
   city: optionalText,
   phone: altPhoneField,
+  /** A data URL from the logo picker; the server uploads it. */
+  logo: z.string().optional(),
 });
 
 export default onboardingSchema;

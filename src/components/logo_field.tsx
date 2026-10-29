@@ -1,9 +1,9 @@
 import type { ChangeEvent } from 'react';
 import { useWatch } from 'react-hook-form';
 import { ImagePlus, Store, Trash2 } from 'lucide-react';
-import type FormComponentProps from '../../types/form_component_props';
-import Button from '../../ui/button';
-import toast from '../../utils/toast';
+import type FormComponentProps from '../types/form_component_props';
+import Button from '../ui/button';
+import toast from '../utils/toast';
 
 const MAX_BYTES = 1024 * 1024;
 
