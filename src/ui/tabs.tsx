@@ -32,7 +32,8 @@ export default function Tabs<T extends string>({ name, label, options, value, on
             key={option.value}
             // On a narrow screen the picked tab may sit past the edge (e.g. ?tab=account): bring it into view.
             ref={!register && option.value === value ? (element) => element?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) : undefined}
-            className="group flex min-h-9 shrink-0 grow cursor-pointer items-center justify-center gap-2 rounded-small px-3 py-1.5 text-center text-sm font-medium whitespace-nowrap text-body transition-colors hover:text-ink has-checked:bg-primary has-checked:font-semibold has-checked:text-on-primary has-focus-visible:outline-2 has-focus-visible:outline-offset-1 has-focus-visible:outline-focus"
+            // `relative` holds the sr-only radio inside its label: otherwise, past the edge of a scrolling strip, it widens the page.
+            className="group relative flex min-h-9 shrink-0 grow cursor-pointer items-center justify-center gap-2 rounded-small px-3 py-1.5 text-center text-sm font-medium whitespace-nowrap text-body transition-colors hover:text-ink has-checked:bg-primary has-checked:font-semibold has-checked:text-on-primary has-focus-visible:outline-2 has-focus-visible:outline-offset-1 has-focus-visible:outline-focus"
           >
             <input
               type="radio"
