@@ -62,7 +62,7 @@ export default function Tabs({ tabs, activeTabId, defaultTabId, onChange, classN
               onClick={() => setSelectedId(tab.id)}
               className={`inline-flex min-h-control items-center px-4 text-sm font-semibold whitespace-nowrap rounded-full border transition-all cursor-pointer ${
                 isActive
-                  ? 'border-primary bg-primary text-on-primary shadow-xs'
+                  ? 'border-primary/20 bg-primary/10 text-primary'
                   : 'border-border bg-surface text-muted hover:border-border-strong hover:text-ink'
               }`}
             >
