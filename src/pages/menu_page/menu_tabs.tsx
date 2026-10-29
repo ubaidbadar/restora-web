@@ -10,13 +10,17 @@ import type MenuTabProps from './menu_tab_props';
 /** Dishes, Deals, Categories and Add-ons. The open tab is in the URL. */
 export default function MenuTabs(props: MenuTabProps) {
   const [params, setParams] = useSearchParams();
-  const tab = params.get('tab') ?? 'dishes';
-  const setTab = (id: string) => setParams((prev) => withParam(prev, 'tab', id, 'dishes'), { replace: true });
   const tabs = [
-    { id: 'dishes', label: 'Dishes', content: <DishesTab {...props} /> },
-    { id: 'deals', label: 'Deals', content: <DealsTab {...props} /> },
-    { id: 'categories', label: 'Categories', content: <CategoriesTab {...props} /> },
-    { id: 'addons', label: 'Add-ons', content: <AddonsTab {...props} /> },
+    { value: 'dishes', label: 'Dishes', content: <DishesTab {...props} /> },
+    { value: 'deals', label: 'Deals', content: <DealsTab {...props} /> },
+    { value: 'categories', label: 'Categories', content: <CategoriesTab {...props} /> },
+    { value: 'addons', label: 'Add-ons', content: <AddonsTab {...props} /> },
   ];
-  return <Tabs tabs={tabs} activeTabId={tabs.some((entry) => entry.id === tab) ? tab : 'dishes'} onChange={setTab} />;
+  const tab = tabs.find((entry) => entry.value === params.get('tab')) ?? tabs[0]!;
+  return (
+    <>
+      <Tabs name="tab" label="Menu" options={tabs} value={tab.value} onChange={(id) => setParams((prev) => withParam(prev, 'tab', id, 'dishes'), { replace: true })} />
+      <div className="py-4">{tab.content}</div>
+    </>
+  );
 }

@@ -20,7 +20,7 @@ export default function PlaceOrderBar({ control, loading, error, taxByPaymentMet
   const { totals, itemCount } = orderTotalsOf(watched, taxByPaymentMethod);
 
   return (
-    <div className="flex shrink-0 flex-col gap-2 border-t border-border bg-surface px-5 pt-3 pb-[max(1rem,calc(env(safe-area-inset-bottom)+0.75rem))] md:py-4">
+    <div className="flex shrink-0 flex-col gap-2 border-t border-border bg-surface px-5 pt-3 pb-safe md:py-4">
       {/* Why the server refused it (a dish just sold out, no permission…), right by the button that was pressed. */}
       {error && <p role="alert" className="text-sm font-medium text-danger-700">{error}</p>}
       <div className="flex items-center justify-between gap-3">

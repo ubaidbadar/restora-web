@@ -1,6 +1,6 @@
 import { Armchair, Table2, Utensils } from 'lucide-react';
 import { useSearchParams } from 'react-router';
-import ChoiceChips from '../../components/choice_chips';
+import Tabs from '../../ui/tabs';
 import EmptyState from '../../components/empty_state';
 import useCan from '../../hooks/useCan';
 import type FloorTable from '../../types/floor_table';
@@ -47,7 +47,7 @@ export default function TablesView({ all, onAnswer, onSaved }: TablesViewProps) 
   return (
     <>
       <CallsStrip tables={tables} onAnswer={onAnswer} />
-      <ChoiceChips label="Show tables" options={options} value={show} onChange={(value) => setParams((prev) => withParam(prev, 'show', value, 'all'), { replace: true })} className="mb-4" />
+      <Tabs name="show" label="Show tables" options={options} value={show} onChange={(value) => setParams((prev) => withParam(prev, 'show', value, 'all'), { replace: true })} className="mb-4" />
       {show === 'archived' && <ArchivedTables tables={archived} onSaved={onSaved} />}
       {show !== 'archived' && !shown.length && (
         <EmptyState
