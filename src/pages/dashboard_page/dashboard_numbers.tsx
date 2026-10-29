@@ -8,7 +8,6 @@ import BranchBreakdown from './branch_breakdown';
 import PaymentSplit from './payment_split';
 import SlippingList from './slipping_list';
 import TypeBreakdown from './type_breakdown';
-import CancelledBreakdown from './cancelled_breakdown';
 
 type DashboardScope = 'branch' | 'all';
 
@@ -18,7 +17,7 @@ const SCOPES: { value: DashboardScope; label: string }[] = [
 ];
 
 interface DashboardNumbersProps {
-  /** May see all branches together (`reports:view_all_branches`). */
+  /** May see all branches together (`reports:view_all_branches`) and the restaurant has more than one. */
   allowedAll: boolean;
 }
 
@@ -61,8 +60,6 @@ export default function DashboardNumbers({ allowedAll }: DashboardNumbersProps) 
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
         <TypeBreakdown byType={stats.byType} />
         <PaymentSplit cash={stats.cash} digital={stats.digital} notCollected={stats.notCollected} />
-        {/* An older server sends no cancelled numbers. */}
-        {stats.cancelled && <CancelledBreakdown cancelled={stats.cancelled} linkToBoard={scope === 'branch'} />}
       </div>
       <SlippingList customers={data.slipping} total={data.slippingTotal} />
     </div>
