@@ -1,6 +1,6 @@
 import addonRule from '../../../utils/addon_rule';
 import { useState } from 'react';
-import ChoiceChips from '../../../components/choice_chips';
+import Tabs from '../../../ui/tabs';
 import type AddonGroup from '../../../types/addon_group';
 import type CartItem from '../../../types/cart_item';
 import type MenuItem from '../../../types/menu_item';
@@ -40,7 +40,8 @@ export default function DishPickerPanel({ dish, groups, contents, onAdd, ...over
         {dish.sizes.length > 1 && (
           <section>
             <h3 className="mb-1 text-sm font-semibold text-ink">Size</h3>
-            <ChoiceChips
+            <Tabs
+              name="size"
               label="Size"
               wrap
               options={dish.sizes.map((option) => ({ value: option._id, label: `${option.name} · ${formatRs(option.price)}` }))}

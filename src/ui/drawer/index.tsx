@@ -31,7 +31,8 @@ export default function Drawer({ state, close, title, children, footer, width = 
       from="right"
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
-      className={`flex h-dvh w-full ${widthClasses[width]} flex-col bg-surface shadow-lg`}
+      // Full height on a phone: the title stays below the notch and the last button above the home indicator.
+      className={`flex h-dvh w-full ${widthClasses[width]} flex-col bg-surface pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-lg`}
     >
       <DialogHeader title={title} titleId={titleId} closeLabel="Close drawer" close={close} />
       <div className="flex flex-1 flex-col overflow-y-auto p-5 sm:p-6">{children}</div>

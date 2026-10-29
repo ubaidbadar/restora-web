@@ -14,17 +14,17 @@ interface ProfileTabsProps {
 export default function ProfileTabs({ customer, onCustomer }: ProfileTabsProps) {
   // The open tab lives in the URL, so a refresh or a shared link keeps it.
   const [params, setParams] = useSearchParams();
-  const tab = params.get('tab') ?? 'orders';
-  const setTab = (id: string) => setParams((prev) => withParam(prev, 'tab', id, 'orders'), { replace: true });
-  const notes = { id: 'notes', label: 'Notes', content: <NotesTab customer={customer} onCustomer={onCustomer} /> };
+  const notes = { value: 'notes', label: 'Notes', content: <NotesTab customer={customer} onCustomer={onCustomer} /> };
   // Keyed by the balance: a payment recorded above (or taken back here) loads the lines again.
-  const khata = { id: 'khata', label: 'Khata', content: <KhataTab customer={customer} onCustomer={onCustomer} /> };
+  const khata = { value: 'khata', label: 'Khata', content: <KhataTab customer={customer} onCustomer={onCustomer} /> };
+
+  const tabs = [{ value: 'orders', label: 'Orders', content: <OrdersTab customerId={customer._id} /> }, khata, notes];
+  const tab = tabs.find((entry) => entry.value === params.get('tab')) ?? tabs[0]!;
 
   return (
-    <Tabs
-      activeTabId={tab}
-      onChange={setTab}
-      tabs={[{ id: 'orders', label: 'Orders', content: <OrdersTab customerId={customer._id} /> }, khata, notes]}
-    />
+    <>
+      <Tabs name="tab" label="Customer" options={tabs} value={tab.value} onChange={(id) => setParams((prev) => withParam(prev, 'tab', id, 'orders'), { replace: true })} />
+      <div className="py-4">{tab.content}</div>
+    </>
   );
 }

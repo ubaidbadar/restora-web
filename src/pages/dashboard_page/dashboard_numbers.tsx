@@ -1,4 +1,4 @@
-import ChoiceChips from '../../components/choice_chips';
+import Tabs from '../../ui/tabs';
 import Skeleton from '../../ui/skeleton';
 import StatCard from '../../components/stat_card';
 import useGet from '../../hooks/useGet';
@@ -26,7 +26,7 @@ interface DashboardNumbersProps {
 export default function DashboardNumbers({ allowedAll }: DashboardNumbersProps) {
   const { data, loading, options, get } = useGet<DashboardAnswer>('/dashboard', { params: { scope: 'branch' } });
   const scope: DashboardScope = options.params.scope;
-  const chips = allowedAll && <ChoiceChips label="Show numbers for" options={SCOPES} value={scope} onChange={(value) => get({ params: { scope: value } })} />;
+  const chips = allowedAll && <Tabs name="scope" label="Show numbers for" options={SCOPES} value={scope} onChange={(value) => get({ params: { scope: value } })} />;
   if (!data || loading) {
     return (
       <div role="status" aria-label="Loading today's numbers" className="flex flex-col gap-4 lg:gap-5">
