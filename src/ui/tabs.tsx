@@ -18,23 +18,22 @@ interface TabsProps<T extends string> {
 }
 
 /**
- * The one tab strip of the app: page tabs, filters and picked-one choices in forms. A light primary track with a primary
- * border, the picked option filled in primary and the others in primary text. Built from radios, so arrow keys move
- * between options.
+ * The one tab strip of the app: page tabs, filters and picked-one choices in forms. A light primary track with the
+ * picked option filled in primary. Built from radios, so arrow keys move between options.
  */
 export default function Tabs<T extends string>({ name, label, options, value, onChange, register, wrap = false, fill = false, className = '' }: TabsProps<T>) {
   return (
     <fieldset className={`min-w-0 ${className}`}>
       <legend className="sr-only">{label}</legend>
       {/* A fieldset can't be a flex box in every browser, so the track is the div inside it. */}
-      <div className={`flex max-w-full gap-1 rounded-control border border-primary bg-primary-soft p-1 ${fill ? '' : 'w-fit'} ${wrap ? 'flex-wrap' : 'hide-scrollbar overflow-x-auto'}`}>
+      <div className={`flex max-w-full gap-1 rounded-control bg-primary-soft p-1 ${fill ? '' : 'w-fit'} ${wrap ? 'flex-wrap' : 'hide-scrollbar overflow-x-auto'}`}>
         {options.map((option) => (
           <label
             key={option.value}
             // On a narrow screen the picked tab may sit past the edge (e.g. ?tab=account): bring it into view.
             ref={!register && option.value === value ? (element) => element?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) : undefined}
             // `relative` holds the sr-only radio inside its label: otherwise, past the edge of a scrolling strip, it widens the page.
-            className="group relative flex min-h-9 shrink-0 grow cursor-pointer items-center justify-center gap-2 rounded-small px-3 py-1.5 text-center text-sm font-medium whitespace-nowrap text-primary transition-colors hover:text-primary-hover has-checked:bg-primary has-checked:font-semibold has-checked:text-on-primary has-focus-visible:outline-2 has-focus-visible:outline-offset-1 has-focus-visible:outline-focus"
+            className="group relative flex min-h-9 shrink-0 grow cursor-pointer items-center justify-center gap-2 rounded-small px-3 py-1.5 text-center text-sm font-medium whitespace-nowrap text-body transition-colors hover:text-ink has-checked:bg-primary has-checked:font-semibold has-checked:text-on-primary has-focus-visible:outline-2 has-focus-visible:outline-offset-1 has-focus-visible:outline-focus"
           >
             <input
               type="radio"
@@ -46,7 +45,7 @@ export default function Tabs<T extends string>({ name, label, options, value, on
             />
             {option.label}
             {option.count !== undefined && (
-              <span className="min-w-5 rounded-pill bg-surface px-1.5 text-xs text-primary tabular-nums group-has-checked:bg-on-primary/20 group-has-checked:text-on-primary">{option.count}</span>
+              <span className="min-w-5 rounded-pill bg-surface px-1.5 text-xs text-muted tabular-nums group-has-checked:bg-on-primary/20 group-has-checked:text-on-primary">{option.count}</span>
             )}
           </label>
         ))}
