@@ -1,7 +1,7 @@
 import type FormComponentProps from '../../types/form_component_props';
 import Input from '../../ui/input';
 import fieldError from '../../utils/field_error';
-import LogoField from './logo_field';
+import LogoField from '../../components/logo_field';
 
 /** Logo, name and what customer receipts add. Phone, address and city are per branch (Settings → Branches), not here. */
 export default function RestaurantFields(props: FormComponentProps) {
