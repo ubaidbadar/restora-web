@@ -42,7 +42,7 @@ export default function AppLayout() {
       ?.getRegistration()
       .then((registration) => registration?.pushManager?.getSubscription())
       .then((subscription) => subscription && api.post('/push-devices', { kind: 'web', ...subscription.toJSON() }))
-      .catch(() => {});
+      .catch(() => { });
   }, [place]);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function AppLayout() {
         Skip to content
       </a>
       {lg && <SideNav />}
-      <main id="main" className="mx-auto min-h-dvh w-full max-w-7xl flex flex-col px-4 pt-5 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
+      <main id="main" className="mx-auto min-h-dvh w-full max-w-7xl flex flex-col px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
         <SyncStatus />
         <Can permission="tables:view">
           <TableCallsBanner key={place} />
