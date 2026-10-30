@@ -6,18 +6,21 @@ on:
   push:
     branches:
       - main
+      - dev
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm install && npm run build
+      - name: Install and Build
+        run: npm install && npm run build
         env:
-          VITE_API_URL: https://restora.live
-          VITE_APP_URL: https://app.restora.live
+          VITE_API_URL: ${{ github.ref_name == 'dev' && 'https://dev.restora.live' || 'https://restora.live' }}
+          VITE_APP_URL: ${{ github.ref_name == 'dev' && 'https://dev-app.restora.live' || 'https://app.restora.live' }}
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RESTORA_LIVE }}
           channelId: live
           projectId: restora-live
+          target: ${{ github.ref_name == 'dev' && 'dev' || 'prod' }}

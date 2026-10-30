@@ -5,7 +5,7 @@ interface BranchBreakdownProps {
   rows: { branch: Branch; sales: number; orderCount: number; cancelledCount?: number }[];
 }
 
-/** Today's sales branch by branch, shown in the all-branches view. */
+/** The days' sales branch by branch, shown in the all-branches view. */
 export default function BranchBreakdown({ rows }: BranchBreakdownProps) {
   return (
     <div className="rounded-card bg-surface shadow-card p-4 sm:p-5">
