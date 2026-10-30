@@ -105,6 +105,7 @@ export default function App() {
               </Route>
               <Route element={<RequireWeb />}>
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="settings/:section" element={<SettingsPage />} />
               </Route>
               <Route path="more" element={<MorePage />} />
               <Route path="*" element={<NotFoundPage />} />

@@ -2,7 +2,7 @@ import { useSearchParams } from 'react-router';
 import BOARD_STATUSES from '../../constants/board_statuses';
 import STATUS_LABELS from '../../constants/status_labels';
 import type Order from '../../types/order';
-import Tabs from '../../ui/tabs';
+import Chips from '../../ui/chips';
 import withParam from '../../utils/with_param';
 import TodayOrderRow from './today_order_row';
 
@@ -23,7 +23,7 @@ export default function TodayList({ orders, onOrderUpdated }: TodayListProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <Tabs name="status" label="Order status" options={tabs} value={status} onChange={(value) => setParams((prev) => withParam(prev, 'status', value, 'all'), { replace: true })} />
+      <Chips name="status" label="Order status" options={tabs} value={status} onChange={(value) => setParams((prev) => withParam(prev, 'status', value, 'all'), { replace: true })} />
       {shown.length === 0 ? (
         <p className="rounded-card border border-dashed border-border-strong px-3 py-8 text-center text-sm text-muted">No orders here</p>
       ) : (

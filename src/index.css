@@ -322,3 +322,12 @@
 @utility bottom-safe {
   bottom: max(1rem, calc(env(safe-area-inset-bottom) + 0.75rem));
 }
+
+/* A row that scrolls sideways fades out at its end, so people can tell there is more past the edge. */
+@utility fade-end {
+  mask-image: linear-gradient(to var(--fade-to, right), #000 calc(100% - 2rem), transparent);
+
+  &:dir(rtl) {
+    --fade-to: left;
+  }
+}

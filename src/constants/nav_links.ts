@@ -13,7 +13,7 @@ const NAV_LINKS: NavLinkItem[] = [
   { to: '/reservations', label: 'Reservations', icon: CalendarDays, permission: 'reservations:view' },
   { to: '/menu', label: 'Menu', icon: UtensilsCrossed, permission: 'menu:view' },
   { to: '/settings', label: 'Settings', icon: Settings, webOnly: true },
-  { to: '/settings?tab=account', label: 'Account', icon: CircleUser, webOnly: true },
+  { to: '/settings/account', label: 'Account', icon: CircleUser, webOnly: true },
 ];
 
 export default NAV_LINKS;

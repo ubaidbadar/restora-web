@@ -20,8 +20,10 @@ interface TabsProps<T extends string> {
 }
 
 /**
- * The one tab strip of the app: page tabs, filters and picked-one choices in forms. A sunken grey track, edged with a border, with the
- * picked option raised on the surface. Built from radios, so arrow keys move between options.
+ * The segmented control: two or three short options that flip a view or a small setting (Board / List, this branch or
+ * all). A sunken grey track, edged with a border, with the picked option raised on the surface. Built from radios, so
+ * arrow keys move between options. Filters and longer choices are `ui/chips`, a choice that changes what happens next
+ * is `ui/choice_cards`, parts of a page are `ui/page_tabs`.
  */
 export default function Tabs<T extends string>({ name, label, options, value, onChange, register, wrap = false, fill = false, showLabel = false, className = '' }: TabsProps<T>) {
   return (

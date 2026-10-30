@@ -1,6 +1,6 @@
 import ALL_CATEGORIES from '../constants/all_categories';
 import type MenuCategory from '../types/menu_category';
-import Tabs from '../ui/tabs';
+import Chips from '../ui/chips';
 
 interface CategoryChipsProps {
   categories: MenuCategory[];
@@ -10,5 +10,5 @@ interface CategoryChipsProps {
 
 export default function CategoryChips({ categories, value, onChange }: CategoryChipsProps) {
   const options = [{ value: ALL_CATEGORIES, label: 'All' }, ...categories.map((category) => ({ value: category._id, label: category.name }))];
-  return <Tabs name="category" label="Category" options={options} value={value} onChange={onChange} />;
+  return <Chips name="category" label="Category" options={options} value={value} onChange={onChange} />;
 }

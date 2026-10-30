@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import FormDrawer from '../../../components/form_drawer';
 import ORDER_TYPE_OPTIONS from '../../../constants/order_type_options';
 import Tabs from '../../../ui/tabs';
+import Chips from '../../../ui/chips';
 import dayKey from '../../../utils/day_key';
 import dayPresets from '../../../utils/day_presets';
 import filterSchema from './filter_schema';
@@ -53,9 +54,9 @@ export default function OrdersFilter() {
       }}
       fields={(form) => (
         <>
-          <Tabs name="days" label="Days" options={dayOptions} value={days} register={form.register} wrap showLabel />
+          <Chips name="days" label="Days" options={dayOptions} value={days} register={form.register} wrap showLabel />
           <PickDays {...form} />
-          <Tabs name="type" label="Order type" options={ORDER_TYPE_OPTIONS} value={type} register={form.register} wrap showLabel />
+          <Chips name="type" label="Order type" options={ORDER_TYPE_OPTIONS} value={type} register={form.register} wrap showLabel />
           <Tabs name="view" label="Show today's orders as" options={VIEWS} value={view} register={form.register} fill showLabel />
         </>
       )}
