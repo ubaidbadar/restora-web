@@ -36,7 +36,7 @@ describe('printSlip', () => {
 
   it('without internet, prints through the agent on this PC with the order\'s own id as its key', async () => {
     post.mockRejectedValue(new Error('Network Error'));
-    fetchMock.mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) }).mockResolvedValueOnce({ ok: true });
+    fetchMock.mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) }).mockResolvedValueOnce({ ok: true, json: async () => ({ printed: true }) });
     await printSlip(order, 'kitchen');
     const [url, init] = fetchMock.mock.calls[1]!;
     expect(url).toBe('http://127.0.0.1:17777/print');
@@ -44,8 +44,20 @@ describe('printSlip', () => {
     expect(printOrder).not.toHaveBeenCalled();
   });
 
+  it('without internet, prints again when asked again, with a key of its own', async () => {
+    post.mockRejectedValue(new Error('Network Error'));
+    fetchMock
+      .mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ printed: false, duplicate: true }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ printed: true }) });
+    await printSlip(order, 'kitchen');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(JSON.parse(fetchMock.mock.calls[2]![1].body).orderKey).toMatch(/^A1~/);
+    expect(printOrder).not.toHaveBeenCalled();
+  });
+
   it('an order not sent yet skips the backend', async () => {
-    fetchMock.mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) }).mockResolvedValueOnce({ ok: true });
+    fetchMock.mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) }).mockResolvedValueOnce({ ok: true, json: async () => ({ printed: true }) });
     await printSlip({ ...order, pendingSync: true }, 'kitchen');
     expect(post).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(2);

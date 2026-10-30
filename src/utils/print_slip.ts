@@ -45,8 +45,11 @@ async function viaThisPc(order: Order, kind: 'kitchen' | 'receipt'): Promise<boo
       const categoryOf = (itemId: string) => menu?.items.find((item) => item._id === itemId)?.categoryId;
       const items = kind === 'kitchen' && printer.categoryIds.length ? order.items.filter((item) => printer.categoryIds.includes(categoryOf(item.itemId) ?? '')) : order.items;
       if (!items.length) continue;
-      const body = { printer: printer.systemName, kind, orderKey: order._id, width: printer.width, copies: printer.copies, order: { ...order, items }, header };
-      const res = await fetch(`${AGENT}/print`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const body = { printer: printer.systemName, kind, width: printer.width, copies: printer.copies, order: { ...order, items }, header };
+      const send = (orderKey: string) => fetch(`${AGENT}/print`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, orderKey }) });
+      let res = await send(order._id);
+      // The agent prints a slip once per order, so the synced order does not print it again; asked again, it is a reprint with a key of its own.
+      if (res.ok && (await res.json()).duplicate) res = await send(`${order._id}~${Date.now().toString(36)}`);
       if (!res.ok) return false;
       sent++;
     }
