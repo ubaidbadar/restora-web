@@ -63,9 +63,17 @@ export default function LiveUpdates() {
       }
     };
 
-    // Loads again what came in while the stream was closed (and the board, if it could not load without internet).
+    // Loads again what came in while the stream was closed (and the board, if it could not load without internet). Once
+    // today's board is here, only the orders changed since its latest change (10 s before, for writes saved late).
     const reload = () => {
-      api.get('/orders').then((res) => getCache.set(ordersKey, res.data), () => {});
+      const board = getCache.get(ordersKey) as Order[] | undefined;
+      const latest = board?.every((order) => order.dayKey === dayKey()) ? board.reduce((max, order) => (order.updatedAt && order.updatedAt > max ? order.updatedAt : max), '') : '';
+      if (latest) {
+        const since = new Date(Date.parse(latest) - 10_000).toISOString();
+        api.get<Order[]>('/orders', { params: { since } }).then((res) => getCache.update<Order[]>(ordersKey, (list) => res.data.reduce(upsertById, list ?? [])), () => {});
+      } else {
+        api.get('/orders').then((res) => getCache.set(ordersKey, res.data), () => {});
+      }
       if (getCache.get(floorKey)) api.get('/tables/floor').then((res) => getCache.set(floorKey, res.data), () => {});
     };
 
