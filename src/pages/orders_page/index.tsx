@@ -4,13 +4,17 @@ import Can from '../../components/can';
 import DateRangeBar from '../../components/date_range_bar';
 import PageHeader from '../../components/page_header';
 import Button from '../../ui/button';
+import OrderHistory from './order_history';
 import OrdersBoard from './orders_board';
 import useWorkplace from '../../hooks/useWorkplace';
 import dayKey from '../../utils/day_key';
 import formatDayRange from '../../utils/format_day_range';
 import withParam from '../../utils/with_param';
 
-/** The working branch's orders on a board: new, preparing, ready, out for delivery, done. Today's at first, other days from the URL's `from` and `to`. */
+/**
+ * The working branch's orders. Today's on the live board (or as a list); other days from the URL's `from` and `to` as
+ * their numbers and a list loaded a page at a time.
+ */
 export default function OrdersPage() {
   const branch = useWorkplace()?.branch;
   const [params, setParams] = useSearchParams();
@@ -23,6 +27,9 @@ export default function OrdersPage() {
       const next = withParam(params, 'from', from, today);
       if (to === today) next.delete('to');
       else next.set('to', to);
+      // Today's board and other days' list read the status and view differently.
+      next.delete('status');
+      next.delete('view');
       return next;
     }, { replace: true });
 
@@ -36,7 +43,7 @@ export default function OrdersPage() {
       <div className="mb-4">
         <DateRangeBar from={from} to={to} onChange={setDays} />
       </div>
-      <OrdersBoard key={`${from}_${to}`} from={from} to={to} />
+      {from === today && to === today ? <OrdersBoard /> : <OrderHistory key={`${from}_${to}`} from={from} to={to} />}
     </>
   );
 }

@@ -113,4 +113,18 @@ describe('Orders board', () => {
     expect(screen.getByText('Paid')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Record payment for order 5' })).toBeNull();
   });
+
+  it('shows the latest 10 done orders and every unpaid one, with a way to all of them', () => {
+    setWide(false);
+    // 14 paid done orders, #1 the oldest, and one unpaid among the oldest.
+    const done = Array.from({ length: 14 }, (_, index) => ({
+      ...order(`d${index}`, index + 1, 'completed'),
+      paymentStatus: index === 0 ? 'unpaid' : 'paid',
+      createdAt: `2026-10-20T10:${String(index).padStart(2, '0')}:00.000Z`,
+    })) as Order[];
+    render(<MemoryRouter><BoardColumns orders={done} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('radio', { name: /Done/ }));
+    expect(tokensShown()).toEqual(['#14', '#13', '#12', '#11', '#10', '#9', '#8', '#7', '#6', '#5', '#1']);
+    expect(screen.getByRole('button', { name: 'All 14 done' })).toBeTruthy();
+  });
 });

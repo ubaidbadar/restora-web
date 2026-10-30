@@ -18,6 +18,8 @@ const oldestFirst = (a: Order, b: Order) => a.createdAt.localeCompare(b.createdA
 const inColumn = (order: Order, status: BoardStatus) => order.status === status || (status === 'new' && order.status === 'pending');
 const cancelledAt = (order: Order) => order.cancellation?.at ?? order.createdAt;
 const latestCancelledFirst = (a: Order, b: Order) => cancelledAt(b).localeCompare(cancelledAt(a));
+/** Done shows the latest few, and every one still to be paid; the rest are in the list. */
+const DONE_SHOWN = 10;
 const pendingFirst = (a: Order, b: Order) => Number(b.status === 'pending') - Number(a.status === 'pending') || oldestFirst(a, b);
 
 interface BoardColumnsProps {
@@ -39,10 +41,13 @@ export default function BoardColumns({ orders, onOrderUpdated }: BoardColumnsPro
   const cancelled = orders.filter((order) => order.status === 'cancelled').sort(latestCancelledFirst);
   const columns = BOARD_STATUSES.map((value) => {
     const orders = shown.filter((order) => inColumn(order, value)).sort(pendingFirst);
-    return { status: value, orders: value === 'completed' ? orders.reverse() : orders };
+    if (value !== 'completed') return { status: value, orders, count: orders.length };
+    // Done: the latest first.
+    const done = orders.reverse();
+    return { status: value, orders: done.filter((order, index) => index < DONE_SHOWN || order.paymentStatus !== 'paid'), count: done.length };
   });
   const tabs = [
-    ...columns.map((column) => ({ value: column.status as Shown, label: STATUS_LABELS[column.status], count: column.orders.length })),
+    ...columns.map((column) => ({ value: column.status as Shown, label: STATUS_LABELS[column.status], count: column.count })),
     { value: 'cancelled' as const, label: STATUS_LABELS.cancelled, count: cancelled.length },
   ];
 
@@ -67,7 +72,19 @@ export default function BoardColumns({ orders, onOrderUpdated }: BoardColumnsPro
       ) : (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
           {(xl ? columns : columns.filter((column) => column.status === status)).map((column) => (
-            <BoardColumn key={column.status} status={column.status} count={column.orders.length} active={column.status === status}>
+            <BoardColumn
+              key={column.status}
+              status={column.status}
+              count={column.count}
+              active={column.status === status}
+              footer={
+                column.count > column.orders.length && (
+                  <Button variant="ghost" onClick={() => setParams(new URLSearchParams({ ...Object.fromEntries(params), view: 'list', status: 'completed' }), { replace: true })}>
+                    All {column.count} done
+                  </Button>
+                )
+              }
+            >
               {column.orders.map((order) => <OrderCard key={order._id} order={order} onOrderUpdated={onOrderUpdated} />)}
             </BoardColumn>
           ))}

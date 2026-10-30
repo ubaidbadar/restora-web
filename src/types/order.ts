@@ -40,6 +40,8 @@ export default interface Order {
   /** Set when the order was cancelled: who, when and why. */
   cancellation?: OrderCancellation;
   createdAt: string;
+  /** When the server last saved it; the app asks for what changed after it. */
+  updatedAt?: string;
   /** Taken without internet and still waiting on this device to be sent. */
   pendingSync?: boolean;
 }
