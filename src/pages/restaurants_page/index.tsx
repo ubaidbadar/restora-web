@@ -1,6 +1,7 @@
 import { Plus, Store } from 'lucide-react';
 import { Link } from 'react-router';
 import AuthCard from '../../components/auth_card';
+import BackButton from '../../components/back_button';
 import EmptyState from '../../components/empty_state';
 import useAuthStore from '../../store/auth_store';
 import Button from '../../ui/button';
@@ -12,9 +13,12 @@ import SignedInAs from './signed_in_as';
 export default function RestaurantsPage() {
   const restaurants = useAuthStore((state) => state.me?.restaurants) ?? [];
   const empty = !restaurants.length;
+  // Someone who works somewhere came from the app and can go back to it.
+  const hasWorkplace = useAuthStore((state) => !!state.me?.workplace);
 
   return (
     <AuthCard
+      back={hasWorkplace && <BackButton />}
       title={empty ? 'Welcome to Restora' : 'Your restaurants'}
       subtitle={empty ? 'Create your restaurant, or open the invitation link your restaurant sent you.' : 'Pick where to work. You can switch any time from the menu.'}
       footer={<SignedInAs />}
