@@ -9,8 +9,8 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, subtitle, children }: PageHeaderProps) {
   return (
-    <header className="mb-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-3 lg:mb-6">
-      <div>
+    <header className="mb-5 flex items-end justify-between gap-x-4 gap-y-3 lg:mb-6">
+      <div className='grid'>
         <h1 className="truncate h2 text-ink">{title}</h1>
         {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
       </div>
