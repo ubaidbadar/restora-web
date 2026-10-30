@@ -37,7 +37,7 @@ export default function AuthCard({ title, subtitle, children, footer, art }: Aut
 
       <main className="flex flex-1 flex-col items-center px-4 py-10 sm:px-8 lg:justify-center">
         <div className="flex w-full max-w-md flex-col gap-6">
-          <div className="mb-2 lg:hidden">
+          <div className="lg:hidden">
             <BrandMark />
           </div>
           <div className="lg:rounded-card lg:p-7 lg:shadow-card">
