@@ -11,13 +11,15 @@ interface AuthCardProps {
   footer?: ReactNode;
   /** A small drawing above the title, for screens that tell rather than ask (an email sent, an invitation). */
   art?: ReactNode;
+  /** A way out above the card, for screens opened from inside the app (accounts, restaurants). */
+  back?: ReactNode;
 }
 
 /**
  * The screens before the app itself: sign in, sign up and password reset.
  * One white page. Wide screens show the Restora drawing beside the form, which sits in a card; phones get just the logo and the form.
  */
-export default function AuthCard({ title, subtitle, children, footer, art }: AuthCardProps) {
+export default function AuthCard({ title, subtitle, children, footer, art, back }: AuthCardProps) {
   return (
     <div className="flex min-h-dvh bg-surface font-body text-ink">
       <aside className="hidden flex-1 text-center shrink-0 flex-col justify-between gap-8 p-10 lg:flex xl:p-14">
@@ -37,6 +39,7 @@ export default function AuthCard({ title, subtitle, children, footer, art }: Aut
 
       <main className="flex flex-1 flex-col items-center px-4 py-10 sm:px-8 lg:justify-center">
         <div className="flex w-full max-w-md flex-col gap-6">
+          {back && <div className="-mb-3">{back}</div>}
           <div className="lg:hidden">
             <BrandMark />
           </div>
