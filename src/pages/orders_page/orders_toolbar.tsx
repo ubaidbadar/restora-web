@@ -8,7 +8,7 @@ export default function OrdersToolbar() {
   const [params, setParams] = useSearchParams();
 
   return (
-    <div className="mb-4 flex items-center gap-2">
+    <div className="mb-4 flex items-center gap-2 justify-between">
       <div className="min-w-0 flex-1 lg:max-w-md">
         <SearchInput label="Search by token, name, phone or table" placeholder="Search orders" initialValue={params.get('q') ?? ''} onSearch={(value) => setParams((prev) => withParam(prev, 'q', value), { replace: true })} delay={300} />
       </div>

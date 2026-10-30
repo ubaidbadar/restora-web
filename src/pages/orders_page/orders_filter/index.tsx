@@ -2,12 +2,12 @@ import { SlidersHorizontal } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import FormDrawer from '../../../components/form_drawer';
 import ORDER_TYPE_OPTIONS from '../../../constants/order_type_options';
-import Button from '../../../ui/button';
 import Tabs from '../../../ui/tabs';
 import dayKey from '../../../utils/day_key';
 import dayPresets from '../../../utils/day_presets';
 import filterSchema from './filter_schema';
 import PickDays from './pick_days';
+import IconButton from '../../../ui/icon_button';
 
 const VIEWS = [
   { value: 'board', label: 'Board' },
@@ -60,10 +60,9 @@ export default function OrdersFilter() {
         </>
       )}
       component={({ open }) => (
-        <Button variant="outline" icon={SlidersHorizontal} onClick={open} aria-label={count ? `Filter, ${count} set` : 'Filter'}>
-          Filter
-          {count > 0 && <span className="min-w-5 rounded-pill bg-primary px-1.5 text-xs text-on-primary tabular-nums">{count}</span>}
-        </Button>
+        <>
+          <IconButton icon={SlidersHorizontal} variant='outline' onClick={open} aria-label={count ? `Filter, ${count} set` : 'Filter'} />
+        </>
       )}
     />
   );

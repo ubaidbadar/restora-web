@@ -30,7 +30,7 @@ export default function OrdersPage() {
       <PageHeader title="Orders" subtitle={subtitle}>
         {/* Phones and tablets have the + in the bottom bar. */}
         <Can permission="orders:create">
-          <Button as={Link} to="/orders/new" icon={Plus} className="max-lg:hidden">New order</Button>
+          <Button as={Link} to="/orders/new" icon={Plus}>New order</Button>
         </Can>
       </PageHeader>
       <OrdersToolbar />
