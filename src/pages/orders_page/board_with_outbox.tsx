@@ -8,7 +8,6 @@ import withOutbox from '../../utils/with_outbox';
 import Button from '../../ui/button';
 import BoardColumns from './board_columns';
 import TodayList from './today_list';
-import TodayToolbar from './today_toolbar';
 
 interface BoardWithOutboxProps {
   orders: Order[];
@@ -38,10 +37,5 @@ export default function BoardWithOutbox({ orders, onOrderUpdated }: BoardWithOut
       </EmptyState>
     );
   }
-  return (
-    <>
-      <TodayToolbar />
-      {params.get('view') === 'list' ? <TodayList orders={shown} onOrderUpdated={onOrderUpdated} /> : <BoardColumns orders={shown} onOrderUpdated={onOrderUpdated} />}
-    </>
-  );
+  return params.get('view') === 'list' ? <TodayList orders={shown} onOrderUpdated={onOrderUpdated} /> : <BoardColumns orders={shown} onOrderUpdated={onOrderUpdated} />;
 }
