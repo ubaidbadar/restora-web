@@ -3,8 +3,6 @@ import { useSearchParams } from 'react-router';
 import EmptyState from '../../../components/empty_state';
 import LoadFailed from '../../../components/load_failed';
 import SkeletonList from '../../../components/skeleton_list';
-import StatCard from '../../../components/stat_card';
-import ORDER_TYPE_OPTIONS from '../../../constants/order_type_options';
 import STATUS_LABELS from '../../../constants/status_labels';
 import useGet from '../../../hooks/useGet';
 import type OrderHistory from '../../../types/order_history';
@@ -26,8 +24,8 @@ interface HistoryResultsProps {
 }
 
 /**
- * The days' numbers first, then their orders 50 at a time, the latest first. The status and type tabs keep the
- * counts of every status and type (the server's summary), so picking one never hides the others.
+ * The days' numbers first, then their orders 50 at a time, the latest first. The status tabs keep the counts of every
+ * status (the server's summary), so picking one never hides the others. The type is picked in the filter.
  */
 export default function HistoryResults({ from, to, q, status, type }: HistoryResultsProps) {
   const [, setParams] = useSearchParams();
@@ -42,20 +40,20 @@ export default function HistoryResults({ from, to, q, status, type }: HistoryRes
   const cancelled = summary.byStatus.cancelled ?? 0;
   const counted = summary.count - cancelled - (summary.byStatus.pending ?? 0);
   const statusTabs = [{ value: 'all', label: 'All', count: summary.count }, ...STATUSES.map((value) => ({ value: value as string, label: STATUS_LABELS[value], count: byStatus(value) }))];
-  const typeTabs = ORDER_TYPE_OPTIONS.map((option) => ({ ...option, count: option.value === 'all' ? summary.count : (summary.byType[option.value] ?? 0) }));
 
   return (
     <div className="flex flex-col gap-4">
-      <section aria-label="Numbers" className="grid grid-cols-2 gap-px overflow-hidden rounded-card bg-border shadow-card lg:grid-cols-4">
-        <StatCard label="Orders" value={summary.count} />
-        <StatCard label="Sales" value={formatRs(summary.sales)} hint="Cancelled orders left out" />
-        <StatCard label="Average order" value={formatRs(counted ? summary.sales / counted : 0)} />
-        <StatCard label="Cancelled" value={cancelled} />
+      {/* One short card: the sales first, the rest on a line under it. */}
+      <section aria-label="Numbers" className="rounded-card bg-surface px-4 py-3 shadow-card sm:px-5">
+        <p className="text-sm text-muted">Sales <span className="text-xs">(cancelled left out)</span></p>
+        <p className="text-metric text-ink tabular-nums">{formatRs(summary.sales)}</p>
+        <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-2 text-sm text-muted tabular-nums">
+          <div className="flex gap-1"><dt className="sr-only">Orders</dt><dd><span className="font-semibold text-ink">{summary.count}</span> orders</dd></div>
+          <div className="flex gap-1"><dt>Average</dt><dd className="font-semibold text-ink">{formatRs(counted ? summary.sales / counted : 0)}</dd></div>
+          <div className="flex gap-1"><dt className="sr-only">Cancelled</dt><dd><span className="font-semibold text-ink">{cancelled}</span> cancelled</dd></div>
+        </dl>
       </section>
-      <div className="flex flex-col gap-2">
-        <Tabs name="status" label="Status" options={statusTabs} value={status} onChange={(value) => setParams((prev) => withParam(prev, 'status', value, 'all'), { replace: true })} />
-        <Tabs name="type" label="Order type" options={typeTabs} value={type} onChange={(value) => setParams((prev) => withParam(prev, 'type', value, 'all'), { replace: true })} />
-      </div>
+      <Tabs name="status" label="Status" options={statusTabs} value={status} onChange={(value) => setParams((prev) => withParam(prev, 'status', value, 'all'), { replace: true })} />
       {data.orders.length === 0 ? (
         <EmptyState icon={ClipboardList} title="No orders found" text={summary.count ? 'Try another status, type or search.' : 'Pick other days to see their orders.'} />
       ) : (

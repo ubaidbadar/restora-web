@@ -6,7 +6,7 @@
 export default function BrandLoader() {
   return (
     <div role="status" aria-label="Loading" className="grid place-items-center motion-safe:animate-fade-in-late">
-      <svg viewBox="0 0 40 40" className="size-18" aria-hidden="true">
+      <svg viewBox="0 0 40 40" className="size-28" aria-hidden="true">
         <rect width="40" height="40" rx="10" className="fill-primary" />
         <g className="fill-on-primary">
           <g className="origin-bottom-right [transform-box:fill-box] motion-safe:animate-lid">
