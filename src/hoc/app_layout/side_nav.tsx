@@ -28,7 +28,7 @@ export default function SideNav() {
         </Can>
       </div>
       <nav aria-label="Sidebar" className="flex flex-col gap-0.5 border-t border-border pt-4">
-        {[...main, ...more].filter((link) => link.to !== '/settings?tab=account').map((link) => (
+        {[...main, ...more].filter((link) => link.to !== '/settings/account').map((link) => (
           <NavItem key={link.to} {...link} />
         ))}
       </nav>

@@ -21,7 +21,7 @@ export default function PosPage() {
     >
       <div className="flex flex-col gap-3 text-sm text-body">
         <p>To use it as a shared counter terminal, a manager signs in here and registers it under Settings, Devices.</p>
-        <Button as={Link} to={me ? '/settings?tab=devices' : '/login?next=%2Fsettings%3Ftab%3Ddevices'} size="lg">
+        <Button as={Link} to={me ? '/settings/devices' : '/login?next=%2Fsettings%2Fdevices'} size="lg">
           {me ? 'Open Devices' : 'Sign in'}
         </Button>
       </div>

@@ -1,10 +1,10 @@
-import { ArrowLeft, UserX } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { UserX } from 'lucide-react';
+import { useParams } from 'react-router';
+import BackButton from '../../components/back_button';
 import EmptyState from '../../components/empty_state';
 import Skeleton from '../../ui/skeleton';
 import useGet from '../../hooks/useGet';
 import type Customer from '../../types/customer';
-import Button from '../../ui/button';
 import KhataCard from './khata_card';
 import ProfileHeader from './profile_header';
 import ProfileStats from './profile_stats';
@@ -17,9 +17,7 @@ export default function CustomerPage() {
 
   return (
     <>
-      <Button as={Link} to="/customers" variant="ghost" size="sm" icon={ArrowLeft} className="mb-3 -ms-2.5 min-h-11 self-start text-sm text-muted">
-        Customers
-      </Button>
+      <BackButton to="/customers" label="Customers" className="mb-3" />
       {loading && !customer && (
         <div role="status" aria-label="Loading the customer" className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
