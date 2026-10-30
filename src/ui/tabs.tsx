@@ -18,7 +18,7 @@ interface TabsProps<T extends string> {
 }
 
 /**
- * The one tab strip of the app: page tabs, filters and picked-one choices in forms. A sunken grey track with the
+ * The one tab strip of the app: page tabs, filters and picked-one choices in forms. A sunken grey track, edged with a border, with the
  * picked option raised on the surface. Built from radios, so arrow keys move between options.
  */
 export default function Tabs<T extends string>({ name, label, options, value, onChange, register, wrap = false, fill = false, className = '' }: TabsProps<T>) {
@@ -26,7 +26,7 @@ export default function Tabs<T extends string>({ name, label, options, value, on
     <fieldset className={`min-w-0 ${className}`}>
       <legend className="sr-only">{label}</legend>
       {/* A fieldset can't be a flex box in every browser, so the track is the div inside it. */}
-      <div className={`flex max-w-full gap-1 rounded-control bg-sunken p-1 ${fill ? '' : 'w-fit'} ${wrap ? 'flex-wrap' : 'hide-scrollbar overflow-x-auto'}`}>
+      <div className={`flex max-w-full gap-1 rounded-control border border-border bg-sunken p-1 ${fill ? '' : 'w-fit'} ${wrap ? 'flex-wrap' : 'hide-scrollbar overflow-x-auto'}`}>
         {options.map((option) => (
           <label
             key={option.value}
