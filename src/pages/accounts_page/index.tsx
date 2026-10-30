@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { Link } from 'react-router';
 import AuthCard from '../../components/auth_card';
+import authApi from '../../config/auth_api';
 import useGet from '../../hooks/useGet';
 import type DeviceSession from '../../types/device_session';
 import Button from '../../ui/button';
@@ -10,10 +11,11 @@ import SkeletonList from '../../components/skeleton_list';
 
 /** Every account signed in on this browser: switch between them, sign out of one, add one, or sign out of all. */
 export default function AccountsPage() {
-  const { data: accounts = [], loading, update } = useGet<DeviceSession[]>('/multi-session/list-device-sessions', { baseURL: '/api/auth' });
+  const { data: accounts = [], loading, update } = useGet<DeviceSession[]>('/multi-session/list-device-sessions', { baseURL: authApi.defaults.baseURL });
 
   return (
     <AuthCard
+      back
       title="Accounts on this browser"
       subtitle="Stay signed in to several accounts and switch without typing passwords again."
       footer={

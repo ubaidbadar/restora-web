@@ -1,6 +1,10 @@
+import { ArrowLeft } from 'lucide-react';
 import { type ReactNode } from 'react';
+import { Link } from 'react-router';
 import AUTH_HIGHLIGHTS from '../constants/auth_highlights';
 import AuthArt from '../icons/auth_art';
+import useAuthStore from '../store/auth_store';
+import Button from '../ui/button';
 import BrandMark from './brand_mark';
 
 interface AuthCardProps {
@@ -11,13 +15,16 @@ interface AuthCardProps {
   footer?: ReactNode;
   /** A small drawing above the title, for screens that tell rather than ask (an email sent, an invitation). */
   art?: ReactNode;
+  /** A way back to the app, for screens opened from inside it (accounts, restaurants). Shown only to someone working somewhere. */
+  back?: boolean;
 }
 
 /**
  * The screens before the app itself: sign in, sign up and password reset.
  * One white page. Wide screens show the Restora drawing beside the form, which sits in a card; phones get just the logo and the form.
  */
-export default function AuthCard({ title, subtitle, children, footer, art }: AuthCardProps) {
+export default function AuthCard({ title, subtitle, children, footer, art, back = false }: AuthCardProps) {
+  const inApp = useAuthStore((state) => Boolean(state.me?.workplace));
   return (
     <div className="flex min-h-dvh bg-surface font-body text-ink">
       <aside className="hidden flex-1 text-center shrink-0 flex-col justify-between gap-8 p-10 lg:flex xl:p-14">
@@ -37,6 +44,11 @@ export default function AuthCard({ title, subtitle, children, footer, art }: Aut
 
       <main className="flex flex-1 flex-col items-center px-4 py-10 sm:px-8 lg:justify-center">
         <div className="flex w-full max-w-md flex-col gap-6">
+          {back && inApp && (
+            <Button as={Link} to="/" variant="ghost" size="sm" icon={ArrowLeft} className="-ms-2.5 -mb-2 min-h-11 self-start text-sm text-muted">
+              Back to the app
+            </Button>
+          )}
           <div className="lg:hidden">
             <BrandMark />
           </div>

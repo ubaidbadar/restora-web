@@ -15,6 +15,7 @@ export default function RestaurantsPage() {
 
   return (
     <AuthCard
+      back
       title={empty ? 'Welcome to Restora' : 'Your restaurants'}
       subtitle={empty ? 'Create your restaurant, or open the invitation link your restaurant sent you.' : 'Pick where to work. You can switch any time from the menu.'}
       footer={<SignedInAs />}
