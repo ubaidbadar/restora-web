@@ -135,7 +135,7 @@ describe('New order (desktop)', () => {
     expect(await screen.findByText('Enter the table')).toBeTruthy();
     fireEvent.change(screen.getByLabelText(/Table/), { target: { value: '4' } });
 
-    pick(/^Paid$/);
+    pick(/^Paid now$/);
     placeOrder();
     expect(await screen.findByText('Pick how the customer paid')).toBeTruthy();
     expect(mocked.post).not.toHaveBeenCalled();
@@ -150,8 +150,8 @@ describe('New order (desktop)', () => {
   it('warns at once that khata needs a customer', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
-    pick(/Add to khata/);
-    expect(screen.getByText('Khata needs a customer: pick one above.')).toBeTruthy();
+    pick(/^Khata/);
+    expect(screen.getByText('Khata needs a customer: pick one at the top.')).toBeTruthy();
   });
 
   it('finds a customer by name, shows what they owe, and sends them with the order', async () => {
@@ -288,13 +288,13 @@ describe('New order (phone)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add Chicken Karahi' }));
     fireEvent.click(screen.getByRole('button', { name: /View order/ }));
     pick(/Delivery/);
-    pick(/Add to khata/);
+    pick(/^Khata/);
     // Close (the backdrop), then open again.
     fireEvent.click(sheet().parentElement!);
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull(), { timeout: 1000 });
     fireEvent.click(screen.getByRole('button', { name: /View order/ }));
     expect((screen.getByRole('radio', { name: /Delivery/ }) as HTMLInputElement).checked).toBe(true);
-    expect((screen.getByRole('radio', { name: /Add to khata/ }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole('radio', { name: /^Khata/ }) as HTMLInputElement).checked).toBe(true);
   });
 
   it('places the order from inside the sheet', async () => {

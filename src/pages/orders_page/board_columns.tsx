@@ -1,4 +1,4 @@
-import Tabs from '../../ui/tabs';
+import Chips from '../../ui/chips';
 import BOARD_STATUSES from '../../constants/board_statuses';
 import STATUS_LABELS from '../../constants/status_labels';
 import { useSearchParams } from 'react-router';
@@ -53,7 +53,7 @@ export default function BoardColumns({ orders, onOrderUpdated }: BoardColumnsPro
 
   return (
     <>
-      {!xl && <Tabs name="status" label="Order status" options={tabs} value={status} onChange={setStatus} className="mb-3" />}
+      {!xl && <Chips name="status" label="Order status" options={tabs} value={status} onChange={setStatus} className="mb-3" />}
       {xl && (status === 'cancelled' || cancelled.length > 0) && (
         <div className="-mt-2 mb-3 flex justify-end">
           {status === 'cancelled' ? (

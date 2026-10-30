@@ -1,7 +1,6 @@
 import { Plus } from 'lucide-react';
 import { Link } from 'react-router';
 import AuthCard from '../../components/auth_card';
-import BackButton from '../../components/back_button';
 import apiOrigin from '../../constants/api_origin';
 import useGet from '../../hooks/useGet';
 import type DeviceSession from '../../types/device_session';
@@ -16,7 +15,7 @@ export default function AccountsPage() {
 
   return (
     <AuthCard
-      back={<BackButton />}
+      back
       title="Accounts on this browser"
       subtitle="Stay signed in to several accounts and switch without typing passwords again."
       footer={
@@ -27,7 +26,7 @@ export default function AccountsPage() {
     >
       <div className="flex flex-col gap-3">
         {loading && <SkeletonList rows={2} />}
-        <ul className="flex flex-col gap-2" aria-label="Signed-in accounts">
+        <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface" aria-label="Signed-in accounts">
           {accounts.map((account) => (
             <AccountRow
               key={account.session.token}

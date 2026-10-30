@@ -19,7 +19,7 @@ export default function UserMenuDropdown({ compact, terminal, trigger }: UserMen
   const items = terminal
     ? [{ label: 'Lock the terminal', icon: Lock, onClick: () => void lockTerminal() }]
     : [
-        { label: 'Account settings', icon: UserCog, onClick: () => navigate('/settings?tab=account') },
+        { label: 'Account settings', icon: UserCog, onClick: () => navigate('/settings/account') },
         { label: 'Switch account', icon: Users, onClick: () => navigate('/accounts') },
         { label: 'Restaurants', icon: Store, onClick: () => navigate('/restaurants') },
         { label: 'Sign out of all accounts', icon: LogOut, danger: true, onClick: () => void signOut() },

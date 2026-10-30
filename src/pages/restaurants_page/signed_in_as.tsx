@@ -6,8 +6,11 @@ import getAxiosMessage from '../../utils/get_axios_message';
 import signOut from '../../utils/sign_out';
 import toast from '../../utils/toast';
 
-/** "Signed in as …. Sign out · Delete account" under the card. */
-export default function SignedInAs() {
+/**
+ * "Signed in as …. Sign out" under the card, with "Delete account" for someone who works nowhere yet: anyone else
+ * deletes it from Settings › My account.
+ */
+export default function SignedInAs({ canDelete }: { canDelete: boolean }) {
   const email = useAuthStore((state) => state.me?.user.email);
 
   const deleteAccount = () =>
@@ -25,8 +28,8 @@ export default function SignedInAs() {
       <Button variant="primaryLink" onClick={() => void signOut()}>
         Sign out
       </Button>
-      <span>·</span>
-      <AlertModal
+      {canDelete && <span>·</span>}
+      {canDelete && <AlertModal
         title="Delete your account?"
         description="Your profile and all sessions will be deleted permanently. If you own an active restaurant, you must transfer ownership or delete it first."
         confirmText="Delete account"
@@ -37,7 +40,7 @@ export default function SignedInAs() {
             Delete account
           </Button>
         )}
-      />
+      />}
     </span>
   );
 }

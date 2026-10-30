@@ -4,6 +4,7 @@ import api from '../../config/api';
 import Avatar from '../../ui/avatar';
 import Badge from '../../ui/badge';
 import Button from '../../ui/button';
+import ListRow from '../../ui/list_row';
 import formatDate from '../../utils/format_date';
 import initialsOf from '../../utils/initials_of';
 import toast from '../../utils/toast';
@@ -40,25 +41,18 @@ export default function RestaurantRow({ restaurant }: RestaurantRowProps) {
       .catch((err) => toast.error(err.response?.data?.message || 'Could not keep the restaurant'));
   };
 
+  const status =
+    restaurant.status === 'deleting' && restaurant.deleteAfter ? <span className="text-danger-700">Will be deleted on {formatDate(restaurant.deleteAfter)}</span> : restaurant.isOwner ? 'Owner' : undefined;
+
   return (
-    <li className="flex items-center justify-between gap-3 rounded-card border border-border p-3">
-      <span className="flex min-w-0 items-center gap-3">
-        <Avatar src={restaurant.logo} initials={initialsOf(restaurant.name)} alt="" />
-        <span className="min-w-0">
-          <span dir="auto" className="block truncate font-semibold text-ink">{restaurant.name}</span>
-          {restaurant.isOwner && <span className="block text-sm text-muted">Owner</span>}
-          {restaurant.status === 'deleting' && restaurant.deleteAfter && <span className="mt-1 block text-xs text-danger-700">Will be deleted on {formatDate(restaurant.deleteAfter)}</span>}
-        </span>
-      </span>
-      {restaurant.status === 'suspended' ? (
-        <Badge variant="warning">Suspended</Badge>
-      ) : restaurant.status === 'deleting' ? (
-        <Button variant="outline" onClick={keepIt}>Keep it</Button>
-      ) : current ? (
-        <Button variant="secondary" onClick={() => navigate('/', { replace: true })}>Continue</Button>
-      ) : (
-        <Button onClick={openRestaurant}>Open</Button>
-      )}
-    </li>
+    <ListRow
+      leading={<Avatar src={restaurant.logo} initials={initialsOf(restaurant.name)} alt="" />}
+      title={<bdi dir="auto">{restaurant.name}</bdi>}
+      subtitle={status}
+      end={restaurant.status === 'suspended' ? <Badge variant="warning">Suspended</Badge> : current ? <Badge variant="success" pill>Current</Badge> : undefined}
+      // Suspended or closing: it can't be opened. The owner can keep a closing one.
+      onClick={restaurant.status ? undefined : current ? () => navigate('/', { replace: true }) : openRestaurant}
+      actions={restaurant.status === 'deleting' && <Button variant="outline" size="sm" onClick={keepIt}>Keep it</Button>}
+    />
   );
 }

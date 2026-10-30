@@ -7,7 +7,7 @@ import STATUS_LABELS from '../../../constants/status_labels';
 import useGet from '../../../hooks/useGet';
 import type OrderHistory from '../../../types/order_history';
 import type OrderStatus from '../../../types/order_status';
-import Tabs from '../../../ui/tabs';
+import Chips from '../../../ui/chips';
 import formatRs from '../../../utils/format_rs';
 import withParam from '../../../utils/with_param';
 import HistoryOrderDrawer from './history_order_drawer';
@@ -53,7 +53,7 @@ export default function HistoryResults({ from, to, q, status, type }: HistoryRes
           <div className="flex gap-1"><dt className="sr-only">Cancelled</dt><dd><span className="font-semibold text-ink">{cancelled}</span> cancelled</dd></div>
         </dl>
       </section>
-      <Tabs name="status" label="Status" options={statusTabs} value={status} onChange={(value) => setParams((prev) => withParam(prev, 'status', value, 'all'), { replace: true })} />
+      <Chips name="status" label="Status" options={statusTabs} value={status} onChange={(value) => setParams((prev) => withParam(prev, 'status', value, 'all'), { replace: true })} />
       {data.orders.length === 0 ? (
         <EmptyState icon={ClipboardList} title="No orders found" text={summary.count ? 'Try another status, type or search.' : 'Pick other days to see their orders.'} />
       ) : (
