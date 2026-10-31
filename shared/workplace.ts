@@ -18,4 +18,9 @@ export default interface Workplace {
   branches: { _id: string; name: string }[];
   /** The restaurant's settings: every screen that needs tax or templates reads them from here (name and logo are on `restaurant`). */
   settings: Omit<RestaurantSettings, 'restaurantName' | 'logo'>;
+  /**
+   * Guests' calls from the table QR page in this branch not yet seen to, oldest first (only for those who see the
+   * tables; left out when there are none). The live stream's `call.*` events keep it current.
+   */
+  calls?: { _id: string; tableId: string; tableName: string; type: 'waiter' | 'bill'; createdAt: string }[];
 }
