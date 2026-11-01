@@ -28,6 +28,8 @@ export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'rec
     const receipt = workplace?.settings.receipt;
     const header = {
       restaurant: workplace?.restaurant.name ?? '',
+      // The agent downloads it once and keeps it, so receipts printed offline have it too.
+      logo: workplace?.restaurant.logo?.startsWith('https://') ? workplace.restaurant.logo : undefined,
       branch: branch ? [branch.name, branch.address, branch.area, branch.city].filter(Boolean).join(', ') : undefined,
       phone: branch?.phone,
       ntn: receipt?.ntn,
