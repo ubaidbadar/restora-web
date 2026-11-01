@@ -1,4 +1,4 @@
-import { CalendarDays, Plus } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import Can from '../../components/can';
 import api from '../../config/api';
 import EmptyState from '../../components/empty_state';
@@ -8,7 +8,6 @@ import ReservationFields from '../../components/reservation_fields';
 import SkeletonList from '../../components/skeleton_list';
 import useGet from '../../hooks/useGet';
 import type Reservation from '../../types/reservation';
-import Button from '../../ui/button';
 import dayKey from '../../utils/day_key';
 import pktToIso from '../../utils/pkt_to_iso';
 import toast from '../../utils/toast';

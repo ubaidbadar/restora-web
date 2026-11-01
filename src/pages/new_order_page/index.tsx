@@ -1,10 +1,8 @@
 import type { KeyboardEvent } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import IconButton from '../../ui/icon_button';
 import DockedSheet from '../../ui/bottom_sheet/docked';
 import ORDER_FORM from '../../constants/order_form';
 import CartBar from './cart_bar';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import useAuthStore from '../../store/auth_store';
 import useRestaurantSettings from '../../hooks/useRestaurantSettings';
 import lockTerminal from '../../utils/lock_terminal';

@@ -7,28 +7,23 @@ import BranchBreakdown from './branch_breakdown';
 import PaymentSplit from './payment_split';
 import SlippingList from './slipping_list';
 import TypeBreakdown from './type_breakdown';
-import HomeFilter from './home_filter';
 import dayKey from '../../utils/day_key';
 
-type DashboardScope = 'branch' | 'all';
-
 interface DashboardNumbersProps {
-  /** May see all branches together (`reports:view_all_branches`) and the restaurant has more than one. */
-  allowedAll: boolean;
+  /** YYYY-MM-DD, both days included. */
+  from: string;
+  to: string;
+  /** `all` shows every branch together, with each branch's share. */
+  scope: 'branch' | 'all';
 }
 
-/** The numbers of the picked days (today at first). The scope and the days are the request's own `scope`, `from` and `to` params. */
-export default function DashboardNumbers({ allowedAll }: DashboardNumbersProps) {
-  const { data, loading, options, get } = useGet<DashboardAnswer>('/dashboard', { params: { scope: 'branch', from: dayKey(), to: dayKey() } });
-  const { scope, from, to }: { scope: DashboardScope; from: string; to: string } = options.params;
+/** The numbers of the picked days and branch scope, which the page above reads from the address and passes in. */
+export default function DashboardNumbers({ from, to, scope }: DashboardNumbersProps) {
+  const { data, loading } = useGet<DashboardAnswer>('/dashboard', { params: { scope, from, to } });
   const isToday = from === to && to === dayKey();
-  const filter = (
-    <HomeFilter from={from} to={to} scope={scope} allowedAll={allowedAll} onChange={(params) => get({ params })} />
-  );
   if (!data || loading) {
     return (
       <div role="status" aria-label="Loading the numbers" className="flex flex-col gap-4 lg:gap-5">
-        {filter}
         <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card bg-border shadow-card lg:grid-cols-4">
           {[1, 2, 3, 4].map((stat) => (
             <div key={stat} className="flex flex-col gap-2 bg-surface px-4 py-3.5 sm:px-5 sm:py-4">
@@ -48,7 +43,6 @@ export default function DashboardNumbers({ allowedAll }: DashboardNumbersProps) 
 
   return (
     <div className="flex flex-col gap-4 lg:gap-5">
-      {filter}
       <section aria-label="Numbers" className="grid grid-cols-2 gap-px overflow-hidden rounded-card bg-border shadow-card lg:grid-cols-4">
         <StatCard label={isToday ? 'Sales today' : 'Sales'} value={formatRs(stats.sales)} hint={stats.orderCount === 1 ? '1 order' : `${stats.orderCount} orders`} />
         <StatCard label="Average order" value={formatRs(stats.orderCount ? stats.sales / stats.orderCount : 0)} />
