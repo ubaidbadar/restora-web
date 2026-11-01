@@ -7,7 +7,7 @@ import Chips from '../../../ui/chips';
 import dayKey from '../../../utils/day_key';
 import dayPresets from '../../../utils/day_presets';
 import filterSchema from './filter_schema';
-import PickDays from './pick_days';
+import PickDays from '../../../components/pick_days';
 import IconButton from '../../../ui/icon_button';
 
 const VIEWS = [
