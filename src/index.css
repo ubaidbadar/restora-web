@@ -39,6 +39,17 @@
   --color-hero-start: #EEF2FF;     /* showcase hero tint (demo page only) */
   --color-hero-mid: #F6F7F9;
 
+  /* The restaurant's theme (Settings → Appearance): the deep colour of the desktop sidebar and the light accent on it.
+     The themes below change these and the brand colours above; the theme cards draw from the --color-preview-* ones. */
+  --color-sidebar: #1E1B4B;
+  --color-sidebar-accent: #A5B4FC;
+  --color-theme-light: #4F46E5;   /* a theme's buttons in light mode, for its card */
+  --color-theme-dark: #818CF8;    /* … and in dark mode */
+  --color-preview-light: #F6F7F9;
+  --color-preview-light-line: #E5E7EB;
+  --color-preview-dark: #0B0F19;
+  --color-preview-dark-line: #2A3347;
+
   /* Status: each role has a tint (50/100), an edge (200), a graphic tone (500) and text tones (600–800).
      Meaning is always repeated by a label or icon, never carried by color alone. */
   --color-danger-50: #FCEFEC;
@@ -91,11 +102,13 @@
   --radius-chip: 0.25rem;    /* checkboxes, tiny markers */
 
   /* Elevation: borders separate; shadows only mean "floating above the page".
-     shadow-card is a hairline edge drawn as a shadow, so it never shifts layout. */
-  --shadow-card: 0 0 0 1px var(--color-border), 0 1px 2px rgb(15 23 42 / 0.04);
-  --shadow-lg: 0 0 0 1px rgb(15 23 42 / 0.06), 0 10px 28px -8px rgb(15 23 42 / 0.18), 0 2px 6px rgb(15 23 42 / 0.06);
-  --shadow-sheet: 0 -10px 30px -8px rgb(15 23 42 / 0.2);
-  --shadow-fab: 0 6px 16px -4px rgb(79 70 229 / 0.45), 0 2px 4px rgb(79 70 229 / 0.2); /* the round New order button, lifted in the brand colour */
+     shadow-card is a hairline edge drawn as a shadow, so it never shifts layout.
+     Built from color tokens (never a fixed color), so they follow the theme and dark mode. */
+  --color-shadow: #0F172A;   /* what shadows are made of; black in dark mode */
+  --shadow-card: 0 0 0 1px var(--color-border), 0 1px 2px color-mix(in srgb, var(--color-shadow) 4%, transparent);
+  --shadow-lg: 0 0 0 1px color-mix(in srgb, var(--color-shadow) 6%, transparent), 0 10px 28px -8px color-mix(in srgb, var(--color-shadow) 18%, transparent), 0 2px 6px color-mix(in srgb, var(--color-shadow) 6%, transparent);
+  --shadow-sheet: 0 -10px 30px -8px color-mix(in srgb, var(--color-shadow) 20%, transparent);
+  --shadow-fab: 0 6px 16px -4px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 2px 4px color-mix(in srgb, var(--color-primary) 20%, transparent); /* the round New order button, lifted in the brand colour */
 
   /* Typography: system fonts only (nothing is downloaded), with Noto fallbacks for other scripts. */
   --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
@@ -155,6 +168,121 @@
   --animate-lid: lid 1.6s var(--ease-emphasized) infinite; /* the loader's cloche lifting its lid (as index.html's boot screen) */
   --animate-fade-in-late: fade-in 300ms 400ms both;   /* loaders: a quick load never flashes them */
   --animate-new-order: new-order 1.4s ease-out 3;      /* a new order's card pulses a few times, then keeps its outline */
+}
+
+/* Themes and dark mode (Settings → Appearance, utils/apply_appearance). <html> carries data-theme (indigo is the
+   @theme above), data-mode (light | dark: "Follow device" is worked out to one of them) and data-sidebar (theme | plain).
+   Every theme has a light and a dark side; status colours (danger, success, warning, info) never change with the theme.
+   Dark is for screens only: printing always uses the light colours. Text roles stay at 4.5:1 or more on surface and
+   canvas, and on-primary on primary, in every theme and mode. */
+/* A theme card (Settings → Appearance) draws its own theme inside any other one: indigo needs its preview colours back too. */
+[data-theme='indigo'] {
+  --color-sidebar: #1E1B4B; --color-sidebar-accent: #A5B4FC; --color-theme-light: #4F46E5; --color-theme-dark: #818CF8;
+}
+[data-theme='saffron'] {
+  --color-primary: #C2410C; --color-primary-hover: #9A3412; --color-primary-soft: #FFF7ED; --color-focus: #C2410C;
+  --color-accent: #C2410C; --color-accent-text: #9A3412; --color-accent-soft: #FFF7ED; --color-accent-alt: #9A3412;
+  --color-hero-start: #FFF7ED; --color-canvas: #FAF8F5; --color-hero-mid: #FAF8F5;
+  --color-sidebar: #3B1206; --color-sidebar-accent: #FDBA74; --color-theme-light: #C2410C; --color-theme-dark: #FB923C;
+}
+[data-theme='emerald'] {
+  --color-primary: #047857; --color-primary-hover: #065F46; --color-primary-soft: #ECFDF5; --color-focus: #047857;
+  --color-accent: #047857; --color-accent-text: #065F46; --color-accent-soft: #ECFDF5; --color-accent-alt: #065F46;
+  --color-hero-start: #ECFDF5; --color-canvas: #F5F8F6; --color-hero-mid: #F5F8F6;
+  --color-sidebar: #022C22; --color-sidebar-accent: #6EE7B7; --color-theme-light: #047857; --color-theme-dark: #34D399;
+}
+[data-theme='ocean'] {
+  --color-primary: #0E7490; --color-primary-hover: #155E75; --color-primary-soft: #ECFEFF; --color-focus: #0E7490;
+  --color-accent: #0E7490; --color-accent-text: #155E75; --color-accent-soft: #ECFEFF; --color-accent-alt: #155E75;
+  --color-hero-start: #ECFEFF; --color-canvas: #F5F8F9; --color-hero-mid: #F5F8F9;
+  --color-sidebar: #082F3E; --color-sidebar-accent: #67E8F9; --color-theme-light: #0E7490; --color-theme-dark: #22D3EE;
+}
+[data-theme='bordeaux'] {
+  --color-primary: #9F1239; --color-primary-hover: #881337; --color-primary-soft: #FFF1F2; --color-focus: #9F1239;
+  --color-accent: #9F1239; --color-accent-text: #881337; --color-accent-soft: #FFF1F2; --color-accent-alt: #881337;
+  --color-hero-start: #FFF1F2; --color-canvas: #FAF7F7; --color-hero-mid: #FAF7F7;
+  --color-sidebar: #3F0716; --color-sidebar-accent: #FDA4AF; --color-theme-light: #9F1239; --color-theme-dark: #FB7185;
+}
+[data-theme='onyx'] {
+  --color-primary: #B45309; --color-primary-hover: #92400E; --color-primary-soft: #FFFBEB; --color-focus: #B45309;
+  --color-accent: #B45309; --color-accent-text: #92400E; --color-accent-soft: #FFFBEB; --color-accent-alt: #92400E;
+  --color-hero-start: #FFFBEB; --color-canvas: #F7F7F5; --color-hero-mid: #F7F7F5;
+  --color-sidebar: #111111; --color-sidebar-accent: #FCD34D; --color-theme-light: #B45309; --color-theme-dark: #FBBF24;
+}
+
+/* Dark: near-black greys with a hint of the theme's colour, and the theme's colour lighter, with its deep colour as text
+   on it. Same contrast as light: text tones (600–800) get lighter, tints (50–200) get darker. */
+@media screen {
+  :root[data-mode='dark'] {
+    color-scheme: dark;
+    --color-canvas: color-mix(in srgb, #0B0F19 92%, var(--color-sidebar));
+    --color-surface: color-mix(in srgb, #151B28 90%, var(--color-sidebar));
+    --color-sunken: color-mix(in srgb, #1C2333 90%, var(--color-sidebar));
+    --color-hover: color-mix(in srgb, #252D40 90%, var(--color-sidebar));
+    --color-scrim: rgb(0 0 0 / 0.6);
+    --color-shadow: #000000;
+    --color-ink: #F1F5F9;
+    --color-body: #CBD5E1;
+    --color-muted: #9AA4B5;
+    --color-subtle: #8B95A7;
+    --color-border: color-mix(in srgb, #2A3347 88%, var(--color-sidebar));
+    --color-border-strong: #6B7486;
+    --color-primary: #818CF8;
+    --color-primary-hover: #A5B4FC;
+    --color-primary-soft: color-mix(in srgb, var(--color-primary) 18%, #151B28);
+    --color-on-primary: var(--color-sidebar);
+    --color-focus: var(--color-primary-hover);
+    --color-accent: var(--color-primary);
+    --color-accent-text: var(--color-primary-hover);
+    --color-accent-soft: var(--color-primary-soft);
+    --color-accent-alt: var(--color-primary-hover);
+    --color-on-accent: var(--color-sidebar);
+    --color-hero-start: color-mix(in srgb, var(--color-primary) 12%, #0B0F19);
+    --color-hero-mid: var(--color-canvas);
+    --color-danger-50: #2B1512; --color-danger-100: #3B1C17; --color-danger-200: #5C2A21; --color-danger-300: #8A3E30;
+    --color-danger-500: #E0664F; --color-danger-600: #EA7A64; --color-danger-700: #F29A87; --color-danger-800: #F7B9AC;
+    --color-success-50: #0F2219; --color-success-100: #143024; --color-success-200: #1E4A35;
+    --color-success-500: #3FAE6E; --color-success-600: #5BC285; --color-success-700: #7FD3A0; --color-success-800: #A6E2BD;
+    --color-warning-50: #2A2108; --color-warning-100: #3A2C0A; --color-warning-200: #5A4410;
+    --color-warning-500: #D69A1F; --color-warning-600: #E3AD3F; --color-warning-700: #EDC065; --color-warning-800: #F5D592;
+    --color-info-50: #0F1B2B; --color-info-100: #15253A; --color-info-200: #1F3755;
+    --color-info-500: #5B8FCB; --color-info-600: #75A3D6; --color-info-700: #94B9E2; --color-info-800: #B6CFEC;
+    --color-art-sand: #3A3122; --color-art-rice: #E8C46E; --color-art-saffron: #E39B2D; --color-art-chili: #D9614A;
+    --color-art-leaf: #4FAE72; --color-art-chat: #1F3B2B;
+  }
+  :root[data-theme='saffron'][data-mode='dark'] { --color-primary: #FB923C; --color-primary-hover: #FDBA74; }
+  :root[data-theme='emerald'][data-mode='dark'] { --color-primary: #34D399; --color-primary-hover: #6EE7B7; }
+  :root[data-theme='ocean'][data-mode='dark'] { --color-primary: #22D3EE; --color-primary-hover: #67E8F9; }
+  :root[data-theme='bordeaux'][data-mode='dark'] { --color-primary: #FB7185; --color-primary-hover: #FDA4AF; }
+  :root[data-theme='onyx'][data-mode='dark'] { --color-primary: #FBBF24; --color-primary-hover: #FCD34D; }
+}
+
+/* The desktop sidebar in the theme's deep colour (data-sidebar="theme"): white text, the light accent for what is picked. */
+:root[data-sidebar='theme'] .sidebar-brand {
+  --color-surface: var(--color-sidebar);
+  --color-ink: #FFFFFF;
+  --color-body: rgb(255 255 255 / 0.82);
+  --color-muted: rgb(255 255 255 / 0.64);
+  --color-subtle: rgb(255 255 255 / 0.5);
+  --color-border: rgb(255 255 255 / 0.1);
+  --color-hover: rgb(255 255 255 / 0.07);
+  --color-sunken: rgb(255 255 255 / 0.08);
+  --color-primary: var(--color-sidebar-accent);
+  --color-primary-hover: #FFFFFF;
+  --color-primary-soft: rgb(255 255 255 / 0.1);
+  --color-on-primary: var(--color-sidebar);
+  --color-accent-text: var(--color-sidebar-accent);
+  --color-focus: var(--color-sidebar-accent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-sidebar) 86%, var(--color-theme-light)) 0%, var(--color-sidebar) 55%);
+  border-color: transparent;
+}
+@media screen {
+  :root[data-sidebar='theme'][data-mode='dark'] .sidebar-brand {
+    --color-sidebar-dark: color-mix(in srgb, var(--color-sidebar) 70%, #05070C);
+    --color-surface: var(--color-sidebar-dark);
+    background: var(--color-sidebar-dark);
+    border-color: rgb(255 255 255 / 0.06);
+  }
 }
 
 /* Spacing convention (Tailwind's 4px scale): page gutter 4 / sm:6 / lg:8, page sections gap-6,

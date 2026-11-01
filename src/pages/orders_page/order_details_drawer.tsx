@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type Order from '../../types/order';
 import Drawer from '../../ui/drawer/modal';
-import OrderDetails from '../../components/order_details';
+import OrderView from '../../components/order_view';
 import PayOrderSheet from './pay_order_sheet';
 
 interface OrderDetailsDrawerProps {
@@ -33,7 +33,7 @@ export default function OrderDetailsDrawer({ order, payable = false, onOrderUpda
           : undefined
       }
     >
-      <OrderDetails order={order} />
+      <OrderView order={order} />
     </Drawer>
   );
 }
