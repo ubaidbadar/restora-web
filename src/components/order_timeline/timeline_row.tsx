@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type AuditEntry from '../../types/audit_entry';
 import formatDate from '../../utils/format_date';
 import formatTime from '../../utils/format_time';
 
@@ -13,16 +14,15 @@ const TONES = {
 interface TimelineRowProps {
   tone: keyof typeof TONES;
   title: string;
-  by?: string;
+  by?: Pick<AuditEntry['actor'], 'name' | 'email' | 'was' | 'via'>;
   at: string;
   /** The day the order was placed: a row on another day also shows its date. */
   orderAt?: string;
-  onPos?: boolean;
   children?: ReactNode;
 }
 
 /** One step of an order's history: a dot on the line, what happened, who and when, then the details. */
-export default function TimelineRow({ tone, title, by, at, orderAt, onPos, children }: TimelineRowProps) {
+export default function TimelineRow({ tone, title, by, at, orderAt, children }: TimelineRowProps) {
   const otherDay = orderAt && formatDate(orderAt) !== formatDate(at);
   const when = [otherDay && formatDate(at), formatTime(at)].filter(Boolean).join(', ');
   return (
@@ -35,10 +35,16 @@ export default function TimelineRow({ tone, title, by, at, orderAt, onPos, child
           <span className="font-semibold text-ink">{title}</span>
           <span className="text-xs text-muted tabular-nums">{when}</span>
         </p>
-        {by && (
+        {by?.name && (
           <p className="-mt-1 text-xs text-muted">
-            <bdi>{by}</bdi>
-            {onPos && ' · on a POS terminal'}
+            <bdi className="text-body">{by.name}</bdi>
+            {by.was && (
+              <>
+                {' '}(was <bdi>{by.was}</bdi>)
+              </>
+            )}
+            {by.email && <span className="break-all"> · {by.email}</span>}
+            {by.via === 'pos' && ' · on a POS terminal'}
           </p>
         )}
         {children && <div className="text-body">{children}</div>}
