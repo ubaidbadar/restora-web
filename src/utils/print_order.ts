@@ -1,3 +1,4 @@
+import CANCEL_REASON_LABELS from '../constants/cancel_reason_labels';
 import ORDER_TYPE_LABELS from '../constants/order_type_labels';
 import PAYMENT_LABELS from '../constants/payment_labels';
 import useAuthStore from '../store/auth_store';
@@ -47,6 +48,11 @@ const STYLES = `
   .kitchen td { padding-top: 2mm; font-size: 15px; }
   .kitchen small { font-size: 13px; color: #000; }
   .kitchen .qty { width: 10mm; font-weight: 700; }
+  .change { font-size: 17px; font-weight: 800; text-align: center; padding: 2mm 0; border: 2px solid #000; }
+  .cancel-line { background: #000; color: #fff; font-weight: 800; }
+  .cancel-line td, .cancel-line small { color: #fff; }
+  .new-line { font-weight: 800; }
+  .cancel-reason { font-weight: 700; white-space: pre-wrap; overflow-wrap: anywhere; }
 `;
 
 /**
@@ -59,6 +65,10 @@ export default function printOrder(order: Order, kind: 'kitchen' | 'receipt') {
   const branch = workplace?.branch;
   const receipt = settings?.receipt ?? {};
   const isReceipt = kind === 'receipt';
+  const cancelled = !isReceipt && (order.status === 'cancelled' || Boolean(order.cancellation));
+  const changed = !isReceipt && /\bCHANGED\b/.test(String(order.dailyToken));
+  const cancellation = order.cancellation;
+  const cancelReason = cancellation ? [cancellation.reason && (CANCEL_REASON_LABELS[cancellation.reason] ?? cancellation.reason), cancellation.note].filter(Boolean).join(' — ') : '';
   const where = [ORDER_TYPE_LABELS[order.type], order.tableName && `Table ${order.tableName}`].filter(Boolean).join(' · ');
   const address = order.type === 'delivery' ? [order.area, order.address].filter(Boolean).join(', ') : '';
   const join = (parts: (string | undefined)[], separator: string) => parts.filter(Boolean).join(separator);
@@ -89,7 +99,7 @@ export default function printOrder(order: Order, kind: 'kitchen' | 'receipt') {
       const extra = [lineDetails(item) && `<small>${escape(lineDetails(item))}</small>`, item.note && `<small class="note">“${escape(item.note)}”</small>`].filter(Boolean).join('');
       return isReceipt
         ? `<tr><td>${escape(item.name)}${extra}</td><td class="num">${item.qty}</td><td class="num">${amount.format(item.price)}</td><td class="num">${amount.format(item.price * item.qty)}</td></tr>`
-        : `<tr><td class="qty">${item.qty}×</td><td>${escape(item.name)}${extra}</td></tr>`;
+        : `<tr class="${item.name.startsWith('CANCEL ') ? 'cancel-line' : item.name.startsWith('NEW ') ? 'new-line' : ''}"><td class="qty">${item.qty}×</td><td>${escape(item.name)}${extra}</td></tr>`;
     })
     .join('');
   const columns = isReceipt ? '<th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th>' : '<th class="qty">Qty</th><th>Item</th>';
