@@ -1,6 +1,5 @@
 import { Plus } from 'lucide-react';
 import { Link } from 'react-router';
-import BrandMark from '../../components/brand_mark';
 import Can from '../../components/can';
 import NavItem from '../../components/nav_item';
 import useNavLinks from '../../hooks/useNavLinks';
