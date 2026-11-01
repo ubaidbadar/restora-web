@@ -2,11 +2,15 @@ import { useEffect, useRef, type HTMLAttributes, type KeyboardEvent, type ReactN
 import { createPortal } from 'react-dom';
 import type OverlayProps from '../types/overlay_props';
 
-// Where the panel sits (a phone's modal clear of the notch and the home indicator), and the offset it enters from (@starting-style) and leaves to (the 'close' state).
+// Where the panel sits, and the offset it enters from (@starting-style) and leaves to (the 'close' state). A modal is a
+// sheet sliding up from the bottom of a phone (clear of the notch) and a card fading in at the centre from `sm` up.
 const placements = {
-  center: { container: 'items-end justify-center p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-safe sm:items-center sm:p-6', enter: 'starting:scale-97 starting:opacity-0', exit: 'scale-97 opacity-0' },
+  modal: {
+    container: 'flex-col justify-end pt-[max(0.75rem,env(safe-area-inset-top))] sm:flex-row sm:items-center sm:justify-center sm:p-6',
+    enter: 'max-sm:starting:translate-y-full sm:starting:scale-97 sm:starting:opacity-0',
+    exit: 'max-sm:translate-y-full sm:scale-97 sm:opacity-0',
+  },
   right: { container: 'justify-end', enter: 'starting:translate-x-full', exit: 'translate-x-full' },
-  bottom: { container: 'flex-col justify-end', enter: 'starting:translate-y-full', exit: 'translate-y-full' },
 };
 
 interface OverlayPanelProps extends Pick<OverlayProps, 'state' | 'close'>, HTMLAttributes<HTMLDivElement> {
@@ -35,7 +39,7 @@ const getTabWrapTarget = (event: KeyboardEvent<HTMLElement>): HTMLElement | null
 };
 
 /**
- * Backdrop + dialog panel shared by Modal, Drawer and BottomSheet. Animated in CSS only: the enter
+ * Backdrop + dialog panel shared by Modal and Drawer. Animated in CSS only: the enter
  * transition starts from @starting-style, the exit plays during useShow's 'close' window.
  * Focus moves into the panel when it opens and Tab stays inside it; useShow returns focus to the opener on close.
  */

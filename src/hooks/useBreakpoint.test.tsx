@@ -25,15 +25,15 @@ beforeEach(() => {
 });
 
 describe('useBreakpoint', () => {
-  it('matches Tailwind md, lg and xl', () => {
+  it('matches Tailwind sm, md, lg and xl', () => {
     width = 375;
-    expect(renderHook(() => useBreakpoint()).result.current).toEqual({ md: false, lg: false, xl: false });
+    expect(renderHook(() => useBreakpoint()).result.current).toEqual({ sm: false, md: false, lg: false, xl: false });
     width = 800;
     resetBreakpoints();
-    expect(renderHook(() => useBreakpoint()).result.current).toEqual({ md: true, lg: false, xl: false });
+    expect(renderHook(() => useBreakpoint()).result.current).toEqual({ sm: true, md: true, lg: false, xl: false });
     width = 1300;
     resetBreakpoints();
-    expect(renderHook(() => useBreakpoint()).result.current).toEqual({ md: true, lg: true, xl: true });
+    expect(renderHook(() => useBreakpoint()).result.current).toEqual({ sm: true, md: true, lg: true, xl: true });
   });
 
   it('follows the window across a breakpoint, and keeps the same object within one', () => {
@@ -43,10 +43,10 @@ describe('useBreakpoint', () => {
     act(() => setWidth(400));
     expect(result.current).toBe(phone);
     act(() => setWidth(1100));
-    expect(result.current).toEqual({ md: true, lg: true, xl: false });
+    expect(result.current).toEqual({ sm: true, md: true, lg: true, xl: false });
   });
 
-  it('shares three listeners however many components use it', () => {
+  it('shares one listener however many components use it', () => {
     renderHook(() => [useBreakpoint(), useBreakpoint(), useBreakpoint()]);
     expect(listeners.size).toBe(1);
   });

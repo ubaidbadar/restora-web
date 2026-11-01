@@ -1,6 +1,7 @@
 import { SlidersHorizontal } from 'lucide-react';
+import { useId } from 'react';
 import { useSearchParams } from 'react-router';
-import FormDrawer from '../../components/form_drawer';
+import FilterOverlay from '../../components/filter_overlay';
 import PickDays from '../../components/pick_days';
 import Chips from '../../ui/chips';
 import IconButton from '../../ui/icon_button';
@@ -24,12 +25,13 @@ interface HomeFilterProps {
 }
 
 /**
- * The Filter button next to New order, as on Orders. It opens a drawer with the same quick picks of days (or From and
- * To) and, where allowed, all branches. What is picked lives in the address (`from`, `to`, `scope`); today and this
+ * The Filter button next to New order, as on Orders. It opens a sheet on a phone (a panel under the button on wider screens) with, where allowed, all branches on top, then the same quick picks of days (or From and
+ * To). What is picked lives in the address (`from`, `to`, `scope`); today and this
  * branch are left out of it.
  */
 export default function HomeFilter({ from, to, scope, allowedAll }: HomeFilterProps) {
   const [, setParams] = useSearchParams();
+  const id = useId();
   const today = dayKey();
   const presets = dayPresets();
   const preset = presets.find((preset) => preset.from === from && preset.to === to);
@@ -38,7 +40,8 @@ export default function HomeFilter({ from, to, scope, allowedAll }: HomeFilterPr
   const count = Number(days !== 'today') + Number(scope !== 'branch');
 
   return (
-    <FormDrawer
+    <FilterOverlay
+      anchorId={id}
       title="Show numbers for"
       schema={schema}
       defaultValues={{ days, from, to, scope }}
@@ -55,12 +58,12 @@ export default function HomeFilter({ from, to, scope, allowedAll }: HomeFilterPr
       }}
       fields={(form) => (
         <>
+          {allowedAll && <Tabs name="scope" label="Branches" options={SCOPES} value={scope} register={form.register} fill showLabel />}
           <Chips name="days" label="Days" options={dayOptions} value={days} register={form.register} wrap showLabel />
           <PickDays {...form} />
-          {allowedAll && <Tabs name="scope" label="Branches" options={SCOPES} value={scope} register={form.register} fill showLabel />}
         </>
       )}
-      component={({ open }) => <IconButton icon={SlidersHorizontal} variant="outline" onClick={open} aria-label={count ? `Filter, ${count} set` : 'Filter'} />}
+      component={({ open }) => <IconButton id={id} icon={SlidersHorizontal} variant="outline" onClick={open} aria-label={count ? `Filter, ${count} set` : 'Filter'} />}
     />
   );
 }

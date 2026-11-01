@@ -3,7 +3,7 @@ import api from '../../config/api';
 import PAYMENT_LABELS from '../../constants/payment_labels';
 import PAYMENT_METHODS from '../../constants/payment_methods';
 import type Order from '../../types/order';
-import BottomSheet from '../../ui/bottom_sheet/modal';
+import ModalOverlay from '../../ui/modal/modal';
 import Button from '../../ui/button';
 import calcTotals from '../../utils/calc_totals';
 import formatRs from '../../utils/format_rs';
@@ -25,8 +25,8 @@ export default function PayOrderSheet({ order, onOrderUpdated, className = '' }:
     calcTotals(order.items, order.discount, taxByPaymentMethod[method] ?? 0, order.deliveryFee).total;
 
   return (
-    <BottomSheet
-      label={`Record payment for order ${order.dailyToken}`}
+    <ModalOverlay
+      title={`Order #${order.dailyToken}${order.tableName ? ` · Table ${order.tableName}` : ''}`}
       component={({ open }) => (
         <Button variant="outline" icon={Banknote} className={className} aria-label={`Record payment for order ${order.dailyToken}`} onClick={open}>
           Pay
@@ -35,10 +35,6 @@ export default function PayOrderSheet({ order, onOrderUpdated, className = '' }:
     >
       {(close) => (
         <div className="flex flex-col gap-2">
-          <h2 className="text-heading text-ink">
-            Order #{order.dailyToken}
-            {order.tableName && ` · Table ${order.tableName}`}
-          </h2>
           <p className="mb-2 text-sm text-muted">How did the customer pay? Tax depends on it, so each way shows its own total.</p>
           {PAYMENT_METHODS.map((method) => (
             <Button
@@ -85,6 +81,6 @@ export default function PayOrderSheet({ order, onOrderUpdated, className = '' }:
           )}
         </div>
       )}
-    </BottomSheet>
+    </ModalOverlay>
   );
 }

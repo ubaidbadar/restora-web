@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from 'react';
-import DockedSheet from '../../ui/bottom_sheet/docked';
+import DockedSheet from '../../ui/docked_sheet';
 import ORDER_FORM from '../../constants/order_form';
 import CartBar from './cart_bar';
 import { useNavigate, useSearchParams } from 'react-router';
