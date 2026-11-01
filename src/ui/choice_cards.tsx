@@ -24,12 +24,12 @@ export default function ChoiceCards<T extends string>({ name, label, options, va
         {options.map(({ value: optionValue, label: optionLabel, icon: Icon, hint }) => (
           <label
             key={optionValue}
-            className="group relative flex min-h-16 cursor-pointer flex-col items-center justify-center gap-1 rounded-control border border-border bg-surface px-2 py-2.5 text-center transition-colors hover:border-border-strong has-checked:border-ink has-checked:bg-sunken has-checked:shadow-[inset_0_0_0_1px_var(--color-ink)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus"
+            className="group relative flex min-h-16 cursor-pointer flex-col items-center justify-center gap-1 rounded-control border border-border bg-surface px-2 py-2.5 text-center transition-colors hover:border-border-strong has-checked:border-primary  has-checked:shadow-[inset_0_0_0_1px_var(--color-primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus"
           >
             <input type="radio" value={optionValue} className="sr-only" defaultChecked={optionValue === value} {...register(name)} />
             <span aria-hidden className="absolute end-1.5 top-1.5 hidden size-2 rounded-pill bg-ink group-has-checked:block" />
-            <Icon aria-hidden className="size-5 text-muted group-has-checked:text-ink" />
-            <span className="text-sm leading-tight font-semibold text-ink">{optionLabel}</span>
+            <Icon aria-hidden className="size-5 text-muted group-has-checked:text-primary" />
+            <span className="text-sm leading-tight font-semibold group-has-checked:text-primary">{optionLabel}</span>
             {hint && <span className="text-xs leading-tight text-muted">{hint}</span>}
           </label>
         ))}

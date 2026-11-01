@@ -30,7 +30,7 @@ export default function DashboardPage() {
       <PageHeader title={workplace?.restaurant.name ?? 'Today'} subtitle={workplace?.branch?.name ?? 'No branch open'}>
         <HomeFilter from={from} to={to} scope={scope} allowedAll={allowedAll} />
         <Can permission="orders:create">
-          <AddLink to="/orders/new">New order</AddLink>
+          <AddLink className='lg:flex hidden' to="/orders/new">New order</AddLink>
         </Can>
       </PageHeader>
       <FilterLine from={from} to={to} scope={scope} allowedAll={allowedAll} />

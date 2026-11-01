@@ -5,7 +5,13 @@ import { Link, LinkProps } from 'react-router';
 
 
 export default function AddButton<T extends ElementType = 'button'>(props: ButtonProps<T>) {
-    return <Button icon={Plus} className='[&>svg]:-ml-1 [&>svg]:-mr-0.5' {...props} />
+    return (
+        <Button
+            icon={Plus}
+            {...props}
+            className={`[&>svg]:-ml-1 [&>svg]:-mr-0.5 ${props.className ?? ''}`}
+        />
+    );
 }
 
 export const AddLink = (props: LinkProps) => (
