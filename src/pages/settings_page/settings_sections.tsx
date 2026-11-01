@@ -1,7 +1,8 @@
 import type Permission from '@shared/permission';
-import { Building2, History, MonitorSmartphone, Percent, Printer, ShieldCheck, Store, UserCog, Users, UsersRound, type LucideIcon } from 'lucide-react';
+import { Building2, History, MonitorSmartphone, Palette, Percent, Printer, ShieldCheck, Store, UserCog, Users, UsersRound, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import AccountTab from './account/account_tab';
+import AppearanceTab from './appearance/appearance_tab';
 import ActivityCard from './activity/activity_card';
 import BranchesCard from './branches/branches_card';
 import DevicesTab from './devices/devices_tab';
@@ -25,6 +26,7 @@ interface SettingsSectionItem {
 /** Each settings section, in list order, with the permission it needs; My account is everyone's. */
 const SETTINGS_SECTIONS: SettingsSectionItem[] = [
   { value: 'restaurant', label: 'Restaurant', icon: Store, group: 'Restaurant', content: <RestaurantTab />, permission: 'settings:manage' },
+  { value: 'appearance', label: 'Appearance', icon: Palette, group: 'Restaurant', content: <AppearanceTab />, permission: 'settings:manage' },
   { value: 'tax', label: 'Tax', icon: Percent, group: 'Restaurant', content: <SettingsSection section="tax" />, permission: 'settings:manage' },
   { value: 'branches', label: 'Branches', icon: Building2, group: 'Restaurant', content: <BranchesCard />, permission: 'branches:manage' },
   { value: 'staff', label: 'Staff', icon: Users, group: 'Team', content: <StaffTab />, permission: 'staff:view' },

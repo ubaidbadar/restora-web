@@ -11,6 +11,15 @@ export default interface RestaurantSettings {
   whatsappTemplates: Record<'winback' | 'reservation', string>;
   /** Tax numbers and a closing line printed on customer receipts; each is left off while empty (all of it in `/me`). */
   receipt?: { ntn?: string; strn?: string; footer?: string };
+  /**
+   * How Restora looks for everyone in the restaurant: one of the themes (each has a light and a dark side), light, dark
+   * or each device's own setting, and the desktop sidebar in the theme colour or plain. Always in `/me`, with defaults.
+   */
+  appearance?: {
+    theme: 'indigo' | 'saffron' | 'emerald' | 'ocean' | 'bordeaux' | 'onyx';
+    mode: 'light' | 'dark' | 'system';
+    sidebar: 'theme' | 'plain';
+  };
   /** When the settings were last saved (ISO). */
   updatedAt?: string;
 }
