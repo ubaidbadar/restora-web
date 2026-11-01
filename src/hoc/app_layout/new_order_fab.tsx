@@ -10,7 +10,7 @@ export default function NewOrderFab() {
       <Link
         to="/orders/new"
         aria-label="New order"
-        className="absolute start-1/2 -top-[26px] flex size-14 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-on-primary shadow-card transition-colors hover:bg-primary-hover active:bg-primary-hover rtl:translate-x-1/2"
+        className="absolute start-1/2 -top-[26px] flex size-14 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-on-primary shadow-fab transition-colors hover:bg-primary-hover active:bg-primary-hover rtl:translate-x-1/2"
       >
         <Plus size={26} aria-hidden="true" />
       </Link>

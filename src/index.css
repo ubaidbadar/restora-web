@@ -95,6 +95,7 @@
   --shadow-card: 0 0 0 1px var(--color-border), 0 1px 2px rgb(15 23 42 / 0.04);
   --shadow-lg: 0 0 0 1px rgb(15 23 42 / 0.06), 0 10px 28px -8px rgb(15 23 42 / 0.18), 0 2px 6px rgb(15 23 42 / 0.06);
   --shadow-sheet: 0 -10px 30px -8px rgb(15 23 42 / 0.2);
+  --shadow-fab: 0 6px 16px -4px rgb(79 70 229 / 0.45), 0 2px 4px rgb(79 70 229 / 0.2); /* the round New order button, lifted in the brand colour */
 
   /* Typography: system fonts only (nothing is downloaded), with Noto fallbacks for other scripts. */
   --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
