@@ -11,6 +11,8 @@ import DropdownMenu from '../../ui/dropdown_menu';
 import IconButton from '../../ui/icon_button';
 import formatRs from '../../utils/format_rs';
 import printSlip from '../../utils/print_slip';
+import printOrder from '../../utils/print_order';
+import kitchenSlipChanges from '../../utils/kitchen_slip_changes';
 import toast from '../../utils/toast';
 import OrderDetailsDrawer from './order_details_drawer';
 import PayOrderSheet from './pay_order_sheet';
@@ -52,6 +54,7 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
   const navigate = useNavigate();
   const workplace = useWorkplace();
   const token = order.dailyToken;
+  const changedSlip = kitchenSlipChanges(order);
   const pending = order.status === 'pending';
   // Each button only for people who may use it (the server checks again).
   const canMove = can(workplace, 'orders:update');
@@ -108,6 +111,7 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
                   items={[
                     { label: 'Details', icon: FileText, onClick: showDetails },
                     { label: 'Print kitchen slip', icon: ChefHat, onClick: () => printSlip(order, 'kitchen') },
+                    ...(changedSlip ? [{ label: order.status === 'cancelled' ? 'Print cancellation' : 'Print latest changes', icon: ChefHat, onClick: () => printOrder(changedSlip, 'kitchen') }] : []),
                     { label: 'Print receipt', icon: Receipt, onClick: () => printSlip(order, 'receipt') },
                     ...(editable ? [{ label: 'Edit order', icon: Pencil, onClick: () => navigate(`/orders/${order._id}/edit`) }] : []),
                     ...(canCancel && active && !pending ? [{ label: 'Cancel order', icon: X, danger: true, onClick: askCancel }] : []),
