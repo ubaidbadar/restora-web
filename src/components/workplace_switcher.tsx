@@ -30,22 +30,22 @@ export default function WorkplaceSwitcher() {
   const items = [
     ...(restaurants.length > 1
       ? restaurants.map((r) => ({
-          section: 'Restaurants',
-          label: r.name,
-          leading: <Avatar src={r.logo} initials={initialsOf(r.name)} alt="" size="xs" square />,
-          selected: r._id === restaurant._id,
-          onClick: () =>
-            r._id !== restaurant._id &&
-            switchTo('/me/workplace', { restaurantId: r._id }, 'Could not switch restaurant').then(() => navigate('/', { replace: true })),
-        }))
+        section: 'Restaurants',
+        label: r.name,
+        leading: <Avatar src={r.logo} initials={initialsOf(r.name)} alt="" size="xs" square />,
+        selected: r._id === restaurant._id,
+        onClick: () =>
+          r._id !== restaurant._id &&
+          switchTo('/me/workplace', { restaurantId: r._id }, 'Could not switch restaurant').then(() => navigate('/', { replace: true })),
+      }))
       : []),
     ...(branches.length > 1
       ? branches.map((b) => ({
-          section: 'Branches',
-          label: b.name,
-          selected: b._id === branch?._id,
-          onClick: () => b._id !== branch?._id && switchTo('/me/branch', { branchId: b._id }, 'Could not switch branch'),
-        }))
+        section: 'Branches',
+        label: b.name,
+        selected: b._id === branch?._id,
+        onClick: () => b._id !== branch?._id && switchTo('/me/branch', { branchId: b._id }, 'Could not switch branch'),
+      }))
       : []),
   ];
 
@@ -68,7 +68,7 @@ export default function WorkplaceSwitcher() {
   return (
     <DropdownMenu
       align="left"
-      className="w-full"
+      className="w-full mb-6"
       menuClassName="w-64"
       items={items}
       trigger={(isOpen) => (
