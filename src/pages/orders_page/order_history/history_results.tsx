@@ -30,7 +30,7 @@ interface HistoryResultsProps {
 export default function HistoryResults({ from, to, q, status, type }: HistoryResultsProps) {
   const [, setParams] = useSearchParams();
   const params = { from, to, q: q || undefined, status: status === 'all' ? undefined : status, type: type === 'all' ? undefined : type };
-  const { data, loading, get, update } = useGet<OrderHistory>('/orders/history', { params });
+  const { data, loading, get, update } = useGet<OrderHistory>('/orders/history', { params, cacheFirst: true });
 
   if (loading) return <SkeletonList rows={8} />;
   if (!data?.summary) return <LoadFailed what="the orders" onRetry={() => get()} />;
