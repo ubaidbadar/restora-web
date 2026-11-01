@@ -5,11 +5,14 @@ interface AvatarProps {
   src?: string;
   alt?: string;
   initials?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  /** A rounded square for a business (restaurant logo) instead of a person's circle. */
+  square?: boolean;
   className?: string;
 }
 
 const sizeClasses = {
+  xs: 'w-6 h-6 text-xs',
   sm: 'w-8 h-8 text-xs',
   md: 'w-10 h-10 text-sm',
   lg: 'w-12 h-12 text-base',
@@ -17,6 +20,7 @@ const sizeClasses = {
 };
 
 const iconSizes = {
+  xs: 12,
   sm: 14,
   md: 18,
   lg: 20,
@@ -28,14 +32,17 @@ export default function Avatar({
   alt = 'Avatar',
   initials,
   size = 'md',
+  square = false,
   className = '',
 }: AvatarProps) {
   // Remembering which src failed resets the fallback automatically when src changes.
   const [failedSrc, setFailedSrc] = useState<string>();
-  const shapeClasses = `inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-soft ${sizeClasses[size]} ${className}`;
+  const shapeClasses = `inline-flex shrink-0 items-center justify-center overflow-hidden ${square ? 'rounded-small' : 'rounded-full'} bg-primary-soft ${sizeClasses[size]} ${className}`;
 
   if (src && failedSrc !== src) {
-    return <img src={src} alt={alt} onError={() => setFailedSrc(src)} className={`object-cover ${shapeClasses}`} />;
+    // A logo is shown whole on white with a hairline edge; a photo of a person fills the circle.
+    const fit = square ? 'object-contain bg-surface shadow-card' : 'object-cover';
+    return <img src={src} alt={alt} onError={() => setFailedSrc(src)} className={`${shapeClasses} ${fit}`} />;
   }
 
   return (
