@@ -46,6 +46,7 @@ toast; a few screens (menu, tables, one customer, settings forms) also update th
 - No manual `useMemo`/`useCallback`/`memo`: the React Compiler does it.
 - Headings `h1`–`h6` / `.h1`–`.h6` get responsive clamp sizes from `index.css`; no `sm:/md:` text sizes on them.
 - Styling uses design tokens only (the `@theme` block in `src/index.css`). Never a raw palette color, hex or `rounded-xl`; lint rejects it.
+- **Themes and dark mode:** the restaurant picks a theme, light/dark/follow device and the sidebar in Settings → Appearance (`settings.appearance`, applied by `utils/apply_appearance`). Each theme and dark mode only redefine tokens in `src/index.css`, so a component that uses tokens works in all 12; `src/themes.test.ts` checks contrast. Shadows are built from color tokens, never fixed colors.
 - Logical CSS only (`ms-`, `pe-`, `text-start`) so RTL can be switched on later. Money, phone, date and WhatsApp
   formatting come from `utils/`, never inline.
 

@@ -16,6 +16,7 @@ import useOutboxStore from './store/outbox_store';
 import type OutboxState from './types/outbox_state';
 import offlineDb from './utils/offline_db';
 import syncOutbox from './utils/sync_outbox';
+import applyAppearance from './utils/apply_appearance';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -52,6 +53,7 @@ Promise.all([getCache.load(), offlineDb.get<Pick<OutboxState, 'items' | 'savedId
 // Who is signed in is kept on the device for the next offline start; signing out forgets it and every saved answer.
 useAuthStore.subscribe(() => {
   const { me } = useAuthStore.getState();
+  applyAppearance(me?.workplace?.settings.appearance);
   if (me) void offlineDb.set('me', me);
   if (me === null) {
     void offlineDb.set('me', null);

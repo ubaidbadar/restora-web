@@ -12,7 +12,7 @@ export default function SideNav() {
   const { main, more } = useNavLinks();
 
   return (
-    <aside className="fixed inset-y-0 inset-s-0 hidden w-64 flex-col gap-5 overflow-y-auto border-e border-border bg-surface px-3 py-5 lg:flex">
+    <aside className="sidebar-brand fixed inset-y-0 inset-s-0 hidden w-64 flex-col gap-5 overflow-y-auto border-e border-border bg-surface px-3 py-5 lg:flex">
       <div className="flex flex-col gap-3">
         <WorkplaceSwitcher />
         <Can permission="orders:create">
