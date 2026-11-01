@@ -9,6 +9,8 @@ import lockTerminal from '../../utils/lock_terminal';
 import api from '../../config/api';
 import toast from '../../utils/toast';
 import printSlip from '../../utils/print_slip';
+import printOnThisPc from '../../utils/print_on_this_pc';
+import kitchenChanges from '../../utils/kitchen_changes';
 import PageHeader from '../../components/page_header';
 import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
@@ -181,6 +183,9 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             if (waitingOrder) {
               const preview = { ...local, dailyToken: token, createdAt: order.createdAt, takenBy: order.takenBy };
               outbox.replace(order._id, { body: { ...(waitingOrder.body as object), ...changes }, preview });
+              // The server only ever sees the final order, so it prints no "CHANGED" slip: this PC prints what changed.
+              const items = kitchenChanges((waitingOrder.preview as Order).items, preview.items);
+              if (items.length) void printOnThisPc({ ...preview, dailyToken: `${token} CHANGED`, items }, 'kitchen', `${order._id}~edit-${Date.now().toString(36)}`);
               return done(`Order ${token} changed. It will be sent when the internet is back.`, preview);
             }
             // No internet: the edit waits in the outbox and the board shows it at once.
@@ -206,9 +211,9 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
           const clientId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
           const body = { ...data, clientId, placedAt: new Date().toISOString() };
           ownOrders.add(clientId);
-          const finish = (message: string) => {
+          const finish = (message: string, print?: Order) => {
             onSuccess('');
-            toast.success(message);
+            toast.success(message, print && { label: 'Print slip', onClick: () => printSlip(print, 'kitchen') });
             // A terminal set to lock after every order hands over to the next person.
             if (useAuthStore.getState().me?.device?.settings.lockAfterOrder) return lockTerminal();
             navigate('/orders');
@@ -218,7 +223,13 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             const token = offlineToken();
             const preview = offlineOrder(data, clientId, token);
             useOutboxStore.getState().add({ id: clientId, method: 'post', url: '/orders', body, label: `Order ${token}`, createdAt: body.placedAt, preview });
-            finish(`No internet. Order ${token} is saved on this device and will be sent when you are back online.`);
+            // Online, the server queues the kitchen slip; offline, this PC's print agent prints it now. Keyed by the
+            // clientId, as the server's slip is once the order syncs, so the kitchen gets it once.
+            void printOnThisPc(preview, 'kitchen', clientId).then((printed) =>
+              printed
+                ? finish(`No internet. Order ${token} is saved on this device and its kitchen slip is printed.`)
+                : finish(`No internet. Order ${token} is saved on this device. Its kitchen slip is not printed yet.`, preview)
+            );
           };
           if (!useOutboxStore.getState().online) return saveOffline();
           api
