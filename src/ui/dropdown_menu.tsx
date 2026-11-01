@@ -22,6 +22,8 @@ interface DropdownMenuItem extends Omit<ButtonHTMLAttributes<HTMLButtonElement>,
   label: string;
   onClick: () => void;
   icon?: ElementType;
+  /** Shown at the start instead of an icon, e.g. a logo. */
+  leading?: ReactNode;
   danger?: boolean;
   /** A small heading shown above this item when it starts a new group. */
   section?: string;
@@ -170,7 +172,7 @@ interface MenuItemProps {
 }
 
 function MenuItem({ ref, item, isActive, onSelect, onHover }: MenuItemProps) {
-  const { label, icon: Icon, danger, section, selected, className = '', onClick, ...buttonProps } = item;
+  const { label, icon: Icon, leading, danger, section, selected, className = '', onClick, ...buttonProps } = item;
   // The active item is always the focused one (hover moves focus too), so focus alone drives the highlight.
   const toneClasses = danger ? 'text-danger-700 focus:bg-danger-50' : 'text-body focus:bg-sunken focus:text-ink';
 
@@ -187,6 +189,7 @@ function MenuItem({ ref, item, isActive, onSelect, onHover }: MenuItemProps) {
       tabIndex={isActive ? 0 : -1}
       {...buttonProps}
     >
+      {leading}
       {Icon && <Icon size={16} aria-hidden="true" />}
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {selected && <Check size={16} className="shrink-0 text-primary" aria-label="Current" />}
