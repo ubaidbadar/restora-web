@@ -43,7 +43,7 @@ export default function useGet<T = unknown>(url: string, { active, cacheFirst = 
     }, []);
 
     useEffect(() => {
-        if (!active && !(cacheFirst && getCache.get(getCache.keyOf(url, initialOptions)) !== undefined)) get();
+        if (!active && !(cacheFirst && !navigator.onLine && getCache.get(getCache.keyOf(url, initialOptions)) !== undefined)) get();
     }, [active, cacheFirst, get, url]);
 
     useEffect(() => {
