@@ -97,9 +97,10 @@ export default function printOrder(order: Order, kind: 'kitchen' | 'receipt') {
   const rows = order.items
     .map((item) => {
       const extra = [lineDetails(item) && `<small>${escape(lineDetails(item))}</small>`, item.note && `<small class="note">“${escape(item.note)}”</small>`].filter(Boolean).join('');
+      const kitchenName = cancelled && !item.name.startsWith('CANCEL ') ? `CANCEL ${item.name}` : item.name;
       return isReceipt
         ? `<tr><td>${escape(item.name)}${extra}</td><td class="num">${item.qty}</td><td class="num">${amount.format(item.price)}</td><td class="num">${amount.format(item.price * item.qty)}</td></tr>`
-        : `<tr class="${item.name.startsWith('CANCEL ') ? 'cancel-line' : item.name.startsWith('NEW ') ? 'new-line' : ''}"><td class="qty">${item.qty}×</td><td>${escape(item.name)}${extra}</td></tr>`;
+        : `<tr class="${kitchenName.startsWith('CANCEL ') ? 'cancel-line' : kitchenName.startsWith('NEW ') ? 'new-line' : ''}"><td class="qty">${item.qty}×</td><td>${escape(kitchenName)}${extra}</td></tr>`;
     })
     .join('');
   const columns = isReceipt ? '<th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th>' : '<th class="qty">Qty</th><th>Item</th>';
