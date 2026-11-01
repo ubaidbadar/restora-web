@@ -13,7 +13,13 @@ export default function ActivityRow({ entry }: ActivityRowProps) {
   return (
     <li className="px-5 py-3 text-sm sm:px-6">
       <p className="text-body">
-        <bdi className="font-medium text-ink">{entry.actor.name ?? 'Someone'}</bdi> {what}
+        <bdi className="font-medium text-ink">{entry.actor.name ?? 'Someone'}</bdi>
+        {entry.actor.was && (
+          <span className="text-muted">
+            {' '}(was <bdi>{entry.actor.was}</bdi>)
+          </span>
+        )}{' '}
+        {what}
         {!self && entry.target.label && (
           <>
             {' '}
@@ -23,6 +29,7 @@ export default function ActivityRow({ entry }: ActivityRowProps) {
       </p>
       <p className="text-xs text-muted">
         {formatAgo(entry.at)}
+        {entry.actor.email && <span className="break-all"> · {entry.actor.email}</span>}
         {entry.actor.via === 'pos' && ' · on a POS terminal'}
       </p>
     </li>

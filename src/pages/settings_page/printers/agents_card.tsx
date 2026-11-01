@@ -14,6 +14,7 @@ import toast from "../../../utils/toast";
 import AgentRow from "./agent_row";
 import agentSchema from "./agent_schema";
 import SetupCard from "./setup_card";
+import ThisPc from "./this_pc";
 
 /**
  * The branch's print agents with their printers. Until one has paired, the setup steps stand in their place; after
@@ -37,80 +38,94 @@ export default function AgentsCard({
   const add = (saved: PrintAgent) =>
     update((current) => [...(current ?? []), saved]);
 
+  // Once the list is known: the agent on this PC, if it has not paired yet, pairs by itself.
+  const thisPc = !loading && (
+    <ThisPc
+      waiting={agents.find((agent) => !agent.lastSeenAt && agent.pairing)}
+      onPaired={() => get()}
+    />
+  );
+
   if (!loading && !agents.some((agent) => agent.lastSeenAt)) {
     return (
-      <SetupCard
-        agent={agents[0]}
-        onAdded={add}
-        onSaved={replace}
-        onRefresh={() => get()}
-      />
+      <div className="flex flex-col gap-4">
+        {thisPc}
+        <SetupCard
+          agent={agents[0]}
+          onAdded={add}
+          onSaved={replace}
+          onRefresh={() => get()}
+        />
+      </div>
     );
   }
 
   return (
-    <SectionCard
-      title="PCs and printers"
-      description="Name each printer and say what it prints. Kitchen slips can go to one printer per category."
-      flush
-      action={
-        <div className="flex gap-2">
-          <Button
-            as="a"
-            href={AGENT_DOWNLOAD_URL}
-            target="_blank"
-            rel="noreferrer"
-            variant="ghost"
-            icon={Download}
-          >
-            Get the agent
-          </Button>
-          <FormDrawer
-            title="Add a PC"
-            schema={agentSchema}
-            defaultValues={{ name: "Counter PC" }}
-            submitLabel="Get pairing code"
-            onSave={(values) =>
-              api.post("/print-agents", values).then((res) => {
-                add(res.data);
-                toast.success("Type the pairing code into the agent");
-              })
-            }
-            fields={({ register, errors }) => (
-              <Input
-                label="PC name"
-                dir="auto"
-                required
-                autoFocus
-                placeholder="e.g. Counter PC"
-                {...register("name")}
-                error={fieldError(errors, "name")}
-              />
-            )}
-            component={({ open }) => (
-              <Button variant="outline" icon={Plus} onClick={open}>
-                Add a PC
-              </Button>
-            )}
-          />
-        </div>
-      }
-    >
-      {loading && <SkeletonList rows={2} variant="lines" />}
-      <ul className="divide-y divide-border">
-        {agents.map((agent) => (
-          <AgentRow
-            key={agent._id}
-            agent={agent}
-            categories={categories}
-            onSaved={replace}
-            onRemoved={(id) =>
-              update((current) => current?.filter((item) => item._id !== id))
-            }
-            onRefresh={() => get()}
-          />
-        ))}
-      </ul>
-    </SectionCard>
+    <div className="flex flex-col gap-4">
+      {thisPc}
+      <SectionCard
+        title="PCs and printers"
+        description="Name each printer and say what it prints. Kitchen slips can go to one printer per category."
+        flush
+        action={
+          <div className="flex gap-2">
+            <Button
+              as="a"
+              href={AGENT_DOWNLOAD_URL}
+              target="_blank"
+              rel="noreferrer"
+              variant="ghost"
+              icon={Download}
+            >
+              Get the agent
+            </Button>
+            <FormDrawer
+              title="Add a PC"
+              schema={agentSchema}
+              defaultValues={{ name: "Counter PC" }}
+              submitLabel="Get pairing code"
+              onSave={(values) =>
+                api.post("/print-agents", values).then((res) => {
+                  add(res.data);
+                  toast.success("Type the pairing code into the agent");
+                })
+              }
+              fields={({ register, errors }) => (
+                <Input
+                  label="PC name"
+                  dir="auto"
+                  required
+                  autoFocus
+                  placeholder="e.g. Counter PC"
+                  {...register("name")}
+                  error={fieldError(errors, "name")}
+                />
+              )}
+              component={({ open }) => (
+                <Button variant="outline" icon={Plus} onClick={open}>
+                  Add a PC
+                </Button>
+              )}
+            />
+          </div>
+        }
+      >
+        {loading && <SkeletonList rows={2} variant="lines" />}
+        <ul className="divide-y divide-border">
+          {agents.map((agent) => (
+            <AgentRow
+              key={agent._id}
+              agent={agent}
+              categories={categories}
+              onSaved={replace}
+              onRemoved={(id) =>
+                update((current) => current?.filter((item) => item._id !== id))
+              }
+              onRefresh={() => get()}
+            />
+          ))}
+        </ul>
+      </SectionCard>
+    </div>
   );
 }

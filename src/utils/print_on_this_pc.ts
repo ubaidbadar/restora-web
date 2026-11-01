@@ -3,9 +3,7 @@ import useAuthStore from '../store/auth_store';
 import type Menu from '../types/menu';
 import type Order from '../types/order';
 import type Printer from '../types/printer';
-
-/** The print agent on this PC. */
-const AGENT = 'http://127.0.0.1:17777';
+import agentFetch from './agent_fetch';
 
 /**
  * Prints an order's slip on this PC's printers through the print agent, which works without internet: the printers come
@@ -18,7 +16,7 @@ const AGENT = 'http://127.0.0.1:17777';
  */
 export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'receipt', key?: string): Promise<boolean> {
   try {
-    const config: { printers: Printer[] } = await (await fetch(`${AGENT}/config`)).json();
+    const config: { printers: Printer[] } = await (await agentFetch('/config')).json();
     const printers = config.printers.filter((printer) => printer.present && printer.prints.includes(kind));
     if (!printers.length) return false;
 
@@ -44,7 +42,7 @@ export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'rec
       const items = kind === 'kitchen' && printer.categoryIds.length ? order.items.filter((item) => printer.categoryIds.includes(categoryOf(item.itemId) ?? '')) : order.items;
       if (!items.length) continue;
       const body = { printer: printer.systemName, kind, width: printer.width, copies: printer.copies, order: { ...order, items }, header };
-      const send = (orderKey: string) => fetch(`${AGENT}/print`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, orderKey }) });
+      const send = (orderKey: string) => agentFetch('/print', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, orderKey }) });
       let res = await send(key ?? order._id);
       // Asked for again by a person: a reprint, with a key of its own.
       if (!key && res.ok && (await res.json()).duplicate) res = await send(`${order._id}~${Date.now().toString(36)}`);

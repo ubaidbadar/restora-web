@@ -19,7 +19,7 @@ interface TimelineEntryProps {
 export default function TimelineEntry({ entry, orderAt }: TimelineEntryProps) {
   const before = entry.changes?.before ?? {};
   const after = entry.changes?.after ?? {};
-  const row = { by: entry.actor.name, at: entry.at, orderAt, onPos: entry.actor.via === 'pos' };
+  const row = { by: entry.actor, at: entry.at, orderAt };
 
   switch (entry.action) {
     case 'order.edited':
