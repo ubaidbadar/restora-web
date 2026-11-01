@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
   const viteEnv = loadEnv(mode, '.', 'VITE_');
   const appUrl = viteEnv.VITE_APP_URL || 'http://localhost:3000';
   // The API (Bun + Hono) in development. The client calls relative /api/v1 and /uploads, so they are proxied there.
-  const apiUrl = viteEnv.VITE_API_PROXY || 'http://localhost:5001';
+  const apiUrl = viteEnv.VITE_API_URL || 'http://localhost:5001';
 
   return {
     plugins: [
