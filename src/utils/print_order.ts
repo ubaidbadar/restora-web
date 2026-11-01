@@ -129,6 +129,7 @@ export default function printOrder(order: Order, kind: 'kitchen' | 'receipt') {
       <div class="token"><b>#${order.dailyToken}</b><span>${escape(where)}</span></div>
       ${details}
       <hr class="rule">
+      ${cancelled ? `<div class="change">✕ CANCELLED ✕</div>${cancellation?.byName ? `<p>By ${escape(cancellation.byName)}</p>` : ''}${cancelReason ? `<p class="cancel-reason">Reason: ${escape(cancelReason)}</p>` : ''}<hr class="rule">` : changed ? '<div class="change">ORDER CHANGED</div>' : ''}
       <table><thead><tr>${columns}</tr></thead><tbody>${rows}</tbody></table>
       ${totals}
     </body></html>`;
