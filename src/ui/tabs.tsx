@@ -28,7 +28,7 @@ interface TabsProps<T extends string> {
 export default function Tabs<T extends string>({ name, label, options, value, onChange, register, wrap = false, fill = false, showLabel = false, className = '' }: TabsProps<T>) {
   return (
     <fieldset className={`min-w-0 ${className}`}>
-      <legend className={showLabel ? 'mb-2' : 'sr-only'}>{label}</legend>
+      <legend className={showLabel ? 'mb-2 text-sm font-semibold text-ink' : 'sr-only'}>{label}</legend>
       {/* A fieldset can't be a flex box in every browser, so the track is the div inside it. */}
       <div className={`flex max-w-full gap-1 rounded-control border border-border bg-sunken p-1 ${fill ? '' : 'w-fit'} ${wrap ? 'flex-wrap' : 'hide-scrollbar overflow-x-auto'}`}>
         {options.map((option) => (

@@ -1,8 +1,8 @@
 import { useWatch } from 'react-hook-form';
-import type FormComponentProps from '../../../types/form_component_props';
-import Input from '../../../ui/input';
-import dayKey from '../../../utils/day_key';
-import fieldError from '../../../utils/field_error';
+import type FormComponentProps from '../types/form_component_props';
+import Input from '../ui/input';
+import dayKey from '../utils/day_key';
+import fieldError from '../utils/field_error';
 
 /** From and To, only once "Pick days" is chosen. Up to today. */
 export default function PickDays({ register, errors, control }: Pick<FormComponentProps, 'register' | 'errors' | 'control'>) {
