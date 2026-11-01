@@ -15,7 +15,8 @@ export default function CartPanel({ taxByPaymentMethod, editing, ...props }: For
   return (
     // Scrolls inside the order panel (a sheet on phones), so Place order below it stays in reach.
     <div id="order-details" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-1 pb-4 md:pt-5">
-      <h2 className="text-heading text-ink">Order</h2>
+      {/* Below lg the modal's own title says "Order". */}
+      <h2 className="text-heading text-ink max-lg:hidden">Order</h2>
       <CartLines {...props} />
       <OrderTypePicker {...props} />
       {/* A placed order is paid from the board, so editing leaves payment out. Without the right to take payments or

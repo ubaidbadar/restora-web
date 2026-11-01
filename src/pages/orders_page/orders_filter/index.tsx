@@ -1,6 +1,7 @@
 import { SlidersHorizontal } from 'lucide-react';
+import { useId } from 'react';
 import { useSearchParams } from 'react-router';
-import FormDrawer from '../../../components/form_drawer';
+import FilterOverlay from '../../../components/filter_overlay';
 import ORDER_TYPE_OPTIONS from '../../../constants/order_type_options';
 import Tabs from '../../../ui/tabs';
 import Chips from '../../../ui/chips';
@@ -17,10 +18,11 @@ const VIEWS = [
 
 /**
  * The one Filter button above the orders, with a count of what differs from the start (today, all types, the board).
- * It opens a drawer with the days, the order type and the board or a list, applied together. All of it lives in the URL.
+ * It opens a sheet on a phone (a panel under the button on wider screens) with the board or a list on top, then the days and the order type, applied together. All of it lives in the URL.
  */
 export default function OrdersFilter() {
   const [params, setParams] = useSearchParams();
+  const id = useId();
   const today = dayKey();
   const presets = dayPresets();
   const from = params.get('from') || today;
@@ -32,7 +34,8 @@ export default function OrdersFilter() {
   const dayOptions = [...presets.map(({ value, label }) => ({ value, label })), { value: 'pick', label: 'Pick days' }];
 
   return (
-    <FormDrawer
+    <FilterOverlay
+      anchorId={id}
       title="Filter orders"
       schema={filterSchema}
       defaultValues={{ days, from, to, type, view }}
@@ -54,17 +57,13 @@ export default function OrdersFilter() {
       }}
       fields={(form) => (
         <>
+          <Tabs name="view" label="Show today's orders as" options={VIEWS} value={view} register={form.register} fill showLabel />
           <Chips name="days" label="Days" options={dayOptions} value={days} register={form.register} wrap showLabel />
           <PickDays {...form} />
           <Chips name="type" label="Order type" options={ORDER_TYPE_OPTIONS} value={type} register={form.register} wrap showLabel />
-          <Tabs name="view" label="Show today's orders as" options={VIEWS} value={view} register={form.register} fill showLabel />
         </>
       )}
-      component={({ open }) => (
-        <>
-          <IconButton icon={SlidersHorizontal} variant='outline' onClick={open} aria-label={count ? `Filter, ${count} set` : 'Filter'} />
-        </>
-      )}
+      component={({ open }) => <IconButton id={id} icon={SlidersHorizontal} variant="outline" onClick={open} aria-label={count ? `Filter, ${count} set` : 'Filter'} />}
     />
   );
 }

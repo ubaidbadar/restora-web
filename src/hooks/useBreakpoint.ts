@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
-/** Tailwind's breakpoints (index.css sets none of its own), so JS and `md:`/`lg:`/`xl:` classes switch at the same width. */
-const QUERIES = { md: '(min-width: 48rem)', lg: '(min-width: 64rem)', xl: '(min-width: 80rem)' } as const;
+/** Tailwind's breakpoints (index.css sets none of its own), so JS and `sm:`/`md:`/`lg:`/`xl:` classes switch at the same width. */
+const QUERIES = { sm: '(min-width: 40rem)', md: '(min-width: 48rem)', lg: '(min-width: 64rem)', xl: '(min-width: 80rem)' } as const;
 
 type Breakpoints = Record<keyof typeof QUERIES, boolean>;
 
@@ -11,9 +11,9 @@ const getLists = () => (lists ??= Object.values(QUERIES).map((query) => window.m
 // One object per combination, so the snapshot only changes when a breakpoint is crossed.
 const snapshots = new Map<string, Breakpoints>();
 function getSnapshot(): Breakpoints {
-  const [md, lg, xl] = getLists().map((list) => list.matches) as [boolean, boolean, boolean];
-  const key = `${+md}${+lg}${+xl}`;
-  if (!snapshots.has(key)) snapshots.set(key, { md, lg, xl });
+  const [sm, md, lg, xl] = getLists().map((list) => list.matches) as [boolean, boolean, boolean, boolean];
+  const key = `${+sm}${+md}${+lg}${+xl}`;
+  if (!snapshots.has(key)) snapshots.set(key, { sm, md, lg, xl });
   return snapshots.get(key)!;
 }
 
@@ -32,9 +32,9 @@ function subscribe(onChange: () => void) {
 }
 
 /**
- * Which of Tailwind's widths the window is at least: `md` tablet, `lg` desktop (sidebar), `xl` wide desktop. For screens
+ * Which of Tailwind's widths the window is at least: `sm` past a phone, `md` tablet, `lg` desktop (sidebar), `xl` wide desktop. For screens
  * that build a different layout per width, so only one is rendered; pure styling stays in CSS classes, which cost nothing.
- * Every component shares the same three media-query listeners.
+ * Every component shares the same media-query listeners.
  */
 export default function useBreakpoint(): Breakpoints {
   return useSyncExternalStore(subscribe, getSnapshot);

@@ -6,6 +6,7 @@ import type OrderType from '../../types/order_type';
 import OrderHistory from './order_history';
 import OrdersBoard from './orders_board';
 import OrdersToolbar from './orders_toolbar';
+import OrdersFilter from './orders_filter';
 import useWorkplace from '../../hooks/useWorkplace';
 import dayKey from '../../utils/day_key';
 import formatDayRange from '../../utils/format_day_range';
@@ -27,7 +28,7 @@ export default function OrdersPage() {
   return (
     <>
       <PageHeader title="Orders" subtitle={subtitle}>
-        {/* Phones and tablets have the + in the bottom bar. */}
+        <OrdersFilter />
         <Can permission="orders:create">
           <AddLink to="/orders/new">New order</AddLink>
         </Can>
