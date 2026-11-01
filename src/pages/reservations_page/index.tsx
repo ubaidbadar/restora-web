@@ -15,6 +15,7 @@ import toast from '../../utils/toast';
 import DayBar from './day_bar';
 import ReservationRow from './reservation_row';
 import reservationSchema from './reservation_schema';
+import AddButton from '../../components/add_button';
 
 /** One day's table bookings at the working branch, in time order. The day is the request's own `date` param. */
 export default function ReservationsPage() {
@@ -49,7 +50,7 @@ export default function ReservationsPage() {
                 })
             }
             fields={(form) => <ReservationFields {...form} />}
-            component={({ open }) => <Button icon={Plus} onClick={open}>Add reservation</Button>}
+            component={({ open }) => <AddButton onClick={open}>Add reservation</AddButton>}
           />
         </Can>
       </PageHeader>
