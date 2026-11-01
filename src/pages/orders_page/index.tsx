@@ -1,16 +1,15 @@
-import { Plus } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import Can from '../../components/can';
 import PageHeader from '../../components/page_header';
 import ORDER_TYPE_LABELS from '../../constants/order_type_labels';
 import type OrderType from '../../types/order_type';
-import Button from '../../ui/button';
 import OrderHistory from './order_history';
 import OrdersBoard from './orders_board';
 import OrdersToolbar from './orders_toolbar';
 import useWorkplace from '../../hooks/useWorkplace';
 import dayKey from '../../utils/day_key';
 import formatDayRange from '../../utils/format_day_range';
+import { AddLink } from '../../components/add_button';
 
 /**
  * The working branch's orders. Today's on the live board (or as a list); other days from the URL's `from` and `to` as
@@ -30,7 +29,7 @@ export default function OrdersPage() {
       <PageHeader title="Orders" subtitle={subtitle}>
         {/* Phones and tablets have the + in the bottom bar. */}
         <Can permission="orders:create">
-          <Button as={Link} to="/orders/new" icon={Plus}>New order</Button>
+          <AddLink to="/orders/new">New order</AddLink>
         </Can>
       </PageHeader>
       <OrdersToolbar />

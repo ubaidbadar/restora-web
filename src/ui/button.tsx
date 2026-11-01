@@ -3,6 +3,8 @@ import buttonSizes from '../constants/button_sizes';
 import buttonVariants from '../constants/button_variants';
 import type ButtonProps from '../types/button_props';
 
+export type { ButtonProps };
+
 const baseClasses =
   'cursor-pointer text-nowrap rounded-control inline-flex items-center justify-center gap-2 font-medium select-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed aria-busy:cursor-progress';
 

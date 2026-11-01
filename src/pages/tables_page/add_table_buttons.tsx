@@ -1,9 +1,8 @@
-import { MoreHorizontal, Plus, Printer, Rows3 } from 'lucide-react';
+import { MoreHorizontal, Printer, Rows3 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import api from '../../config/api';
 import FormDrawer from '../../components/form_drawer';
 import type Table from '../../types/table';
-import Button from '../../ui/button';
 import DropdownMenu from '../../ui/dropdown_menu';
 import IconButton from '../../ui/icon_button';
 import toast from '../../utils/toast';
@@ -11,6 +10,7 @@ import BatchFields from './batch_fields';
 import batchSchema from './batch_schema';
 import TableFields from './table_fields';
 import tableSchema from './table_schema';
+import AddButton from '../../components/add_button';
 
 interface AddTableButtonsProps {
   /** The sections already used, offered while typing one. */
@@ -64,9 +64,7 @@ export default function AddTableButtons({ sections, hasTables, onAdded }: AddTab
         }
         fields={(form) => <TableFields {...form} sections={sections} />}
         component={({ open }) => (
-          <Button icon={Plus} onClick={open}>
-            Add table
-          </Button>
+          <AddButton onClick={open}>Add table</AddButton>
         )}
       />
     </>

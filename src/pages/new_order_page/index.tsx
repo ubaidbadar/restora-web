@@ -105,11 +105,10 @@ const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing })
       <div className="min-w-0 w-full lg:pr-96">
         {/* The bottom bar is hidden on this page below the sidebar width, so it gets its own way back. */}
         <div className="flex gap-1">
-          <IconButton as={Link} to="/orders" icon={ArrowLeft} aria-label="Back to orders" className="-ms-2.5 -mr-1 -mt-1.75 lg:hidden" />
           {order ? (
-            <PageHeader title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board." />
+            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board." />
           ) : (
-            <PageHeader title="New order" subtitle="Find the customer, tap dishes, place the order" />
+            <PageHeader backTo='/orders' title="New order" subtitle="Find the customer, tap dishes, place the order" />
           )}
         </div>
         <div className="flex min-w-0 flex-col gap-5">

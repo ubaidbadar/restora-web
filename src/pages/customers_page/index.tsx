@@ -1,4 +1,4 @@
-import { Plus, Upload, Users } from 'lucide-react';
+import { Upload, Users } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import Chips from '../../ui/chips';
 import CustomerFields from '../../components/customer_fields';
@@ -22,6 +22,7 @@ import toast from '../../utils/toast';
 import withParam from '../../utils/with_param';
 import CustomerListHeader from './customer_list_header';
 import CustomerRow from './customer_row';
+import AddButton from '../../components/add_button';
 
 type CustomerFilter = Segment | 'all';
 const FILTERS = [{ value: 'all' as CustomerFilter, label: 'All' }, ...SEGMENTS.map((value) => ({ value: value as CustomerFilter, label: SEGMENT_LABELS[value] }))];
@@ -68,7 +69,7 @@ export default function CustomersPage() {
                 })
             }
             fields={(form) => <CustomerFields {...form} />}
-            component={({ open }) => <Button icon={Plus} onClick={open}>Add customer</Button>}
+            component={({ open }) => <AddButton onClick={open}>Add customer</AddButton>}
           />
         </Can>
       </PageHeader>
