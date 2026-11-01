@@ -1,12 +1,11 @@
 import { RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import api from '../../../config/api';
-import apiOrigin from '../../../constants/api_origin';
 import type PrintAgent from '../../../types/print_agent';
 import Button from '../../../ui/button';
 import agentFetch from '../../../utils/agent_fetch';
 import getAxiosMessage from '../../../utils/get_axios_message';
 import minutesSince from '../../../utils/minutes_since';
+import pairThisPc from '../../../utils/pair_this_pc';
 import toast from '../../../utils/toast';
 
 interface ThisPcProps {
@@ -30,7 +29,8 @@ async function blocked() {
 /**
  * The print agent on the PC this page is open on, when it has not paired yet, pairs by itself: the page makes the code
  * and hands it to the agent, so nobody types it. The agent's "Connect to Restora" button opens this page.
- * Shows nothing when there is no agent here or it is paired already.
+ * Shows nothing when there is no agent here or it is paired already. Once the browser allows it, any page reconnects
+ * the agent too (hoc/app_layout/agent_reconnect).
  */
 export default function ThisPc({ waiting, onPaired }: ThisPcProps) {
   const [state, setState] = useState<{ step: Step; message?: string }>({ step: 'idle' });
@@ -45,17 +45,7 @@ export default function ThisPc({ waiting, onPaired }: ThisPcProps) {
 
     setState({ step: 'connecting' });
     try {
-      const code =
-        waiting?.pairing && minutesSince(waiting.pairing.expiresAt) < 0
-          ? waiting.pairing.code
-          : (await api.post<PrintAgent>('/print-agents', { name: 'Counter PC' })).data.pairing?.code;
-      // The API this page uses, so the dev site pairs the agent with the dev API (the agent knows only Restora's).
-      const res = await agentFetch('/setup/pair', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, api: apiOrigin ? `${apiOrigin}/api/v1` : undefined }),
-      });
-      if (!res.ok) throw new Error(((await res.json()) as { message?: string }).message ?? 'The print agent could not connect.');
+      await pairThisPc(waiting?.pairing && minutesSince(waiting.pairing.expiresAt) < 0 ? waiting.pairing.code : undefined);
       setState({ step: 'idle' });
       toast.success('This PC is connected. Name its printers below.');
       onPaired();

@@ -9,6 +9,7 @@ import can from '@shared/can';
 import Can from '../../components/can';
 import PosIdleLock from './pos_idle_lock';
 import SyncStatus from './sync_status';
+import AgentReconnect from './agent_reconnect';
 import useBreakpoint from '../../hooks/useBreakpoint';
 import api from '../../config/api';
 
@@ -67,6 +68,9 @@ export default function AppLayout() {
       </main>
       <Can permission="orders:view">
         <LiveUpdates key={place} />
+      </Can>
+      <Can permission="devices:manage">
+        <AgentReconnect key={place} />
       </Can>
       {me?.device && <PosIdleLock seconds={me.device.settings.idleLockSeconds} />}
       {!lg && <BottomNav />}
