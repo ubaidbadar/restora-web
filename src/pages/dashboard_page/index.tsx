@@ -8,6 +8,7 @@ import useWorkplace from '../../hooks/useWorkplace';
 import Can from '../../components/can';
 import { AddLink } from '../../components/add_button';
 import dayKey from '../../utils/day_key';
+import useBreakpoint from '../../hooks/useBreakpoint';
 
 /**
  * The picked days' numbers (today at first) for the working branch or, for people allowed to, all branches together;
@@ -23,15 +24,17 @@ export default function DashboardPage() {
   const manyBranches = Boolean(workplace && (workplace.branches.length > 1 || !workplace.allBranches));
   const allowedAll = manyBranches && can(workplace, 'reports:view_all_branches');
   const scope = allowedAll && params.get('scope') === 'all' ? 'all' : 'branch';
-
+  const { sm } = useBreakpoint();
   return (
     <>
       {/* New order is also the + in the phone's bottom bar and the button at the top of the sidebar. */}
       <PageHeader title={workplace?.restaurant.name ?? 'Today'} subtitle={workplace?.branch?.name ?? 'No branch open'}>
         <HomeFilter from={from} to={to} scope={scope} allowedAll={allowedAll} />
-        <Can permission="orders:create">
-          <AddLink className='lg:flex hidden' to="/orders/new">New order</AddLink>
-        </Can>
+        {sm && (
+          <Can permission="orders:create">
+            <AddLink className='lg:flex hidden' to="/orders/new">New order</AddLink>
+          </Can>
+        )}
       </PageHeader>
       <FilterLine from={from} to={to} scope={scope} allowedAll={allowedAll} />
       <DashboardNumbers key={`${from}_${to}_${scope}`} from={from} to={to} scope={scope} />
