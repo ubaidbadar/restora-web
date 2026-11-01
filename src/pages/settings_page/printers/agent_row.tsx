@@ -1,16 +1,16 @@
-import { RefreshCw, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import api from '../../../config/api';
 import type MenuCategory from '../../../types/menu_category';
 import type PrintAgent from '../../../types/print_agent';
 import AlertModal from '../../../ui/alert_modal/modal';
 import Badge from '../../../ui/badge';
-import Button from '../../../ui/button';
 import IconButton from '../../../ui/icon_button';
 import formatAgo from '../../../utils/format_ago';
 import getAxiosMessage from '../../../utils/get_axios_message';
 import minutesSince from '../../../utils/minutes_since';
 import toast from '../../../utils/toast';
 import BranchName from '../devices/branch_name';
+import PairingCode from './pairing_code';
 import PrinterRow from './printer_row';
 
 interface AgentRowProps {
@@ -29,7 +29,6 @@ const ONLINE_MINUTES = 2;
 export default function AgentRow({ agent, categories, onSaved, onRemoved, onRefresh }: AgentRowProps) {
   const waiting = !agent.lastSeenAt;
   const online = !!agent.lastSeenAt && minutesSince(agent.lastSeenAt) < ONLINE_MINUTES;
-  const expired = !!agent.pairing && minutesSince(agent.pairing.expiresAt) >= 0;
 
   return (
     <li className="py-3">
@@ -63,29 +62,9 @@ export default function AgentRow({ agent, categories, onSaved, onRemoved, onRefr
       </div>
 
       {agent.pairing && (
-        <div className="mx-5 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-control bg-sunken px-4 py-3 sm:mx-6">
-          <span>
-            <span className="block text-sm text-muted">{expired ? 'This code has expired.' : 'Type this code into the agent:'}</span>
-            <span className="block text-2xl font-semibold tracking-widest text-ink tabular-nums">{expired ? '------' : agent.pairing.code}</span>
-          </span>
-          <span className="flex gap-2">
-            <Button variant="outline" size="sm" icon={RefreshCw} onClick={onRefresh}>
-              Check again
-            </Button>
-            {expired && (
-              <Button
-                size="sm"
-                onClick={() =>
-                  api
-                    .post(`/print-agents/${agent._id}/code`)
-                    .then((res) => onSaved(res.data))
-                    .catch((err) => toast.error(getAxiosMessage(err)))
-                }
-              >
-                New code
-              </Button>
-            )}
-          </span>
+        <div className="mx-5 mt-3 rounded-control bg-sunken px-4 py-3 sm:mx-6">
+          <p className="mb-3 text-sm text-muted">Type this code into the agent on {agent.name}:</p>
+          <PairingCode agent={{ ...agent, pairing: agent.pairing }} onSaved={onSaved} onRefresh={onRefresh} />
         </div>
       )}
 
