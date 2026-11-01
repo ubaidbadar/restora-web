@@ -14,9 +14,6 @@ export default function SideNav() {
 
   return (
     <aside className="fixed inset-y-0 inset-s-0 hidden w-64 flex-col gap-5 overflow-y-auto border-e border-border bg-surface px-3 py-5 lg:flex">
-      <Link to="/" aria-label="Restora, home" className="self-start rounded-control px-2 py-1 -outline-offset-2">
-        <BrandMark />
-      </Link>
       <div className="flex flex-col gap-3">
         <WorkplaceSwitcher />
         <Can permission="orders:create">
@@ -26,7 +23,7 @@ export default function SideNav() {
           </Button>
         </Can>
       </div>
-      <nav aria-label="Sidebar" className="flex flex-col gap-0.5 border-t border-border pt-4">
+      <nav aria-label="Sidebar" className="flex flex-col gap-0.5">
         {[...main, ...more].filter((link) => link.to !== '/settings/account').map((link) => (
           <NavItem key={link.to} {...link} />
         ))}
