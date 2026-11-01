@@ -1,5 +1,6 @@
-import { MoreVertical } from 'lucide-react';
+import { Check, MoreVertical } from 'lucide-react';
 import {
+    Fragment,
     useRef,
     useState,
     type ButtonHTMLAttributes,
@@ -22,6 +23,10 @@ interface DropdownMenuItem extends Omit<ButtonHTMLAttributes<HTMLButtonElement>,
   onClick: () => void;
   icon?: ElementType;
   danger?: boolean;
+  /** A small heading shown above this item when it starts a new group. */
+  section?: string;
+  /** The current choice in a list of options: shows a check. */
+  selected?: boolean;
 }
 
 interface DropdownMenuProps {
@@ -30,9 +35,11 @@ interface DropdownMenuProps {
   items: DropdownMenuItem[];
   align?: 'left' | 'right';
   className?: string;
+  /** The menu's width; w-52 by default. */
+  menuClassName?: string;
 }
 
-export default function DropdownMenu({ trigger, items, align = 'right', className = '' }: DropdownMenuProps) {
+export default function DropdownMenu({ trigger, items, align = 'right', className = '', menuClassName = 'w-52' }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -127,19 +134,25 @@ export default function DropdownMenu({ trigger, items, align = 'right', classNam
             style={floatingStyle}
             role="menu"
             aria-orientation="vertical"
-            className="z-50 w-52 p-1 rounded-control bg-surface shadow-lg animate-pop-in motion-reduce:animate-none"
+            className={`z-50 ${menuClassName} p-1 rounded-control bg-surface shadow-lg animate-pop-in motion-reduce:animate-none`}
           >
             {items.map((item, index) => (
-              <MenuItem
-                key={`${item.label}-${index}`}
-                ref={(el) => {
-                  itemRefs.current[index] = el;
-                }}
-                item={item}
-                isActive={index === activeIndex}
-                onSelect={() => select(item)}
-                onHover={() => focusItem(index)}
-              />
+              <Fragment key={`${item.label}-${index}`}>
+                {item.section && item.section !== items[index - 1]?.section && (
+                  <p role="presentation" className={`px-3 pb-1 text-xs font-medium text-muted ${index ? 'mt-1 border-t border-border pt-2' : 'pt-1.5'}`}>
+                    {item.section}
+                  </p>
+                )}
+                <MenuItem
+                  ref={(el) => {
+                    itemRefs.current[index] = el;
+                  }}
+                  item={item}
+                  isActive={index === activeIndex}
+                  onSelect={() => select(item)}
+                  onHover={() => focusItem(index)}
+                />
+              </Fragment>
             ))}
           </div>,
           document.body,
@@ -157,7 +170,7 @@ interface MenuItemProps {
 }
 
 function MenuItem({ ref, item, isActive, onSelect, onHover }: MenuItemProps) {
-  const { label, icon: Icon, danger, className = '', onClick, ...buttonProps } = item;
+  const { label, icon: Icon, danger, section, selected, className = '', onClick, ...buttonProps } = item;
   // The active item is always the focused one (hover moves focus too), so focus alone drives the highlight.
   const toneClasses = danger ? 'text-danger-700 focus:bg-danger-50' : 'text-body focus:bg-sunken focus:text-ink';
 
@@ -175,7 +188,8 @@ function MenuItem({ ref, item, isActive, onSelect, onHover }: MenuItemProps) {
       {...buttonProps}
     >
       {Icon && <Icon size={16} aria-hidden="true" />}
-      {label}
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {selected && <Check size={16} className="shrink-0 text-primary" aria-label="Current" />}
     </button>
   );
 }
