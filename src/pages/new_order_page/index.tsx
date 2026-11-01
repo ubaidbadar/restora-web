@@ -26,6 +26,7 @@ import type CartItem from '../../types/cart_item';
 import calcTotals from '../../utils/calc_totals';
 import dayKey from '../../utils/day_key';
 import syncOutbox from '../../utils/sync_outbox';
+import ownOrders from '../../utils/own_orders';
 import upsertById from '../../utils/upsert_by_id';
 
 /**
@@ -204,6 +205,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
           // Made here, so the order is saved once however many times it is sent (offline, or a retry).
           const clientId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
           const body = { ...data, clientId, placedAt: new Date().toISOString() };
+          ownOrders.add(clientId);
           const finish = (message: string) => {
             onSuccess('');
             toast.success(message);

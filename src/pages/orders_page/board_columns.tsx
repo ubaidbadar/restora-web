@@ -2,6 +2,7 @@ import Chips from '../../ui/chips';
 import BOARD_STATUSES from '../../constants/board_statuses';
 import STATUS_LABELS from '../../constants/status_labels';
 import { useSearchParams } from 'react-router';
+import useOrderAlertStore from '../../store/order_alert_store';
 import type Order from '../../types/order';
 import withParam from '../../utils/with_param';
 import BoardColumn from './board_column';
@@ -34,6 +35,7 @@ interface BoardColumnsProps {
  */
 export default function BoardColumns({ orders, onOrderUpdated }: BoardColumnsProps) {
   const [params, setParams] = useSearchParams();
+  const fresh = useOrderAlertStore((state) => state.fresh);
   const { xl } = useBreakpoint();
   const status = (params.get('status') ?? 'new') as Shown;
   const setStatus = (value: string) => setParams((prev) => withParam(prev, 'status', value, 'new'), { replace: true });
@@ -47,7 +49,7 @@ export default function BoardColumns({ orders, onOrderUpdated }: BoardColumnsPro
     return { status: value, orders: done.filter((order, index) => index < DONE_SHOWN || order.paymentStatus !== 'paid'), count: done.length };
   });
   const tabs = [
-    ...columns.map((column) => ({ value: column.status as Shown, label: STATUS_LABELS[column.status], count: column.count })),
+    ...columns.map((column) => ({ value: column.status as Shown, label: STATUS_LABELS[column.status], count: column.count, dot: column.orders.some((order) => fresh.includes(order._id)) })),
     { value: 'cancelled' as const, label: STATUS_LABELS.cancelled, count: cancelled.length },
   ];
 

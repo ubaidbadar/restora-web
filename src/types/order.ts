@@ -42,6 +42,8 @@ export default interface Order {
   createdAt: string;
   /** When the server last saved it; the app asks for what changed after it. */
   updatedAt?: string;
+  /** Made on the device that took the order (see `utils/own_orders`). */
+  clientId?: string;
   /** Taken without internet and still waiting on this device to be sent. */
   pendingSync?: boolean;
 }
