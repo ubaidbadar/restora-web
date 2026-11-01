@@ -9,7 +9,7 @@ import TimelineRow from './timeline_row';
 /** Everything that happened to an order, oldest first: placed, each change with what changed, moves, payment, cancel. */
 export default function OrderTimeline({ order }: { order: Order }) {
   // An order still waiting on this device to be sent has no history on the server yet.
-  const { data: entries, loading, get } = useGet<AuditEntry[]>(`/orders/${order._id}/timeline`, { active: order.pendingSync });
+  const { data: entries, loading, get } = useGet<AuditEntry[]>(`/orders/${order._id}/timeline`, { active: order.pendingSync, cacheFirst: true });
   // Who placed it, by account; guest and older orders have only the name saved on the order.
   const created = entries?.find((entry) => entry.action === 'order.created');
   const placed = <TimelineRow tone="primary" title="Placed" by={created?.actor ?? { name: order.takenBy, via: 'web' }} at={order.createdAt} />;
@@ -23,7 +23,7 @@ export default function OrderTimeline({ order }: { order: Order }) {
       </div>
     );
   }
-  if (!entries && !order.pendingSync) return <LoadFailed what="the history" onRetry={() => get()} />;
+  if (!entries && !order.pendingSync) return <LoadFailed what="the history (connect to load it on this device)" onRetry={() => get()} />;
 
   return (
     <ol className="flex flex-col">
