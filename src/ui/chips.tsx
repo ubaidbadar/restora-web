@@ -5,7 +5,8 @@ interface ChipsProps<T extends string> {
   /** The radio group's name; with `register`, the form field. */
   name: string;
   label: string;
-  options: { value: T; label: string; count?: number; icon?: LucideIcon }[];
+  /** `dot`: something new waits behind this option (e.g. a column with a new order). */
+  options: { value: T; label: string; count?: number; icon?: LucideIcon; dot?: boolean }[];
   /** The picked option. With `register` it is only the one checked at the start; the form keeps it after that. */
   value: T;
   onChange?: (value: T) => void;
@@ -28,7 +29,7 @@ export default function Chips<T extends string>({ name, label, options, value, o
     <fieldset className={`min-w-0 ${className}`}>
       <legend className={showLabel ? 'mb-2 text-sm font-semibold text-ink' : 'sr-only'}>{label}</legend>
       <div className={`flex gap-2 ${wrap ? 'flex-wrap' : 'hide-scrollbar fade-end overflow-x-auto pe-8'}`}>
-        {options.map(({ value: optionValue, label: optionLabel, count, icon: Icon }) => (
+        {options.map(({ value: optionValue, label: optionLabel, count, icon: Icon, dot }) => (
           <label
             key={optionValue}
             // On a narrow screen the picked chip may sit past the edge: bring it into view.
@@ -47,6 +48,11 @@ export default function Chips<T extends string>({ name, label, options, value, o
             {Icon && <Icon aria-hidden className="size-4 shrink-0" />}
             {optionLabel}
             {count !== undefined && <span className="text-xs font-medium text-muted tabular-nums group-has-checked:text-surface/75">{count}</span>}
+            {dot && (
+              <span className="size-2 shrink-0 rounded-full bg-primary group-has-checked:bg-surface">
+                <span className="sr-only">, new</span>
+              </span>
+            )}
           </label>
         ))}
       </div>

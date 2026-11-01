@@ -3,6 +3,7 @@ import api from '../config/api';
 import getCache from '../store/get_cache';
 import useOutboxStore from '../store/outbox_store';
 import getAxiosMessage from './get_axios_message';
+import ownOrders from './own_orders';
 import toast from './toast';
 
 let running = false;
@@ -30,6 +31,8 @@ export default async function syncOutbox() {
       if (!item) break;
       // A change to an order taken offline names it by its offline id until the server has saved it.
       const url = item.url.replace(/[^/]+/g, (part) => savedIds[part] ?? part);
+      // Taken here before a reload: it comes back on the live stream and must not chime here.
+      if (item.method === 'post' && item.url === '/orders') ownOrders.add(item.id);
       try {
         const { data } = await api.request<Order>({ method: item.method, url, data: item.body });
         const created = item.method === 'post' && item.url === '/orders';

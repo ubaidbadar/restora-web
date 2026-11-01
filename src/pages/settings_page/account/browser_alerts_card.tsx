@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Bell, BellOff } from 'lucide-react';
 import SectionCard from '../../../components/section_card';
 import api from '../../../config/api';
+import useOrderAlertStore from '../../../store/order_alert_store';
 import Button from '../../../ui/button';
+import Toggle from '../../../ui/toggle';
 import getAxiosMessage from '../../../utils/get_axios_message';
 import subscribeWebPush from '../../../utils/subscribe_web_push';
 import toast from '../../../utils/toast';
@@ -13,6 +15,7 @@ import toast from '../../../utils/toast';
  */
 export default function BrowserAlertsCard() {
   const [state, setState] = useState<{ on: boolean; saving: boolean }>({ on: false, saving: false });
+  const muted = useOrderAlertStore((store) => store.muted);
 
   useEffect(() => {
     navigator.serviceWorker
@@ -58,7 +61,10 @@ export default function BrowserAlertsCard() {
         )
       }
     >
-      <p className="text-sm text-muted">While Restora is open in front of you, the page chimes instead.</p>
+      <div className="flex flex-col gap-2">
+        <Toggle label="Chime for new orders and calls" checked={!muted} onChange={(event) => useOrderAlertStore.getState().setMuted(!event.target.checked)} />
+        <p className="text-sm text-muted">While Restora is open, this browser chimes and highlights each new order taken on another device. POS terminals stay quiet.</p>
+      </div>
     </SectionCard>
   );
 }

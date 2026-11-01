@@ -153,6 +153,7 @@
   --animate-pop-in: pop-in 140ms ease-out both;        /* menus */
   --animate-lid: lid 1.6s var(--ease-emphasized) infinite; /* the loader's cloche lifting its lid (as index.html's boot screen) */
   --animate-fade-in-late: fade-in 300ms 400ms both;   /* loaders: a quick load never flashes them */
+  --animate-new-order: new-order 1.4s ease-out 3;      /* a new order's card pulses a few times, then keeps its outline */
 }
 
 /* Spacing convention (Tailwind's 4px scale): page gutter 4 / sm:6 / lg:8, page sections gap-6,
@@ -173,6 +174,10 @@
 }
 @keyframes fade-in {
   from { opacity: 0; }
+}
+@keyframes new-order {
+  from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 45%, transparent); }
+  to { box-shadow: 0 0 0 12px transparent; }
 }
 
 /* `error:` styles a control that is invalid by prop (aria-invalid) or by native constraint after user input. */

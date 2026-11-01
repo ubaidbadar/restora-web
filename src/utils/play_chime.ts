@@ -1,5 +1,6 @@
 /** The page's one sound output. Browsers keep it muted until someone has used the page since it loaded. */
 let audio: AudioContext | undefined;
+let unlocked = false;
 
 const unmute = () => {
   audio ??= new AudioContext();
@@ -8,10 +9,17 @@ const unmute = () => {
 };
 
 // After a reload nobody has touched the page yet: the first tap or key press anywhere turns the sound on.
-window.addEventListener('pointerdown', unmute, { once: true, capture: true });
-window.addEventListener('keydown', unmute, { once: true, capture: true });
+const unlock = () => {
+  unlocked = true;
+  unmute();
+};
+window.addEventListener('pointerdown', unlock, { once: true, capture: true });
+window.addEventListener('keydown', unlock, { once: true, capture: true });
 
-/** Two short rising notes, so staff hear a guest's order or call over a busy floor. */
+/**
+ * Two short rising notes, so staff hear a new order or a guest's call over a busy floor. Answers false when the browser
+ * still holds the sound back (nobody has tapped the page since it loaded), so the caller can ask for a tap.
+ */
 export default function playChime() {
   const context = unmute();
   [660, 880].forEach((frequency, index) => {
@@ -26,4 +34,5 @@ export default function playChime() {
     tone.start(start);
     tone.stop(start + 0.32);
   });
+  return unlocked || context.state === 'running';
 }
