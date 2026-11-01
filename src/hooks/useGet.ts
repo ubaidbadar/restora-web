@@ -8,8 +8,6 @@ import getAxiosMessage from '../utils/get_axios_message';
 
 type UseGetOptions = AxiosRequestConfig & {
     active?: boolean;
-    /** Prefer an already persisted response and avoid an unnecessary GET when opening offline-first screens. */
-    cacheFirst?: boolean;
 };
 
 type GetState<T> = {
@@ -27,7 +25,7 @@ type Request = {
 const pending = new Map<string, Promise<unknown>>();
 
 
-export default function useGet<T = unknown>(url: string, { active, cacheFirst = false, ...initialOptions }: UseGetOptions = {}) {
+export default function useGet<T = unknown>(url: string, { active, ...initialOptions }: UseGetOptions = {}) {
     const [state, setState] = useState<GetState<T>>(() => {
         const data = getCache.get(getCache.keyOf(url, initialOptions)) as T | undefined;
         return { loading: !active && data === undefined, data };
@@ -43,8 +41,8 @@ export default function useGet<T = unknown>(url: string, { active, cacheFirst = 
     }, []);
 
     useEffect(() => {
-        if (!active && !(cacheFirst && !navigator.onLine && getCache.get(getCache.keyOf(url, initialOptions)) !== undefined)) get();
-    }, [active, cacheFirst, get, url]);
+        if (!active) get();
+    }, [active, get]);
 
     useEffect(() => {
         if (request.id === 0) return;
