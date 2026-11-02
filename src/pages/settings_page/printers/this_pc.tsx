@@ -1,4 +1,4 @@
-import { PlugZap, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type PrintAgent from '../../../types/print_agent';
 import Button from '../../../ui/button';
@@ -15,7 +15,7 @@ interface ThisPcProps {
   onPaired: () => void;
 }
 
-type Step = 'idle' | 'ready' | 'connecting' | 'blocked' | 'failed';
+type Step = 'idle' | 'connecting' | 'blocked' | 'failed';
 
 /** Whether the browser has been told never to let Restora reach apps on this PC. */
 async function blocked() {
@@ -42,10 +42,7 @@ export default function ThisPc({ waiting, onPaired }: ThisPcProps) {
     if (left()) return;
     if (!status) return setState({ step: (await blocked()) ? 'blocked' : 'idle' });
     if (status.paired) return setState({ step: 'idle' });
-    setState({ step: 'ready' });
-  };
 
-  const pair = async () => {
     setState({ step: 'connecting' });
     try {
       await pairThisPc(waiting?.pairing && minutesSince(waiting.pairing.expiresAt) < 0 ? waiting.pairing.code : undefined);
@@ -68,12 +65,6 @@ export default function ThisPc({ waiting, onPaired }: ThisPcProps) {
   }, []);
 
   if (state.step === 'idle') return null;
-  if (state.step === 'ready') return (
-    <div className="flex max-w-3xl flex-wrap items-center gap-3 rounded-card border border-border bg-surface px-4 py-3">
-      <p className="min-w-0 flex-1 basis-60 text-sm text-body">Restora Print is running on this computer. Connect it to the currently selected restaurant branch to enable automatic printing.</p>
-      <Button size="sm" icon={PlugZap} onClick={() => void pair()}>Connect this PC</Button>
-    </div>
-  );
   if (state.step === 'connecting') {
     return (
       <p role="status" className="flex max-w-3xl items-center gap-2 rounded-card bg-primary-soft px-4 py-3 text-sm font-medium text-accent-text">
