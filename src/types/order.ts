@@ -1,3 +1,4 @@
+import type AuditEntry from './audit_entry';
 import type OrderCancellation from './order_cancellation';
 import type OrderCustomer from './order_customer';
 import type OrderItem from './order_item';
@@ -18,6 +19,8 @@ export default interface Order {
   type: OrderType;
   status: OrderStatus;
   items: OrderItem[];
+  /** Recorded changes and status events, oldest first; bundled with the order for offline viewing. */
+  timeline?: AuditEntry[];
   subtotal: number;
   discount: number;
   taxRate: number;

@@ -11,6 +11,8 @@ import toast from '../../utils/toast';
 import printSlip from '../../utils/print_slip';
 import printOnThisPc from '../../utils/print_on_this_pc';
 import kitchenChanges from '../../utils/kitchen_changes';
+import kitchenSlipChanges from '../../utils/kitchen_slip_changes';
+import printOrder from '../../utils/print_order';
 import PageHeader from '../../components/page_header';
 import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
@@ -170,7 +172,10 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             const token = order.dailyToken;
             const done = (message: string, saved: Order) => {
               onSuccess('');
-              toast.success(message, { label: 'Print slip', onClick: () => printSlip(saved, 'kitchen') });
+              const changeSlip = kitchenSlipChanges(saved, order.items);
+              toast.success(message, changeSlip
+                ? { label: 'Print changes', onClick: () => printOrder(changeSlip, 'kitchen') }
+                : { label: 'Print slip', onClick: () => printSlip(saved, 'kitchen') });
               navigate('/orders');
             };
             // The order as the board will show it, worked out here from the form and the menu prices.
