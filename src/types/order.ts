@@ -1,3 +1,4 @@
+import type AuditEntry from './audit_entry';
 import type OrderCancellation from './order_cancellation';
 import type OrderCustomer from './order_customer';
 import type OrderItem from './order_item';
@@ -46,4 +47,6 @@ export default interface Order {
   clientId?: string;
   /** Taken without internet and still waiting on this device to be sent. */
   pendingSync?: boolean;
+  /** Activity and change history of the order. */
+  entries?: AuditEntry[];
 }
