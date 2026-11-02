@@ -49,7 +49,7 @@ export default function useGet<T = unknown>(url: string, { active, ...initialOpt
         let current = true;
         let unsubscribe = () => { };
 
-        const timer = setTimeout(() => {
+        const run = () => {
             const key = getCache.keyOf(url, request.options);
             const cached = getCache.get(key) as T | undefined;
             setState(s => ({ ...s, data: cached ?? s.data, loading: cached === undefined, error: undefined }));
@@ -68,11 +68,14 @@ export default function useGet<T = unknown>(url: string, { active, ...initialOpt
                 .catch(err => current && setState(s => ({ ...s, loading: false, error: getAxiosMessage(err) })));
 
             unsubscribe = getCache.subscribe(changed => changed === key && current && setState(s => ({ ...s, data: getCache.get(key) as T })));
-        }, request.delay);
+        };
+
+        const timer = request.delay > 0 ? setTimeout(run, request.delay) : null;
+        if (!request.delay) run();
 
         return () => {
             current = false;
-            clearTimeout(timer);
+            if (timer) clearTimeout(timer);
             unsubscribe();
         };
     }, [url, request]);

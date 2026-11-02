@@ -7,7 +7,11 @@ import useOutboxStore from '../store/outbox_store';
 import sampleMe from '../test/sample_me';
 import syncOutbox from './sync_outbox';
 
-vi.mock('../config/api', () => ({ default: { request: vi.fn() } }));
+vi.mock('../config/api', () => {
+  const fn: any = vi.fn();
+  fn.request = vi.fn();
+  return { default: fn };
+});
 vi.mock('./offline_db', () => ({ default: { get: vi.fn(async () => undefined), set: vi.fn(async () => undefined), clear: vi.fn(async () => undefined) } }));
 const request = vi.mocked(api.request) as unknown as ReturnType<typeof vi.fn>;
 

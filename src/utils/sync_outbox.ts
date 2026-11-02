@@ -39,6 +39,7 @@ export default async function syncOutbox() {
         useOutboxStore.getState().done(item.id, created ? data._id : undefined);
         useOutboxStore.getState().setOnline(true);
         putOrder(item.id, data);
+        getCache.deleteMatching((key) => key.includes(`/orders/${data._id}`) || key.includes(`/orders/${item.id}`));
         if (created) toast.success(`${item.label} is saved as order #${data.dailyToken}`);
       } catch (err) {
         const status = (err as { response?: { status: number } }).response?.status;
