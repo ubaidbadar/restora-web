@@ -18,6 +18,7 @@ import CancelOrder from './cancel_order';
 import type OrderCancellation from '../../types/order_cancellation';
 import getAxiosMessage from '../../utils/get_axios_message';
 import useOutboxStore from '../../store/outbox_store';
+import useAuthStore from '../../store/auth_store';
 import syncOutbox from '../../utils/sync_outbox';
 
 interface OrderCardFooterProps {
@@ -84,8 +85,27 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
       .catch((err) => (err.response ? toast.error(getAxiosMessage(err)) : (queue(), void syncOutbox())));
   };
 
-  const handleAdvance = () => next && change('patch', `/orders/${order._id}`, { status: next }, pending ? `Order #${token} accepted` : `Order #${token} moved to ${STATUS_LABELS[next]}`);
-  const handleCancel = (body: Pick<OrderCancellation, 'reason' | 'note'>) => change('post', `/orders/${order._id}/cancel`, body, pending ? `Order #${token} turned down` : `Order #${token} cancelled`);
+  const handleAdvance = () => {
+    const me = useAuthStore.getState().me;
+    return (
+      next &&
+      change(
+        'patch',
+        `/orders/${order._id}`,
+        { status: next, updatedBy: me?.user.name, updatedAt: new Date().toISOString() },
+        pending ? `Order #${token} accepted` : `Order #${token} moved to ${STATUS_LABELS[next]}`
+      )
+    );
+  };
+  const handleCancel = (body: Pick<OrderCancellation, 'reason' | 'note'>) => {
+    const me = useAuthStore.getState().me;
+    const cancelMeta = {
+      ...body,
+      cancelledBy: me?.user.name,
+      cancelledAt: new Date().toISOString(),
+    };
+    return change('post', `/orders/${order._id}/cancel`, cancelMeta, pending ? `Order #${token} turned down` : `Order #${token} cancelled`);
+  };
 
   return (
     <OrderDetailsDrawer

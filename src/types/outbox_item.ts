@@ -12,4 +12,6 @@ export default interface OutboxItem {
   createdAt: string;
   /** A new order as the board shows it until it syncs; for an edit, the fields it changes. */
   preview?: unknown;
+  /** Explicit before/after diff for offline history inspection and timeline rendering. */
+  changes?: { before?: Record<string, unknown>; after?: Record<string, unknown> };
 }

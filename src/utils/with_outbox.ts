@@ -20,7 +20,7 @@ export default function withOutbox(orders: Order[]): Order[] {
       item.method === 'put'
         ? (item.preview as Partial<Order>)
         : action === 'cancel'
-          ? { status: 'cancelled', cancellation: { ...(item.body as Partial<OrderCancellation>), at: item.createdAt } }
+          ? { status: 'cancelled', cancellation: { ...(item.body as Partial<OrderCancellation>), at: (item.body as { cancelledAt?: string })?.cancelledAt || item.createdAt, byName: (item.body as { cancelledBy?: string; byName?: string })?.cancelledBy || (item.body as { byName?: string })?.byName } }
           : (item.body as { status?: OrderStatus } | undefined)?.status
             ? { status: (item.body as { status: OrderStatus }).status }
             : undefined;

@@ -6,6 +6,7 @@ import formatDate from './format_date';
 import formatRs from './format_rs';
 import formatTime from './format_time';
 import lineDetails from './line_details';
+import cancellationText from './cancellation_text';
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 
@@ -47,6 +48,13 @@ const STYLES = `
   .kitchen td { padding-top: 2mm; font-size: 15px; }
   .kitchen small { font-size: 13px; color: #000; }
   .kitchen .qty { width: 10mm; font-weight: 700; }
+  .kitchen tr.cancel td { background: #000 !important; color: #fff !important; padding: 2mm 1.5mm !important; font-weight: 700 !important; }
+  .kitchen tr.cancel small { color: #fff !important; }
+  .kitchen tr.new td { font-weight: 700 !important; }
+  .cancel-block { text-align: center; margin: 2mm 0; border: 2px dashed #000; padding: 2mm; }
+  .cancel-cross { font-size: 22px; font-weight: 900; line-height: 1; letter-spacing: 0.2em; margin-bottom: 1mm; }
+  .cancel-badge { display: inline-block; background: #000; color: #fff; font-weight: 900; font-size: 15px; padding: 1mm 4mm; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.5mm; }
+  .cancel-meta { font-size: 11px; margin-top: 0.5mm; }
 `;
 
 /**
@@ -86,13 +94,26 @@ export default function printOrder(order: Order, kind: 'kitchen' | 'receipt') {
 
   const rows = order.items
     .map((item) => {
+      const isCancel = item.name.startsWith('CANCEL ');
+      const isNew = item.name.startsWith('NEW ');
+      const rowClass = !isReceipt && isCancel ? 'cancel' : !isReceipt && isNew ? 'new' : '';
       const extra = [lineDetails(item) && `<small>${escape(lineDetails(item))}</small>`, item.note && `<small class="note">“${escape(item.note)}”</small>`].filter(Boolean).join('');
       return isReceipt
         ? `<tr><td>${escape(item.name)}${extra}</td><td class="num">${item.qty}</td><td class="num">${amount.format(item.price)}</td><td class="num">${amount.format(item.price * item.qty)}</td></tr>`
-        : `<tr><td class="qty">${item.qty}×</td><td>${escape(item.name)}${extra}</td></tr>`;
+        : `<tr class="${rowClass}"><td class="qty">${item.qty}×</td><td>${escape(item.name)}${extra}</td></tr>`;
     })
     .join('');
   const columns = isReceipt ? '<th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th>' : '<th class="qty">Qty</th><th>Item</th>';
+
+  const cancellationBlock =
+    !isReceipt && order.cancellation
+      ? `<div class="cancel-block">
+          <div class="cancel-cross">✕</div>
+          <div class="cancel-badge">CANCELLED</div>
+          ${order.cancellation.byName ? `<p class="cancel-meta"><b>By:</b> ${escape(order.cancellation.byName)}</p>` : ''}
+          ${order.cancellation.reason ? `<p class="cancel-meta"><b>Reason:</b> ${escape(cancellationText(order.cancellation))}</p>` : ''}
+        </div><hr class="rule">`
+      : '';
 
   const stamp = order.paymentStatus === 'paid' ? `<div class="stamp" aria-hidden="true"><b>Paid</b>${order.paymentMethod ? `<span>${PAYMENT_LABELS[order.paymentMethod]}</span>` : ''}</div>` : '';
   const printed = new Date().toISOString();
@@ -119,6 +140,7 @@ export default function printOrder(order: Order, kind: 'kitchen' | 'receipt') {
       <div class="token"><b>#${order.dailyToken}</b><span>${escape(where)}</span></div>
       ${details}
       <hr class="rule">
+      ${cancellationBlock}
       <table><thead><tr>${columns}</tr></thead><tbody>${rows}</tbody></table>
       ${totals}
     </body></html>`;

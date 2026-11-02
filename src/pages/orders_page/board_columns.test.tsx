@@ -79,7 +79,15 @@ describe('Orders board', () => {
     expect(await screen.findByText('Say why it was cancelled')).toBeTruthy();
     fireEvent.change(screen.getByLabelText(/^Note/), { target: { value: 'Guest paid at another counter' } });
     fireEvent.click(screen.getByRole('button', { name: 'Cancel order' }));
-    await waitFor(() => expect(api.request).toHaveBeenCalledWith({ method: 'post', url: '/orders/a/cancel', data: { reason: 'other', note: 'Guest paid at another counter' } }));
+    await waitFor(() =>
+      expect(api.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: 'post',
+          url: '/orders/a/cancel',
+          data: expect.objectContaining({ reason: 'other', note: 'Guest paid at another counter' }),
+        })
+      )
+    );
   });
 
   it('allows recording payment for completed orders that are unpaid', async () => {
