@@ -29,6 +29,20 @@ const getCache = {
   update<T>(key: string, updater: (current: T | undefined) => T | undefined) {
     getCache.set(key, updater(entries.get(key) as T | undefined));
   },
+  deleteMatching(predicate: (key: string) => boolean) {
+    const keysToDelete: string[] = [];
+    entries.forEach((_, key) => {
+      if (predicate(key)) keysToDelete.push(key);
+    });
+    for (const key of keysToDelete) {
+      entries.delete(key);
+      listeners.forEach((listener) => listener(key));
+    }
+    if (keysToDelete.length > 0) {
+      window.clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(() => void offlineDb.set('get-cache', [...entries]), 500);
+    }
+  },
   subscribe(listener: (key: string) => void) {
     listeners.add(listener);
     return () => void listeners.delete(listener);

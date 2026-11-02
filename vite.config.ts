@@ -58,11 +58,6 @@ export default defineConfig(({ mode }) => {
             { name: 'Customers', url: '/customers', icons: [{ src: '/pwa-192.png', sizes: '192x192' }] },
             { name: 'Reservations', url: '/reservations', icons: [{ src: '/pwa-192.png', sizes: '192x192' }] },
           ],
-          // Shown in Chrome's install window. Retake them when the dashboard changes a lot.
-          screenshots: [
-            { src: '/screenshots/dashboard-wide.jpg', sizes: '1280x800', type: 'image/jpeg', form_factor: 'wide', label: 'Today at a glance' },
-            { src: '/screenshots/dashboard-narrow.jpg', sizes: '780x1688', type: 'image/jpeg', form_factor: 'narrow', label: 'Today at a glance' },
-          ],
         },
         workbox: {
           // The app itself is kept for instant, flaky-network-proof starts.

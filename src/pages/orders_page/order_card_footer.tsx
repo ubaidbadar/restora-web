@@ -84,8 +84,21 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
       .catch((err) => (err.response ? toast.error(getAxiosMessage(err)) : (queue(), void syncOutbox())));
   };
 
-  const handleAdvance = () => next && change('patch', `/orders/${order._id}`, { status: next }, pending ? `Order #${token} accepted` : `Order #${token} moved to ${STATUS_LABELS[next]}`);
-  const handleCancel = (body: Pick<OrderCancellation, 'reason' | 'note'>) => change('post', `/orders/${order._id}/cancel`, body, pending ? `Order #${token} turned down` : `Order #${token} cancelled`);
+  const handleAdvance = () =>
+    next &&
+    change(
+      'patch',
+      `/orders/${order._id}`,
+      { status: next, updatedBy: workplace?.user?.name, updatedAt: new Date().toISOString() },
+      pending ? `Order #${token} accepted` : `Order #${token} moved to ${STATUS_LABELS[next]}`
+    );
+  const handleCancel = (body: Pick<OrderCancellation, 'reason' | 'note'>) =>
+    change(
+      'post',
+      `/orders/${order._id}/cancel`,
+      { ...body, cancelledBy: workplace?.user?.name, cancelledAt: new Date().toISOString() },
+      pending ? `Order #${token} turned down` : `Order #${token} cancelled`
+    );
 
   return (
     <OrderDetailsDrawer

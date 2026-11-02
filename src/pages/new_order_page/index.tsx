@@ -178,38 +178,38 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             // The customer list may not be loaded: an unchanged customer keeps the name the order already has.
             const local = { ...worked, customer: worked.customer ?? (data.customerId && data.customerId === order.customerId ? order.customer : undefined) };
             const outbox = useOutboxStore.getState();
-            const waitingOrder = outbox.items.find((item) => item.id === order._id && item.url === '/orders');
-            // Taken offline and not sent yet: change the waiting order itself, so the server only ever gets the final one.
-            if (waitingOrder) {
-              const preview = { ...local, dailyToken: token, createdAt: order.createdAt, takenBy: order.takenBy };
-              outbox.replace(order._id, { body: { ...(waitingOrder.body as object), ...changes }, preview });
-              // The server only ever sees the final order, so it prints no "CHANGED" slip: this PC prints what changed.
-              const items = kitchenChanges((waitingOrder.preview as Order).items, preview.items);
-              if (items.length) void printOnThisPc({ ...preview, dailyToken: `${token} CHANGED`, items }, 'kitchen', `${order._id}~edit-${Date.now().toString(36)}`);
-              return done(`Order ${token} changed. It will be sent when the internet is back.`, preview);
-            }
+            const me = useAuthStore.getState().me;
+            const editMeta = {
+              ...changes,
+              editedBy: me?.user.name,
+              editedAt: new Date().toISOString(),
+            };
             // No internet: the edit waits in the outbox and the board shows it at once.
             const queue = () => {
               const { customerId, customer, type, items, subtotal, discount, tax, taxRate, total, deliveryFee, tableId, tableName, area, address, rider } = local;
               const preview = { customerId, customer, type, items, subtotal, discount, tax, taxRate, total, deliveryFee, tableId, tableName, area, address, rider };
-              useOutboxStore.getState().add({ id: `${order._id}-edit-${Date.now().toString(36)}`, method: 'put', url: `/orders/${order._id}`, body: changes, label: `Changes to order #${token}`, createdAt: new Date().toISOString(), preview });
+              useOutboxStore.getState().add({ id: `${order._id}-edit-${Date.now().toString(36)}`, method: 'put', url: `/orders/${order._id}`, body: editMeta, label: `Changes to order #${token}`, createdAt: editMeta.editedAt, preview });
+              const changedItems = kitchenChanges(order.items, preview.items);
+              if (changedItems.length) void printOnThisPc({ ...order, ...preview, dailyToken: `${token} CHANGED`, items: changedItems }, 'kitchen', `${order._id}~edit-${Date.now().toString(36)}`);
               done(`Order #${token} changed. It will be sent when the internet is back.`, { ...order, ...preview });
             };
             // Changes already waiting for this order go first, so this one waits behind them.
             const behind = outbox.items.some((item) => item.url.startsWith(`/orders/${order._id}`));
             if (!outbox.online || behind) return queue();
             return void api
-              .put(`/orders/${order._id}`, changes)
+              .put(`/orders/${order._id}`, editMeta)
               .then((res) => {
                 getCache.update<Order[]>(getCache.keyOf('/orders'), (list) => list?.map((item) => (item._id === res.data._id ? res.data : item)));
+                getCache.deleteMatching((key) => key.includes(`/orders/${order._id}`));
                 getCache.set(getCache.keyOf(`/orders/${order._id}`), res.data);
                 done(`Order #${res.data.dailyToken} updated`, res.data);
               })
               .catch((err) => (err.response ? onError(err) : (queue(), void syncOutbox())));
           }
           // Made here, so the order is saved once however many times it is sent (offline, or a retry).
+          const me = useAuthStore.getState().me;
           const clientId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-          const body = { ...data, clientId, placedAt: new Date().toISOString() };
+          const body = { ...data, clientId, placedAt: new Date().toISOString(), takenBy: me?.user.name };
           ownOrders.add(clientId);
           const finish = (message: string, print?: Order) => {
             onSuccess('');
