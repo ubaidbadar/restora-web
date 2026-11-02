@@ -11,6 +11,7 @@ import DropdownMenu from '../../ui/dropdown_menu';
 import IconButton from '../../ui/icon_button';
 import formatRs from '../../utils/format_rs';
 import printSlip from '../../utils/print_slip';
+import printOnThisPc from '../../utils/print_on_this_pc';
 import toast from '../../utils/toast';
 import OrderDetailsDrawer from './order_details_drawer';
 import PayOrderSheet from './pay_order_sheet';
@@ -69,18 +70,27 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
    * Sends the change, or, without internet (or for an order still waiting to sync), keeps it in the outbox and shows it
    * on the board at once; it is sent, in order, once the internet is back.
    */
-  const change = (method: 'post' | 'patch', url: string, body: unknown, done: string) => {
+  const change = (method: 'post' | 'patch', url: string, body: unknown, done: string, printOnDone?: Order) => {
     const queue = () => {
       // The board lays the waiting change over the order (orders_page/board_with_outbox).
       useOutboxStore.getState().add({ id: `${order._id}-${Date.now().toString(36)}`, method, url, body, label: `Order #${token}`, createdAt: new Date().toISOString() });
-      toast.success(`${done}. It will be sent when the internet is back.`);
+      if (printOnDone) {
+        void printOnThisPc(printOnDone, 'kitchen', `${order._id}~cancel-${Date.now().toString(36)}`);
+      }
+      toast.success(
+        `${done}. It will be sent when the internet is back.`,
+        printOnDone && { label: 'Print slip', onClick: () => printSlip(printOnDone, 'kitchen') }
+      );
     };
     if (order.pendingSync || !useOutboxStore.getState().online) return queue();
     api
       .request({ method, url, data: body })
       .then((res) => {
         onOrderUpdated?.(res.data);
-        toast.success(done);
+        toast.success(
+          done,
+          printOnDone && { label: 'Print slip', onClick: () => printSlip(printOnDone, 'kitchen') }
+        );
       })
       .catch((err) => (err.response ? toast.error(getAxiosMessage(err)) : (queue(), void syncOutbox())));
   };
@@ -104,7 +114,23 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
       cancelledBy: me?.user.name,
       cancelledAt: new Date().toISOString(),
     };
-    return change('post', `/orders/${order._id}/cancel`, cancelMeta, pending ? `Order #${token} turned down` : `Order #${token} cancelled`);
+    const cancelSlipOrder: Order = {
+      ...order,
+      status: 'cancelled',
+      dailyToken: `${token} CANCELLED`,
+      cancellation: { ...body, byName: me?.user.name, at: cancelMeta.cancelledAt },
+      items: order.items.map((item) => ({
+        ...item,
+        name: item.name.startsWith('CANCEL ') ? item.name : `CANCEL ${item.name}`,
+      })),
+    };
+    return change(
+      'post',
+      `/orders/${order._id}/cancel`,
+      cancelMeta,
+      pending ? `Order #${token} turned down` : `Order #${token} cancelled`,
+      cancelSlipOrder
+    );
   };
 
   return (

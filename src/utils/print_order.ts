@@ -1,3 +1,4 @@
+import CANCEL_REASON_LABELS from '../constants/cancel_reason_labels';
 import ORDER_TYPE_LABELS from '../constants/order_type_labels';
 import PAYMENT_LABELS from '../constants/payment_labels';
 import useAuthStore from '../store/auth_store';
@@ -6,7 +7,6 @@ import formatDate from './format_date';
 import formatRs from './format_rs';
 import formatTime from './format_time';
 import lineDetails from './line_details';
-import cancellationText from './cancellation_text';
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 
@@ -16,7 +16,7 @@ const amount = new Intl.NumberFormat('en-PK', { maximumFractionDigits: 0 });
 const line = (label: string, value: string, className = '') => `<div class="line ${className}"><span>${label}</span><span>${value}</span></div>`;
 
 const STYLES = `
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { width: 72mm; margin: 0 auto; padding: 4mm 0 6mm; font: 12px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; color: #000; font-variant-numeric: tabular-nums; }
   p { margin: 0; }
   .center { text-align: center; }
@@ -26,7 +26,7 @@ const STYLES = `
   .head p + p { margin-top: 0.5mm; }
   .rule { margin: 3mm 0; border: 0; border-top: 1px dashed #000; }
   .token { display: flex; align-items: baseline; justify-content: space-between; gap: 3mm; }
-  .token b { font-size: 22px; }
+  .token b { font-size: 22px; font-weight: 800; }
   .line { display: flex; align-items: baseline; justify-content: space-between; gap: 3mm; margin-top: 0.5mm; }
   .line span:first-child { color: #333; }
   .line span:last-child { text-align: right; }
@@ -45,16 +45,63 @@ const STYLES = `
   .stamp span { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; }
   .footer { margin-top: 3mm; }
   .footer p + p { margin-top: 1mm; }
-  .kitchen td { padding-top: 2mm; font-size: 15px; }
-  .kitchen small { font-size: 13px; color: #000; }
-  .kitchen .qty { width: 10mm; font-weight: 700; }
-  .kitchen tr.cancel td { background: #000 !important; color: #fff !important; padding: 2mm 1.5mm !important; font-weight: 700 !important; }
-  .kitchen tr.cancel small { color: #fff !important; }
-  .kitchen tr.new td { font-weight: 700 !important; }
-  .cancel-block { text-align: center; margin: 2mm 0; border: 2px dashed #000; padding: 2mm; }
-  .cancel-cross { font-size: 22px; font-weight: 900; line-height: 1; letter-spacing: 0.2em; margin-bottom: 1mm; }
-  .cancel-badge { display: inline-block; background: #000; color: #fff; font-weight: 900; font-size: 15px; padding: 1mm 4mm; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.5mm; }
-  .cancel-meta { font-size: 11px; margin-top: 0.5mm; }
+
+  /* Kitchen slip formatting matching PC Agent ESC/POS receipts */
+  .kitchen .head .name { font-size: 20px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+  .kitchen td { padding: 1.8mm 0; font-size: 15px; line-height: 1.35; }
+  .kitchen .qty { width: 11mm; font-size: 16px; font-weight: 800; vertical-align: top; }
+  .kitchen .item-name { font-weight: 700; font-size: 15px; }
+  .kitchen small { display: block; font-size: 12.5px; font-weight: normal; color: #222; margin-top: 0.5mm; }
+  .kitchen .note { font-style: italic; color: #333; }
+  .kitchen tr.new td { font-weight: 800 !important; }
+  .kitchen tr.cancel td {
+    background: #000 !important;
+    color: #fff !important;
+    padding: 2.5mm 1.5mm !important;
+    font-weight: 800 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .kitchen tr.cancel small {
+    color: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .kitchen tr.cancel .note {
+    color: #f0f0f0 !important;
+  }
+  .cancel-block {
+    text-align: center;
+    margin: 2mm 0;
+    border: 2px dashed #000;
+    padding: 2mm 1.5mm;
+  }
+  .cancel-cross {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5mm;
+  }
+  .cancel-badge {
+    display: inline-block;
+    background: #000 !important;
+    color: #fff !important;
+    font-weight: 900;
+    font-size: 16px;
+    padding: 1.5mm 5mm;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1.5mm;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .cancel-meta {
+    font-size: 11.5px;
+    text-align: left;
+    margin-top: 0.8mm;
+    line-height: 1.3;
+  }
 `;
 
 /**
@@ -67,6 +114,10 @@ export default function printOrder(order: Order, kind: 'kitchen' | 'receipt') {
   const branch = workplace?.branch;
   const receipt = settings?.receipt ?? {};
   const isReceipt = kind === 'receipt';
+  const isCancelledOrder = !isReceipt && (order.status === 'cancelled' || Boolean(order.cancellation));
+  const tokenText = isCancelledOrder && !String(order.dailyToken).includes('CANCELLED')
+    ? `${order.dailyToken} CANCELLED`
+    : String(order.dailyToken);
   const where = [ORDER_TYPE_LABELS[order.type], order.tableName && `Table ${order.tableName}`].filter(Boolean).join(' · ');
   const address = order.type === 'delivery' ? [order.area, order.address].filter(Boolean).join(', ') : '';
   const join = (parts: (string | undefined)[], separator: string) => parts.filter(Boolean).join(separator);
@@ -94,24 +145,39 @@ export default function printOrder(order: Order, kind: 'kitchen' | 'receipt') {
 
   const rows = order.items
     .map((item) => {
-      const isCancel = item.name.startsWith('CANCEL ');
+      const isCancel = item.name.startsWith('CANCEL ') || isCancelledOrder;
       const isNew = item.name.startsWith('NEW ');
+      const displayName = isCancelledOrder && !item.name.startsWith('CANCEL ')
+        ? `CANCEL ${item.name}`
+        : item.name;
       const rowClass = !isReceipt && isCancel ? 'cancel' : !isReceipt && isNew ? 'new' : '';
       const extra = [lineDetails(item) && `<small>${escape(lineDetails(item))}</small>`, item.note && `<small class="note">“${escape(item.note)}”</small>`].filter(Boolean).join('');
       return isReceipt
         ? `<tr><td>${escape(item.name)}${extra}</td><td class="num">${item.qty}</td><td class="num">${amount.format(item.price)}</td><td class="num">${amount.format(item.price * item.qty)}</td></tr>`
-        : `<tr class="${rowClass}"><td class="qty">${item.qty}×</td><td>${escape(item.name)}${extra}</td></tr>`;
+        : `<tr class="${rowClass}"><td class="qty">${item.qty}×</td><td class="item-name">${escape(displayName)}${extra}</td></tr>`;
     })
     .join('');
-  const columns = isReceipt ? '<th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th>' : '<th class="qty">Qty</th><th>Item</th>';
+
+  const tableHead = isReceipt
+    ? '<thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>'
+    : '';
+
+  const cancelReason = [
+    order.cancellation?.reason && order.cancellation.reason !== 'other' && CANCEL_REASON_LABELS[order.cancellation.reason],
+    order.cancellation?.note,
+  ]
+    .filter(Boolean)
+    .join(' - ');
+
+  const cancelBy = order.cancellation?.byName || (order.cancellation as { cancelledBy?: string })?.cancelledBy;
 
   const cancellationBlock =
-    !isReceipt && order.cancellation
+    isCancelledOrder
       ? `<div class="cancel-block">
           <div class="cancel-cross">✕</div>
           <div class="cancel-badge">CANCELLED</div>
-          ${order.cancellation.byName ? `<p class="cancel-meta"><b>By:</b> ${escape(order.cancellation.byName)}</p>` : ''}
-          ${order.cancellation.reason ? `<p class="cancel-meta"><b>Reason:</b> ${escape(cancellationText(order.cancellation))}</p>` : ''}
+          ${cancelBy ? `<p class="cancel-meta"><b>By:</b> ${escape(cancelBy)}</p>` : ''}
+          ${cancelReason ? `<p class="cancel-meta"><b>Reason:</b> ${escape(cancelReason)}</p>` : ''}
         </div><hr class="rule">`
       : '';
 
@@ -133,15 +199,15 @@ export default function printOrder(order: Order, kind: 'kitchen' | 'receipt') {
       </div>`
     : '';
 
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Order #${order.dailyToken}</title><style>${STYLES}</style></head>
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Order #${tokenText}</title><style>${STYLES}</style></head>
     <body class="${kind}">
       <div class="head center">${header.filter(Boolean).join('')}</div>
       <hr class="rule">
-      <div class="token"><b>#${order.dailyToken}</b><span>${escape(where)}</span></div>
+      <div class="token"><b>#${tokenText}</b><span>${escape(where)}</span></div>
       ${details}
       <hr class="rule">
       ${cancellationBlock}
-      <table><thead><tr>${columns}</tr></thead><tbody>${rows}</tbody></table>
+      <table>${tableHead}<tbody>${rows}</tbody></table>
       ${totals}
     </body></html>`;
 
