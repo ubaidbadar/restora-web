@@ -19,9 +19,9 @@ type GetState<T> = {
 type Request = {
     id: number;
     options: AxiosRequestConfig;
+    delay: number;
 };
 
-// Requests on their way, so two screens asking for the same thing at once make one request.
 const pending = new Map<string, Promise<unknown>>();
 
 
@@ -30,12 +30,12 @@ export default function useGet<T = unknown>(url: string, { active, ...initialOpt
         const data = getCache.get(getCache.keyOf(url, initialOptions)) as T | undefined;
         return { loading: !active && data === undefined, data };
     });
-    const [request, setRequest] = useState<Request>({ id: 0, options: initialOptions });
+    const [request, setRequest] = useState<Request>({ id: 0, options: initialOptions, delay: 0 });
 
-    // Merges `params` too, so `get({ params: { date } })` keeps the other params.
-    const get = useCallback((override: AxiosRequestConfig = {}) => {
+    const get = useCallback((override: AxiosRequestConfig = {}, delay = 0) => {
         setRequest(r => ({
             id: r.id + 1,
+            delay,
             options: { ...r.options, ...override, params: override.params ? { ...r.options.params, ...override.params } : r.options.params },
         }));
     }, []);
@@ -47,30 +47,32 @@ export default function useGet<T = unknown>(url: string, { active, ...initialOpt
     useEffect(() => {
         if (request.id === 0) return;
         let current = true;
-        const key = getCache.keyOf(url, request.options);
-        const cached = getCache.get(key) as T | undefined;
-        setState(s => ({ ...s, data: cached ?? s.data, loading: cached === undefined, error: undefined }));
+        let unsubscribe = () => { };
 
-        let promise = pending.get(key);
-        if (!promise) {
-            promise = api<T>({ method: 'GET', url, ...request.options }).then(res => res.data);
-            pending.set(key, promise);
-            // Saved and reported once, however many screens are waiting for it. Without internet no toast: a screen with a
-            // saved answer keeps showing it, and the offline bar already says why nothing new loads.
+        const timer = setTimeout(() => {
+            const key = getCache.keyOf(url, request.options);
+            const cached = getCache.get(key) as T | undefined;
+            setState(s => ({ ...s, data: cached ?? s.data, loading: cached === undefined, error: undefined }));
+
+            let promise = pending.get(key);
+            if (!promise) {
+                promise = api<T>({ method: 'GET', url, ...request.options }).then(res => res.data);
+                pending.set(key, promise);
+                promise
+                    .then(data => getCache.set(key, data), err => (err.response || (cached === undefined && useOutboxStore.getState().online)) && toast.error(getAxiosMessage(err)))
+                    .finally(() => pending.delete(key));
+            }
+
             promise
-                .then(data => getCache.set(key, data), err => (err.response || (cached === undefined && useOutboxStore.getState().online)) && toast.error(getAxiosMessage(err)))
-                .finally(() => pending.delete(key));
-        }
+                .then(data => current && setState(s => ({ ...s, loading: false, data: data as T })))
+                .catch(err => current && setState(s => ({ ...s, loading: false, error: getAxiosMessage(err) })));
 
-        promise
-            .then(data => current && setState(s => ({ ...s, loading: false, data: data as T })))
-            .catch(err => current && setState(s => ({ ...s, loading: false, error: getAxiosMessage(err) })));
-
-        // Shows changes made to this answer elsewhere (another screen's update, an order synced from the outbox).
-        const unsubscribe = getCache.subscribe(changed => changed === key && current && setState(s => ({ ...s, data: getCache.get(key) as T })));
+            unsubscribe = getCache.subscribe(changed => changed === key && current && setState(s => ({ ...s, data: getCache.get(key) as T })));
+        }, request.delay);
 
         return () => {
             current = false;
+            clearTimeout(timer);
             unsubscribe();
         };
     }, [url, request]);
