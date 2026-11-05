@@ -104,12 +104,17 @@ loaded by a parent, or can the client work it out from what it just sent and got
   (`useSearchParams`, `useNavigate`, `useParams`, `useLocation`) do not count. Split the component instead of adding a
   second state; `useAuthStore.getState()` inside a handler is not a state.
 - The same goes for custom hooks: one `useState` (an object if several values belong together), no refs.
-- Local UI state stays in the section that uses it (for example a search box keeps its own `useState`).
-- A value the server reads (a date, a scope, a server-side filter, an id in the address) lives in the `useGet` request's
-  own `options`, not in a second state or the URL: show it from `options.params.x` (or `options.url`) and change it
-  with `get({ params: { x } })` (or `get({ url })`).
-- Search text, filters and tabs that only narrow what is already loaded live in the URL: `useSearchParams` with
-  `utils/with_param`. Steps of a flow are derived from the data, not kept in the URL or in state.
+- Local UI state stays in the section that uses it (for example whether a section is expanded).
+- A value the server reads (a date, a scope, a status, a page, search text, an id in the address) lives in the `useGet`
+  request's own `options`, not in a second state or the URL: show it from `options.params.x` (or `options.url`) and
+  change it with `get({ params: { x } })` (or `get({ url })`). Clear a filter with `undefined`
+  (`get({ params: { status: undefined } })`); params merge, so leaving it out keeps the old value.
+- **Search text the server uses is a filter like any other.** The input reads `options.params.search` and calls
+  `get({ params: { search: e.target.value || undefined } }, 400)`. The delay is the second argument of `get`. No
+  `useState` for the text, no debounce `useEffect`, no separate search component, no timers in screens.
+- Filters and tabs that only narrow what is already loaded (a client-side text filter, a tab) live in the URL:
+  `useSearchParams` with `utils/with_param`, and never call `get`. Steps of a flow are derived from the data, not kept
+  in the URL or in state.
 - No manual `useMemo`, `useCallback` or `memo`: the React Compiler handles it.
 
 ## Data
@@ -225,7 +230,6 @@ Every field follows the pattern of `ui/input.tsx` and `ui/select.tsx`:
   `src/icons/restora_*`). Loading is shown with skeletons (see Data), never a spinner (`LoaderCircle`, `animate-spin`);
   a busy button says what it is doing in words ("Setting up…").
 - Logical CSS only (`ms-`, `pe-`, `text-start`, `inset-s`) so RTL can be switched on later.
-- Money, phone, date and WhatsApp formatting come from `utils/`, never inline.
 - Each kind of screen gets a layout that fits its job: sign-in screens look like sign-in, setup looks like a
   workspace, app pages use the app layout. Don't reuse a layout just because it's there.
 
