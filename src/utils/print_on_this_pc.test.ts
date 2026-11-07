@@ -36,6 +36,28 @@ describe('printOnThisPc', () => {
     expect(await printOnThisPc(order, 'kitchen', 'k1-abc')).toBe(false);
   });
 
+  it('routes a kitchen slip independently to multiple present printers', async () => {
+    const bar = { ...kitchen, systemName: 'Bar Star', label: 'Bar' };
+    fetchMock
+      .mockResolvedValueOnce({ json: async () => ({ printers: [kitchen, bar] }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ printed: true }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ printed: true }) });
+    expect(await printOnThisPc(order, 'kitchen', 'multi-print-id')).toBe(true);
+    const requests = fetchMock.mock.calls.slice(1).map(([, init]) => JSON.parse(init.body));
+    expect(requests.map((item) => item.printer)).toEqual(['Kitchen Star', 'Bar Star']);
+    expect(requests.map((item) => item.orderKey)).toEqual(['multi-print-id', 'multi-print-id']);
+  });
+
+  it('skips printers no longer present in Windows', async () => {
+    const missing = { ...kitchen, systemName: 'Removed Printer', present: false };
+    fetchMock
+      .mockResolvedValueOnce({ json: async () => ({ printers: [missing, kitchen] }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ printed: true }) });
+    expect(await printOnThisPc(order, 'kitchen', 'available-only')).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchMock.mock.calls[1]![1].body).printer).toBe('Kitchen Star');
+  });
+
   it('is false when no printer here prints kitchen slips', async () => {
     fetchMock.mockResolvedValueOnce({ json: async () => ({ printers: [{ ...kitchen, prints: ['receipt'] }] }) });
     expect(await printOnThisPc(order, 'kitchen', 'k1-abc')).toBe(false);
