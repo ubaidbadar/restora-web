@@ -100,6 +100,26 @@ describe('syncOutbox', () => {
   });
 
 
+  it('keeps an in-flight order result in the original restaurant cache after switching workplaces', async () => {
+    const originalKey = getCache.keyOf('/orders');
+    getCache.set(originalKey, [{ _id: 'A1', dailyToken: 'A-1' }]);
+    useOutboxStore.setState({ items: [item('A1', '/orders', { clientId: 'A1' })] });
+    let switchedKey = '';
+    request.mockImplementationOnce(async () => {
+      const switched = sampleMe();
+      switched.workplace!.restaurant = { _id: 'r2', name: 'Other Place' };
+      switched.workplace!.branch = { _id: 'b2', name: 'Gulberg' };
+      useAuthStore.getState().setMe(switched);
+      switchedKey = getCache.keyOf('/orders');
+      getCache.set(switchedKey, [{ _id: 'other-order', dailyToken: 4 }]);
+      return { data: { _id: 'saved-a1', dailyToken: 15 } };
+    });
+    await syncOutbox();
+    expect(getCache.get(originalKey)).toEqual([{ _id: 'saved-a1', dailyToken: 15 }]);
+    expect(getCache.get(switchedKey)).toEqual([{ _id: 'other-order', dailyToken: 4 }]);
+    expect(useOutboxStore.getState().items).toHaveLength(0);
+  });
+
   it('puts the synced order on the board in place of its offline copy', async () => {
     const key = getCache.keyOf('/orders');
     getCache.set(key, [{ _id: 'A1', dailyToken: 'A-1' }, { _id: 'old', dailyToken: 2 }]);
