@@ -78,6 +78,20 @@ describe('syncOutbox', () => {
     expect(useOutboxStore.getState().items).toHaveLength(1);
   });
 
+  it('syncs the active branch even when another branch has an older pending order', async () => {
+    useOutboxStore.setState({
+      items: [
+        { ...item('other', '/orders'), scope: { userId: 'u1', restaurantId: 'r1', branchId: 'b2' } },
+        item('current', '/orders'),
+      ],
+      savedIds: {}, online: true,
+    });
+    request.mockResolvedValueOnce({ data: { _id: 'current-saved', dailyToken: 22 } });
+    await syncOutbox();
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(useOutboxStore.getState().items.map((entry) => entry.id)).toEqual(['other']);
+  });
+
   it('holds unscoped legacy outbox entries instead of guessing their owner', async () => {
     useOutboxStore.setState({ items: [{ ...item('legacy', '/orders'), scope: undefined }] });
     await syncOutbox();
