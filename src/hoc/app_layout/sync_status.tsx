@@ -34,7 +34,7 @@ export default function SyncStatus() {
       <Icon size={16} aria-hidden="true" className="shrink-0" />
       <span className="min-w-0 flex-1">{message}</span>
       <WaitingCount />
-      {problem && !differentWorkplace && (
+      {first && problem && !differentWorkplace && (
         <button
           type="button"
           className="rounded-control border border-current px-3 py-1.5 font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
