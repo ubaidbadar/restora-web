@@ -10,8 +10,8 @@ import toast from './toast';
 let running = false;
 
 /** Puts the server's copy of an order on the board, in place of its offline copy (or its older copy). */
-const putOrder = (offlineId: string, order: Order) =>
-  getCache.update<Order[]>(getCache.keyOf('/orders'), (list) =>
+const putOrder = (cacheKey: string, offlineId: string, order: Order) =>
+  getCache.update<Order[]>(cacheKey, (list) =>
     list?.some((item) => item._id === offlineId || item._id === order._id)
       ? list.map((item) => (item._id === offlineId || item._id === order._id ? order : item))
       : list
@@ -34,6 +34,9 @@ export default async function syncOutbox() {
       if (!item) break;
       // A rejected change remains visible and editable. Never silently drop it.
       if (item.syncIssue) break;
+      // Keep this response attached to the original workplace even if the user
+      // switches restaurant/branch while the HTTP request is in flight.
+      const orderCacheKey = getCache.keyOf('/orders');
       // A change to an order taken offline names it by its offline id until the server has saved it.
       const url = item.url.replace(/[^/]+/g, (part) => savedIds[part] ?? part);
       // Taken here before a reload: it comes back on the live stream and must not chime here.
@@ -43,8 +46,8 @@ export default async function syncOutbox() {
         const created = item.method === 'post' && item.url === '/orders';
         useOutboxStore.getState().done(item.id, created ? data._id : undefined);
         useOutboxStore.getState().setOnline(true);
-        putOrder(item.id, data);
-        if (created) toast.success(`${item.label} is saved as order #${data.dailyToken}`);
+        putOrder(orderCacheKey, item.id, data);
+        if (created && belongsToCurrentWorkplace(item)) toast.success(`${item.label} is saved as order #${data.dailyToken}`);
       } catch (err) {
         const status = (err as { response?: { status: number } }).response?.status;
         if (!status) {
