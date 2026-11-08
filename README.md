@@ -39,6 +39,12 @@ yarn dev                # http://localhost:3000 (also served on the LAN: `server
 
 ## Commands
 
+Production builds require `VITE_API_URL`. For the live dashboard, build with
+`VITE_API_URL=https://restora.live VITE_APP_URL=https://app.restora.live yarn build`.
+For the development dashboard, use `https://dev.restora.live` and `https://dev-app.restora.live` instead.
+These values are public build configuration. A missing API origin now stops the build rather than sending API calls
+to Firebase Hosting, which returns the dashboard HTML instead of JSON. Deploy the resulting `dist/` only to its intended environment.
+
 | Command | What it does |
 |---|---|
 | `yarn dev` | dev server on port 3000 |
@@ -60,3 +66,4 @@ Tailwind CSS v4 sets the floor: Chrome 111+, Firefox 128+, Safari 16.4+.
 - **Dialogs** move, trap and restore focus, but have no accessible name (`aria-labelledby`) and `Modal` has no `aria-modal`.
 - **Tooling.** `typescript` stays on 6.x until `typescript-eslint` supports 7. There is no formatter and no CI workflow.
 # restora-web
+

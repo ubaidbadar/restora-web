@@ -9,9 +9,12 @@ import { VitePWA } from 'vite-plugin-pwa';
 const CANVAS = '#F6F7F9';
 const DESCRIPTION = 'Orders, customers, khata and WhatsApp campaigns for your restaurant.';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   // index.html's link previews need the app's full address. Set VITE_APP_URL in .env for production.
   const viteEnv = loadEnv(mode, '.', 'VITE_');
+  if (command === 'build' && !viteEnv.VITE_API_URL?.trim()) {
+    throw new Error('Set VITE_API_URL to the backend origin before building Restora (for example https://restora.live).');
+  }
   const appUrl = viteEnv.VITE_APP_URL || 'http://localhost:3000';
   // The API (Bun + Hono) in development. The client calls relative /api/v1 and /uploads, so they are proxied there.
   const apiUrl = viteEnv.VITE_API_URL || 'http://localhost:5001';
@@ -89,3 +92,4 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
+

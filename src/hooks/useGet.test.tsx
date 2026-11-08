@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import api from '../config/api';
 import useAuthStore from '../store/auth_store';
 import sampleMe from '../test/sample_me';
 import useGet from './useGet';
+import getCache from '../store/get_cache';
 
 vi.mock('../config/api', () => ({ default: vi.fn() }));
 const request = vi.mocked(api) as unknown as ReturnType<typeof vi.fn>;
@@ -17,8 +18,10 @@ function later<T>() {
 }
 
 describe('useGet', () => {
+  afterEach(cleanup);
   beforeEach(() => {
     request.mockReset();
+    getCache.clear();
     useAuthStore.getState().setMe(sampleMe());
   });
 
@@ -50,7 +53,9 @@ describe('useGet', () => {
     const fast = later<string>();
     request.mockReturnValueOnce(slow.promise).mockReturnValueOnce(fast.promise);
     const { result } = renderHook(() => useGet<string>('/late', { params: { day: 1 } }));
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
     act(() => result.current.get({ params: { day: 2 } }));
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
     await act(async () => fast.resolve('day 2'));
     await act(async () => slow.resolve('day 1'));
     expect(result.current.data).toBe('day 2');
@@ -67,14 +72,18 @@ describe('useGet', () => {
     const second = renderHook(() => useGet<string>('/cached'));
     expect(second.result.current.data).toBe('first');
     expect(second.result.current.loading).toBe(false);
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
     await act(async () => fresh.resolve('second'));
     expect(second.result.current.data).toBe('second');
   });
 
   it('two screens asking at once make one request', async () => {
-    request.mockResolvedValue({ data: 'shared' });
+    const shared = later<string>();
+    request.mockReturnValue(shared.promise);
     const a = renderHook(() => useGet<string>('/shared'));
     const b = renderHook(() => useGet<string>('/shared'));
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+    await act(async () => shared.resolve('shared'));
     await waitFor(() => expect(b.result.current.data).toBe('shared'));
     expect(a.result.current.data).toBe('shared');
     expect(request).toHaveBeenCalledTimes(1);
@@ -105,3 +114,4 @@ describe('useGet', () => {
     expect(second.result.current.data).toEqual(['a', 'b']);
   });
 });
+

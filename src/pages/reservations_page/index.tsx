@@ -15,15 +15,19 @@ import DayBar from './day_bar';
 import ReservationRow from './reservation_row';
 import reservationSchema from './reservation_schema';
 import AddButton from '../../components/add_button';
+import LoadFailed from '../../components/load_failed';
 
 /** One day's table bookings at the working branch, in time order. The day is the request's own `date` param. */
 export default function ReservationsPage() {
-  const { data: list = [], loading, options, get, update } = useGet<Reservation[]>('/reservations', { params: { date: dayKey() } });
+  const { data, loading, error, options, get, update } = useGet<Reservation[]>('/reservations', { params: { date: dayKey() } });
+  const list = data ?? [];
   const day: string = options.params.date;
   const setDay = (date: string) => get({ params: { date } });
   const reservations = list.filter((reservation) => dayKey(reservation.dateTime) === day).sort((a, b) => a.dateTime.localeCompare(b.dateTime));
   const active = reservations.filter((reservation) => reservation.status !== 'cancelled');
   const guests = active.reduce((sum, reservation) => sum + reservation.partySize, 0);
+
+  if (error && data === undefined) return <LoadFailed what="the reservations" onRetry={() => get()} />;
 
   return (
     <>
@@ -64,3 +68,4 @@ export default function ReservationsPage() {
     </>
   );
 }
+

@@ -9,6 +9,7 @@ import getAxiosMessage from '../../utils/get_axios_message';
 import toast from '../../utils/toast';
 import AddTableButtons from './add_table_buttons';
 import TablesView from './tables_view';
+import LoadFailed from '../../components/load_failed';
 
 /**
  * The branch's tables, one screen for everyone: each table and what it needs now, guest calls on top, narrowed by
@@ -16,7 +17,8 @@ import TablesView from './tables_view';
  * and bring archived ones back under Archived.
  */
 export default function TablesPage() {
-  const { data: all = [], loading, update } = useGet<FloorTable[]>('/tables/floor');
+  const { data, loading, error, get, update } = useGet<FloorTable[]>('/tables/floor');
+  const all = data ?? [];
   const tables = all.filter((table) => !table.archived);
   const sections = [...new Set(tables.map((table) => table.section ?? ''))];
 
@@ -42,6 +44,8 @@ export default function TablesPage() {
       .catch((err) => toast.error(getAxiosMessage(err)));
   };
 
+  if (error && data === undefined) return <LoadFailed what="the tables" onRetry={() => get()} />;
+
   return (
     <>
       <PageHeader title="Tables" subtitle="Who needs you, table by table">
@@ -53,3 +57,4 @@ export default function TablesPage() {
     </>
   );
 }
+

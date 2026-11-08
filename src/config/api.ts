@@ -8,7 +8,13 @@ const api = axios.create({ baseURL: `${apiOrigin}/api/v1`, withCredentials: true
 // A host that is not the API (e.g. the hosting's page for every path) answers HTML: that is an error, never data.
 api.interceptors.response.use((res) => {
   if (typeof res.data === 'string' && /^\s*</.test(res.data)) {
-    return Promise.reject(new Error('The API answered with a page instead of data. Check VITE_API_URL at build time.'));
+    return Promise.reject(new axios.AxiosError(
+      'The API answered with a page instead of data. Check VITE_API_URL at build time.',
+      'ERR_BAD_RESPONSE',
+      res.config,
+      res.request,
+      res,
+    ));
   }
   return res;
 });
@@ -26,3 +32,4 @@ api.interceptors.response.use(undefined, (error) => {
 });
 
 export default api;
+

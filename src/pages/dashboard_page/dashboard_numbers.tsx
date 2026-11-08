@@ -8,6 +8,7 @@ import PaymentSplit from './payment_split';
 import SlippingList from './slipping_list';
 import TypeBreakdown from './type_breakdown';
 import dayKey from '../../utils/day_key';
+import LoadFailed from '../../components/load_failed';
 
 interface DashboardNumbersProps {
   /** YYYY-MM-DD, both days included. */
@@ -19,8 +20,9 @@ interface DashboardNumbersProps {
 
 /** The numbers of the picked days and branch scope, which the page above reads from the address and passes in. */
 export default function DashboardNumbers({ from, to, scope }: DashboardNumbersProps) {
-  const { data, loading } = useGet<DashboardAnswer>('/dashboard', { params: { scope, from, to } });
+  const { data, loading, error, get } = useGet<DashboardAnswer>('/dashboard', { params: { scope, from, to } });
   const isToday = from === to && to === dayKey();
+  if (error && data === undefined) return <LoadFailed what="the numbers" onRetry={() => get()} />;
   if (!data || loading) {
     return (
       <div role="status" aria-label="Loading the numbers" className="flex flex-col gap-4 lg:gap-5">
@@ -58,3 +60,4 @@ export default function DashboardNumbers({ from, to, scope }: DashboardNumbersPr
     </div>
   );
 }
+

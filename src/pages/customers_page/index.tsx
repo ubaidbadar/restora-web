@@ -23,6 +23,7 @@ import withParam from '../../utils/with_param';
 import CustomerListHeader from './customer_list_header';
 import CustomerRow from './customer_row';
 import AddButton from '../../components/add_button';
+import LoadFailed from '../../components/load_failed';
 
 type CustomerFilter = Segment | 'all';
 const FILTERS = [{ value: 'all' as CustomerFilter, label: 'All' }, ...SEGMENTS.map((value) => ({ value: value as CustomerFilter, label: SEGMENT_LABELS[value] }))];
@@ -37,7 +38,8 @@ const inSegment = (customer: Customer, segment: Segment, now = Date.now()) => {
 /** The customer list, narrowed by the search text and segment kept in the URL. */
 export default function CustomersPage() {
   const [params, setParams] = useSearchParams();
-  const { data: sourceList = [], loading, update } = useGet<Customer[]>('/customers');
+  const { data, loading, error, get, update } = useGet<Customer[]>('/customers');
+  const sourceList = data ?? [];
   const search = params.get('q') ?? '';
   const filter = (params.get('seg') ?? 'all') as CustomerFilter;
   const setSearch = (value: string) => setParams((prev) => withParam(prev, 'q', value), { replace: true });
@@ -47,6 +49,8 @@ export default function CustomersPage() {
   const customers = sourceList.filter(
     (customer: Customer) => (!q || customer.name.toLowerCase().includes(q) || (digits && customer.phone.includes(digits))) && (filter === 'all' || inSegment(customer, filter)),
   );
+
+  if (error && data === undefined) return <LoadFailed what="the customers" onRetry={() => get()} />;
 
   return (
     <>
@@ -84,3 +88,4 @@ export default function CustomersPage() {
     </>
   );
 }
+
