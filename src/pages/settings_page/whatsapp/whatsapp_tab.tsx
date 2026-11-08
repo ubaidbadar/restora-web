@@ -55,6 +55,7 @@ export default function WhatsAppTab() {
   const { data: config, loading: configLoading, error: configError } = useGet<SignupConfig>('/whatsapp/signup/config');
   const { data: connections = [], loading, get } = useGet<Connection[]>('/whatsapp/connections');
   const [busy, setBusy] = useState(false);
+  const [sdkReady, setSdkReady] = useState(false);
   const [registering, setRegistering] = useState<string | null>(null);
   const [pin, setPin] = useState('');
   const workplace = useAuthStore(state => state.me?.workplace);
@@ -63,6 +64,17 @@ export default function WhatsAppTab() {
   const codeRef = useRef('');
   const finishRef = useRef<MetaFinish | null>(null);
   const startedRef = useRef(false);
+
+  // Preload the SDK before the user clicks. Facebook's popup must be opened
+  // synchronously from a real user gesture or browsers may block it.
+  useEffect(() => {
+    if (!config?.enabled || !config.appId) return;
+    let active = true;
+    setSdkReady(false);
+    void loadMetaSDK(config.appId).then(() => { if (active) setSdkReady(true); },
+      () => { if (active) setFeedback('Meta signup could not load. Check your browser privacy settings and refresh.'); });
+    return () => { active = false; };
+  }, [config?.enabled, config?.appId]);
 
   const complete = async () => {
     const code = codeRef.current;
@@ -116,16 +128,14 @@ export default function WhatsAppTab() {
     return () => window.removeEventListener('message', onMessage);
   }, []);
 
-  const connect = async () => {
-    if (!config?.enabled || !config.appId || !config.configId || !hasBranch) return;
+  const connect = () => {
+    if (!config?.enabled || !config.appId || !config.configId || !hasBranch || !sdkReady || !window.FB) return;
     setBusy(true);
     setFeedback('Opening secure Meta signup…');
     codeRef.current = '';
     finishRef.current = null;
     startedRef.current = true;
     try {
-      await loadMetaSDK(config.appId);
-      if (!window.FB) throw new Error('Meta SDK unavailable');
       window.FB.login((response) => {
         if (!response.authResponse?.code) {
           setBusy(false);
@@ -183,8 +193,8 @@ export default function WhatsAppTab() {
           )}
           {!hasBranch && <p role="alert" className="rounded-control bg-warning-50 p-3 text-sm text-warning-800">Choose a specific restaurant branch before connecting WhatsApp.</p>}
           <div>
-            <Button onClick={() => void connect()} disabled={busy || configLoading || !config?.enabled || !hasBranch}>
-              {busy ? 'Connecting to Meta…' : 'Connect WhatsApp Business'}
+            <Button onClick={() => void connect()} disabled={busy || configLoading || !config?.enabled || !hasBranch || !sdkReady}>
+              {busy ? 'Connecting to Meta…' : !sdkReady && config?.enabled ? 'Loading Meta signup…' : 'Connect WhatsApp Business'}
             </Button>
           </div>
           <p className="text-sm text-muted">You will sign in to your own Facebook Business account. Restora never receives your Facebook password. An existing WhatsApp Business app number may require Meta's coexistence setup.</p>
