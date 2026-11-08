@@ -1,4 +1,4 @@
-import { Armchair, CalendarDays, CircleUser, ClipboardList, LayoutDashboard, Settings, Users, UtensilsCrossed } from 'lucide-react';
+import { Armchair, CalendarDays, CircleUser, ClipboardList, LayoutDashboard, MessageSquareText, Settings, Users, UtensilsCrossed } from 'lucide-react';
 import type NavLinkItem from '../types/nav_link_item';
 
 /**
@@ -11,6 +11,7 @@ const NAV_LINKS: NavLinkItem[] = [
   { to: '/customers', label: 'Customers', icon: Users, permission: 'customers:view' },
   { to: '/tables', label: 'Tables', icon: Armchair, permission: 'tables:view' },
   { to: '/reservations', label: 'Reservations', icon: CalendarDays, permission: 'reservations:view' },
+  { to: '/whatsapp', label: 'WhatsApp', icon: MessageSquareText, permission: 'orders:view' },
   { to: '/menu', label: 'Menu', icon: UtensilsCrossed, permission: 'menu:view' },
   { to: '/settings', label: 'Settings', icon: Settings, webOnly: true },
   { to: '/settings/account', label: 'Account', icon: CircleUser, webOnly: true },
