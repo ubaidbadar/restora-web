@@ -38,7 +38,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
             <TriangleAlert size={26} aria-hidden="true" />
           </span>
           <h1 className="text-heading text-ink">This screen stopped working</h1>
-          <p className="mt-2 text-sm text-muted">Nothing you saved is lost. Go back to Home and carry on from there.</p>
+          <p className="mt-2 text-sm text-muted">This screen could not load. Saved changes should still be available, but please check any pending orders before continuing.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             {caught && (
               <Button type="button" icon={RotateCcw} onClick={this.reset}>
