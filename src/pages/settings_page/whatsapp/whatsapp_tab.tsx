@@ -210,7 +210,7 @@ export default function WhatsAppTab() {
                 <div className="mt-3 flex flex-col gap-2">
                   <label className="text-sm font-medium text-ink" htmlFor={`meta-pin-${connection._id}`}>Six-digit WhatsApp registration PIN</label>
                   <div className="flex flex-wrap items-center gap-2">
-                    <input id={`meta-pin-${connection._id}`} className="rounded-control border border-border bg-surface px-3 py-2 text-ink" type="text" inputMode="numeric" autoComplete="off" maxLength={6} value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, ''))} placeholder="000000" />
+                    <input id={`meta-pin-${connection._id}`} className="rounded-control border border-border bg-surface px-3 py-2 text-ink" type="password" inputMode="numeric" autoComplete="off" maxLength={6} value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, ''))} placeholder="000000" />
                     <Button disabled={registering !== null || !/^\d{6}$/.test(pin)} onClick={() => void register(connection._id)}>Register number</Button>
                   </div>
                   <p className="text-xs text-muted">Choose and retain a six-digit PIN; Meta requires it for registration and future verification. Do not share it with Restora support.</p>
