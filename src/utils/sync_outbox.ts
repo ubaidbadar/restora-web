@@ -2,7 +2,7 @@ import type Order from '../types/order';
 import api from '../config/api';
 import getCache from '../store/get_cache';
 import useOutboxStore from '../store/outbox_store';
-import useAuthStore from '../store/auth_store';
+import belongsToCurrentWorkplace from './belongs_to_current_workplace';
 import getAxiosMessage from './get_axios_message';
 import ownOrders from './own_orders';
 import toast from './toast';
@@ -19,8 +19,8 @@ const putOrder = (offlineId: string, order: Order) =>
 
 /**
  * Sends the outbox, oldest change first, one at a time. Stops at the first change that cannot reach the server (still
- * offline, or signed out) and tries again later. A change the server refuses is dropped and the person is told why;
- * the server's version stands. Safe to call often: a second call while one runs does nothing.
+ * offline, or signed out) and tries again later. Definitively refused changes remain for human review;
+ * no queued order is silently thrown away. Safe to call often: a second call while one runs does nothing.
  */
 export default async function syncOutbox() {
   if (running) return;
@@ -28,16 +28,10 @@ export default async function syncOutbox() {
   try {
     for (;;) {
       const { items, savedIds } = useOutboxStore.getState();
-      const item = items[0];
+      // Different restaurant/branch/account queues share the device; one must
+      // never block or leak another's changes. Preserve FIFO within each scope.
+      const item = items.find(belongsToCurrentWorkplace);
       if (!item) break;
-      // Fail closed: a shared device or restaurant switch must never replay
-      // the previous user's orders into the currently selected workplace.
-      const me = useAuthStore.getState().me;
-      const place = me?.workplace;
-      if (!me || !place || !item.scope ||
-          item.scope.userId !== me.user.id ||
-          item.scope.restaurantId !== place.restaurant._id ||
-          item.scope.branchId !== (place.branch?._id ?? '')) break;
       // A rejected change remains visible and editable. Never silently drop it.
       if (item.syncIssue) break;
       // A change to an order taken offline names it by its offline id until the server has saved it.
