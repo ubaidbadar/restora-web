@@ -1,5 +1,5 @@
 import type Permission from '@shared/permission';
-import { Building2, History, MonitorSmartphone, Palette, Percent, Printer, ShieldCheck, Store, UserCog, Users, UsersRound, type LucideIcon } from 'lucide-react';
+import { Building2, History, MonitorSmartphone, Palette, Percent, Printer, MessageCircle, ShieldCheck, Store, UserCog, Users, UsersRound, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import AccountTab from './account/account_tab';
 import AppearanceTab from './appearance/appearance_tab';
@@ -12,6 +12,7 @@ import RolesCard from './roles/roles_card';
 import SettingsSection from './settings_section';
 import StaffTab from './staff/staff_tab';
 import TeamsTab from './teams/teams_tab';
+import WhatsAppTab from './whatsapp/whatsapp_tab';
 
 interface SettingsSectionItem {
   value: string;
@@ -33,6 +34,7 @@ const SETTINGS_SECTIONS: SettingsSectionItem[] = [
   { value: 'roles', label: 'Roles', icon: ShieldCheck, group: 'Team', content: <RolesCard />, permission: 'roles:manage' },
   { value: 'teams', label: 'Teams', icon: UsersRound, group: 'Team', content: <TeamsTab />, permission: 'teams:manage' },
   { value: 'devices', label: 'Devices', icon: MonitorSmartphone, group: 'Devices', content: <DevicesTab />, permission: 'devices:manage' },
+  { value: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, group: 'Devices', content: <WhatsAppTab />, permission: 'devices:manage' },
   { value: 'printers', label: 'Printers', icon: Printer, group: 'Devices', content: <PrintersTab />, permission: 'devices:manage' },
   { value: 'activity', label: 'Activity', icon: History, group: 'Records', content: <ActivityCard />, permission: 'audit:view' },
   { value: 'account', label: 'My account', icon: UserCog, group: 'You', content: <AccountTab /> },
