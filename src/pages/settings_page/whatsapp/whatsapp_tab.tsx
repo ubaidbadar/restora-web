@@ -5,6 +5,7 @@ import Button from '../../../ui/button';
 import toast from '../../../utils/toast';
 import getAxiosMessage from '../../../utils/get_axios_message';
 import useGet from '../../../hooks/useGet';
+import useAuthStore from '../../../store/auth_store';
 
 type Connection = {
   _id: string; phoneNumberId: string; phoneNumberDisplay: string;
@@ -28,7 +29,7 @@ function loadMetaSDK(appId: string): Promise<void> {
     return Promise.resolve();
   }
   if (!sdkPromise) sdkPromise = new Promise<void>((resolve, reject) => {
-    const timer = window.setTimeout(() => reject(new Error('Meta signup could not load. Check browser privacy settings.')), 15000);
+    const timer = window.setTimeout(() => { sdkPromise = undefined; reject(new Error('Meta signup could not load. Check browser privacy settings.')); }, 15000);
     window.fbAsyncInit = () => {
       window.clearTimeout(timer);
       window.FB?.init({ appId, cookie: true, xfbml: false, version: 'v26.0' });
@@ -48,7 +49,7 @@ function loadMetaSDK(appId: string): Promise<void> {
   return sdkPromise;
 }
 
-type MetaFinish = { wabaId: string; phoneNumberId: string };
+type MetaFinish = { wabaId: string; phoneNumberId?: string };
 
 export default function WhatsAppTab() {
   const { data: config, loading: configLoading, error: configError } = useGet<SignupConfig>('/whatsapp/signup/config');
@@ -56,6 +57,8 @@ export default function WhatsAppTab() {
   const [busy, setBusy] = useState(false);
   const [registering, setRegistering] = useState<string | null>(null);
   const [pin, setPin] = useState('');
+  const workplace = useAuthStore(state => state.me?.workplace);
+  const hasBranch = Boolean(workplace?.branch?._id);
   const [feedback, setFeedback] = useState('');
   const codeRef = useRef('');
   const finishRef = useRef<MetaFinish | null>(null);
@@ -101,8 +104,8 @@ export default function WhatsAppTab() {
         return;
       }
       if (!['FINISH', 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'].includes(result.event || '')) return;
-      if (!result.data?.waba_id || !result.data?.phone_number_id) {
-        setFeedback('Meta did not return a phone number. Restart signup or contact support.');
+      if (!result.data?.waba_id) {
+        setFeedback('Meta did not return a WhatsApp Business Account. Restart signup or contact support.');
         setBusy(false);
         return;
       }
@@ -114,7 +117,7 @@ export default function WhatsAppTab() {
   }, []);
 
   const connect = async () => {
-    if (!config?.enabled || !config.appId || !config.configId) return;
+    if (!config?.enabled || !config.appId || !config.configId || !hasBranch) return;
     setBusy(true);
     setFeedback('Opening secure Meta signup…');
     codeRef.current = '';
@@ -178,8 +181,9 @@ export default function WhatsAppTab() {
               WhatsApp signup is not configured by Restora yet. Contact support to enable your Meta integration.
             </p>
           )}
+          {!hasBranch && <p role="alert" className="rounded-control bg-warning-50 p-3 text-sm text-warning-800">Choose a specific restaurant branch before connecting WhatsApp.</p>}
           <div>
-            <Button onClick={() => void connect()} disabled={busy || configLoading || !config?.enabled}>
+            <Button onClick={() => void connect()} disabled={busy || configLoading || !config?.enabled || !hasBranch}>
               {busy ? 'Connecting to Meta…' : 'Connect WhatsApp Business'}
             </Button>
           </div>
