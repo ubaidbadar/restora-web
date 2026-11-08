@@ -23,9 +23,23 @@ const run = <T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRe
       new Promise<T | undefined>((resolve) => {
         if (!database) return resolve(undefined);
         try {
-          const request = work(database.transaction('kv', mode).objectStore('kv'));
-          request.onsuccess = () => resolve(request.result as T);
-          request.onerror = () => resolve(undefined);
+          const transaction = database.transaction('kv', mode);
+          let result: T | undefined;
+          let settled = false;
+          const finish = (value: T | undefined) => {
+            if (!settled) {
+              settled = true;
+              resolve(value);
+            }
+          };
+          // A request can succeed and the enclosing transaction can still abort.
+          // A write is durable only after transaction.oncomplete fires.
+          transaction.oncomplete = () => finish(result);
+          transaction.onabort = () => finish(undefined);
+          transaction.onerror = () => finish(undefined);
+          const request = work(transaction.objectStore('kv'));
+          request.onsuccess = () => { result = request.result as T; };
+          request.onerror = () => { /* transaction.onerror resolves the failed operation */ };
         } catch {
           resolve(undefined);
         }

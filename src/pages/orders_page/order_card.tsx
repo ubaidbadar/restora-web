@@ -45,7 +45,7 @@ export default function OrderCard({ order, onOrderUpdated }: OrderCardProps) {
           {!(cancelled && order.paymentStatus === 'unpaid') && <Badge variant={paymentVariant}>{paymentLabel}</Badge>}
           {isNew && <Badge variant="primary">Just in</Badge>}
           {order.pendingSync && <Badge variant="neutral">Waiting to sync</Badge>}
-          {order.status === 'pending' && <Badge variant="warning">From table QR</Badge>}
+          {order.status === 'pending' && <Badge variant="warning">{order.whatsappPhone ? 'From WhatsApp' : 'From table QR'}</Badge>}
         </div>
       </div>
       {cancelled && order.cancellation && <p className="rounded-control bg-danger-50 px-2.5 py-1.5 text-sm text-danger-700">{cancellationText(order.cancellation)}</p>}

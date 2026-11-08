@@ -2,6 +2,7 @@ import type Order from '../types/order';
 import api from '../config/api';
 import getCache from '../store/get_cache';
 import useOutboxStore from '../store/outbox_store';
+import belongsToCurrentWorkplace from './belongs_to_current_workplace';
 import getAxiosMessage from './get_axios_message';
 import ownOrders from './own_orders';
 import toast from './toast';
@@ -9,8 +10,8 @@ import toast from './toast';
 let running = false;
 
 /** Puts the server's copy of an order on the board, in place of its offline copy (or its older copy). */
-const putOrder = (offlineId: string, order: Order) =>
-  getCache.update<Order[]>(getCache.keyOf('/orders'), (list) =>
+const putOrder = (cacheKey: string, offlineId: string, order: Order) =>
+  getCache.update<Order[]>(cacheKey, (list) =>
     list?.some((item) => item._id === offlineId || item._id === order._id)
       ? list.map((item) => (item._id === offlineId || item._id === order._id ? order : item))
       : list
@@ -18,8 +19,8 @@ const putOrder = (offlineId: string, order: Order) =>
 
 /**
  * Sends the outbox, oldest change first, one at a time. Stops at the first change that cannot reach the server (still
- * offline, or signed out) and tries again later. A change the server refuses is dropped and the person is told why;
- * the server's version stands. Safe to call often: a second call while one runs does nothing.
+ * offline, or signed out) and tries again later. Definitively refused changes remain for human review;
+ * no queued order is silently thrown away. Safe to call often: a second call while one runs does nothing.
  */
 export default async function syncOutbox() {
   if (running) return;
@@ -27,8 +28,15 @@ export default async function syncOutbox() {
   try {
     for (;;) {
       const { items, savedIds } = useOutboxStore.getState();
-      const item = items[0];
+      // Different restaurant/branch/account queues share the device; one must
+      // never block or leak another's changes. Preserve FIFO within each scope.
+      const item = items.find(belongsToCurrentWorkplace);
       if (!item) break;
+      // A rejected change remains visible and editable. Never silently drop it.
+      if (item.syncIssue) break;
+      // Keep this response attached to the original workplace even if the user
+      // switches restaurant/branch while the HTTP request is in flight.
+      const orderCacheKey = getCache.keyOf('/orders');
       // A change to an order taken offline names it by its offline id until the server has saved it.
       const url = item.url.replace(/[^/]+/g, (part) => savedIds[part] ?? part);
       // Taken here before a reload: it comes back on the live stream and must not chime here.
@@ -38,19 +46,24 @@ export default async function syncOutbox() {
         const created = item.method === 'post' && item.url === '/orders';
         useOutboxStore.getState().done(item.id, created ? data._id : undefined);
         useOutboxStore.getState().setOnline(true);
-        putOrder(item.id, data);
-        if (created) toast.success(`${item.label} is saved as order #${data.dailyToken}`);
+        putOrder(orderCacheKey, item.id, data);
+        if (created && belongsToCurrentWorkplace(item)) toast.success(`${item.label} is saved as order #${data.dailyToken}`);
       } catch (err) {
         const status = (err as { response?: { status: number } }).response?.status;
         if (!status) {
           useOutboxStore.getState().setOnline(false);
           break;
         }
-        // Signed out or a locked terminal: keep it until someone signs in again.
-        if (status === 401) break;
-        useOutboxStore.getState().done(item.id);
-        toast.error(`${item.label} could not be saved: ${getAxiosMessage(err)}`);
-        if (item.url === '/orders') getCache.update<Order[]>(getCache.keyOf('/orders'), (list) => list?.filter((order) => order._id !== item.id));
+        // Temporary backend failures, rate limits and authentication changes
+        // do not mean the order is invalid. Preserve it for a later retry.
+        if (status === 401 || status === 403 || status === 408 || status === 425 ||
+            status === 429 || status >= 500) break;
+        // Even a definitive validation error needs human review: do NOT lose
+        // an order just because a dish was removed while this device was offline.
+        const message = getAxiosMessage(err);
+        useOutboxStore.getState().replace(item.id, { syncIssue: message });
+        toast.error(`${item.label} needs review: ${message}`);
+        break;
       }
     }
   } finally {

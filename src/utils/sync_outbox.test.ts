@@ -11,7 +11,11 @@ vi.mock('../config/api', () => ({ default: { request: vi.fn() } }));
 vi.mock('./offline_db', () => ({ default: { get: vi.fn(async () => undefined), set: vi.fn(async () => undefined), clear: vi.fn(async () => undefined) } }));
 const request = vi.mocked(api.request) as unknown as ReturnType<typeof vi.fn>;
 
-const item = (id: string, url: string, body?: unknown) => ({ id, method: url === '/orders' ? ('post' as const) : ('patch' as const), url, body, label: `Order ${id}`, createdAt: '2026-10-20T10:00:00.000Z' });
+const item = (id: string, url: string, body?: unknown) => ({
+  id, method: url === '/orders' ? ('post' as const) : ('patch' as const), url, body,
+  label: `Order ${id}`, createdAt: '2026-10-20T10:00:00.000Z',
+  scope: { userId: 'u1', restaurantId: 'r1', branchId: 'b1' },
+});
 const offline = () => Object.assign(new Error('Network Error'), { response: undefined });
 const refused = (message: string) => Object.assign(new Error(message), { response: { status: 400, data: { message } } });
 
@@ -48,12 +52,72 @@ describe('syncOutbox', () => {
     expect(useOutboxStore.getState().online).toBe(false);
   });
 
-  it('drops a change the server refuses and goes on with the next', async () => {
+  it('keeps rejected orders for review rather than silently deleting them', async () => {
     useOutboxStore.setState({ items: [item('A1', '/orders'), item('A2', '/orders')] });
-    request.mockRejectedValueOnce(refused('One of the dishes is no longer on the menu')).mockResolvedValueOnce({ data: { _id: 'srv2', dailyToken: 3 } });
+    request.mockRejectedValueOnce(refused('One of the dishes is no longer on the menu'));
     await syncOutbox();
-    expect(useOutboxStore.getState().items).toEqual([]);
-    expect(useOutboxStore.getState().savedIds).toEqual({ A2: 'srv2' });
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(useOutboxStore.getState().items).toHaveLength(2);
+    expect(useOutboxStore.getState().items[0]?.syncIssue).toContain('no longer on the menu');
+    await syncOutbox();
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps orders on temporary server errors for a later retry', async () => {
+    useOutboxStore.setState({ items: [item('A1', '/orders')] });
+    request.mockRejectedValueOnce(Object.assign(new Error('Server down'), { response: { status: 503 } }));
+    await syncOutbox();
+    expect(useOutboxStore.getState().items).toHaveLength(1);
+    expect(useOutboxStore.getState().items[0]?.syncIssue).toBeUndefined();
+  });
+
+  it('does not replay another person’s or restaurant’s unsent changes', async () => {
+    useOutboxStore.setState({ items: [{ ...item('A1', '/orders'), scope: { userId: 'u1', restaurantId: 'r2', branchId: 'b1' } }] });
+    await syncOutbox();
+    expect(request).not.toHaveBeenCalled();
+    expect(useOutboxStore.getState().items).toHaveLength(1);
+  });
+
+  it('syncs the active branch even when another branch has an older pending order', async () => {
+    useOutboxStore.setState({
+      items: [
+        { ...item('other', '/orders'), scope: { userId: 'u1', restaurantId: 'r1', branchId: 'b2' } },
+        item('current', '/orders'),
+      ],
+      savedIds: {}, online: true,
+    });
+    request.mockResolvedValueOnce({ data: { _id: 'current-saved', dailyToken: 22 } });
+    await syncOutbox();
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(useOutboxStore.getState().items.map((entry) => entry.id)).toEqual(['other']);
+  });
+
+  it('holds unscoped legacy outbox entries instead of guessing their owner', async () => {
+    useOutboxStore.setState({ items: [{ ...item('legacy', '/orders'), scope: undefined }] });
+    await syncOutbox();
+    expect(request).not.toHaveBeenCalled();
+    expect(useOutboxStore.getState().items).toHaveLength(1);
+  });
+
+
+  it('keeps an in-flight order result in the original restaurant cache after switching workplaces', async () => {
+    const originalKey = getCache.keyOf('/orders');
+    getCache.set(originalKey, [{ _id: 'A1', dailyToken: 'A-1' }]);
+    useOutboxStore.setState({ items: [item('A1', '/orders', { clientId: 'A1' })] });
+    let switchedKey = '';
+    request.mockImplementationOnce(async () => {
+      const switched = sampleMe();
+      switched.workplace!.restaurant = { _id: 'r2', name: 'Other Place' };
+      switched.workplace!.branch = { _id: 'b2', name: 'Gulberg' };
+      useAuthStore.getState().setMe(switched);
+      switchedKey = getCache.keyOf('/orders');
+      getCache.set(switchedKey, [{ _id: 'other-order', dailyToken: 4 }]);
+      return { data: { _id: 'saved-a1', dailyToken: 15 } };
+    });
+    await syncOutbox();
+    expect(getCache.get(originalKey)).toEqual([{ _id: 'saved-a1', dailyToken: 15 }]);
+    expect(getCache.get(switchedKey)).toEqual([{ _id: 'other-order', dailyToken: 4 }]);
+    expect(useOutboxStore.getState().items).toHaveLength(0);
   });
 
   it('puts the synced order on the board in place of its offline copy', async () => {

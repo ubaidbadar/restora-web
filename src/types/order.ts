@@ -14,6 +14,9 @@ export default interface Order {
   /** The branch that took the order. */
   branchId: string;
   customerId?: string;
+  /** Present only for orders initiated through a connected restaurant WhatsApp number. */
+  whatsappPhone?: string;
+  whatsappPhoneNumberId?: string;
   /** Name and phone of the customer, sent with list responses. */
   customer?: OrderCustomer;
   type: OrderType;

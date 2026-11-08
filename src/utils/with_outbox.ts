@@ -2,6 +2,7 @@ import type Order from '../types/order';
 import type OrderStatus from '../types/order_status';
 import type OrderCancellation from '../types/order_cancellation';
 import useOutboxStore from '../store/outbox_store';
+import belongsToCurrentWorkplace from './belongs_to_current_workplace';
 
 /**
  * Orders as the server last sent them, with what still waits in this device's outbox laid on top, oldest change first:
@@ -12,7 +13,7 @@ export default function withOutbox(orders: Order[]): Order[] {
   const isOrder = (order: Order, id: string) => order._id === id || order._id === savedIds[id];
 
   let shown = orders;
-  for (const item of items) {
+  for (const item of items.filter(belongsToCurrentWorkplace)) {
     if (item.url === '/orders' && item.preview && !shown.some((order) => isOrder(order, item.id))) shown = [item.preview as Order, ...shown];
     const [, , id, action] = item.url.split('/');
     if (!id) continue;
