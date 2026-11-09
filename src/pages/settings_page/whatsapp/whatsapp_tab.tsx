@@ -142,9 +142,20 @@ function MetaSignupButton({ appId, configId, onConnected }: {
   );
 }
 
+function BranchGuard({ config, onConnected }: {
+  config: SignupConfig; onConnected: (result: SignupResult) => void;
+}) {
+  const workplace = useWorkplace();
+  if (!workplace?.branch?._id) return (
+    <p role="alert" className="rounded-control bg-warning-50 p-3 text-sm text-warning-800">
+      Select a restaurant branch before connecting WhatsApp.
+    </p>
+  );
+  return <MetaSignupButton appId={config.appId!} configId={config.configId!} onConnected={onConnected}/>;
+}
+
 function SignupSection({ onConnected }: { onConnected: (result: SignupResult) => void }) {
   const { data, loading, error, get } = useGet<SignupConfig>('/whatsapp/signup/config');
-  const workplace = useWorkplace();
   return (
     <SectionCard title="WhatsApp Business"
       description="Connect your restaurant's own WhatsApp Business number through Meta.">
@@ -153,10 +164,8 @@ function SignupSection({ onConnected }: { onConnected: (result: SignupResult) =>
       {data && !data.enabled && <p role="alert" className="rounded-control bg-warning-50 p-3 text-sm text-warning-800">
         Meta Embedded Signup is not configured on the Restora backend. Contact support.
       </p>}
-      {data?.enabled && data.appId && data.configId && !workplace?.branch?._id &&
-        <p role="alert" className="rounded-control bg-warning-50 p-3 text-sm text-warning-800">Select a restaurant branch before connecting WhatsApp.</p>}
-      {data?.enabled && data.appId && data.configId && workplace?.branch?._id &&
-        <MetaSignupButton appId={data.appId} configId={data.configId} onConnected={onConnected}/>}
+      {data?.enabled && data.appId && data.configId &&
+        <BranchGuard config={data} onConnected={onConnected}/>}
       <p className="mt-3 text-xs text-muted">Sign in through your Facebook Business account. Restora does not receive your Facebook password.</p>
     </SectionCard>
   );
