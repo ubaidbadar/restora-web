@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import api from '../../../config/api';
 import SectionCard from '../../../components/section_card';
 import Button from '../../../ui/button';
@@ -76,7 +76,7 @@ export default function WhatsAppTab() {
     return () => { active = false; };
   }, [config?.enabled, config?.appId]);
 
-  const complete = async () => {
+  const complete = useCallback(async () => {
     const code = codeRef.current;
     const ids = finishRef.current;
     if (!startedRef.current || !code || !ids) return;
@@ -96,7 +96,7 @@ export default function WhatsAppTab() {
       finishRef.current = null;
       setBusy(false);
     }
-  };
+  }, [get]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -126,7 +126,7 @@ export default function WhatsAppTab() {
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, []);
+  }, [complete]);
 
   const connect = () => {
     if (!config?.enabled || !config.appId || !config.configId || !hasBranch || !sdkReady || !window.FB) return;
