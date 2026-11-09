@@ -25,6 +25,7 @@ let loginCallback: ((response: MetaResponse) => void) | undefined;
 async function launch() {
   render(<WhatsAppTab />);
   const button = await screen.findByRole('button', { name: 'Connect WhatsApp Business' });
+  await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
   fireEvent.click(button);
   expect(loginCallback).toBeDefined();
 }
@@ -69,7 +70,7 @@ describe('Meta WhatsApp Embedded Signup completion', () => {
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/whatsapp/signup/complete', {
       code: 'test-meta-code',
     }), { timeout: 3000 });
-    expect(screen.getByText('WhatsApp connected successfully.')).toBeTruthy();
+    await waitFor(() => expect(screen.getByText('WhatsApp connected successfully.')).toBeTruthy());
   });
 
   it('reports a missing authorization code instead of silently doing nothing', async () => {
