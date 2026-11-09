@@ -52,7 +52,7 @@ export default function WhatsAppPage() {
   const [notice, setNotice] = useState('');
   const lastMessageRef = useRef<HTMLDivElement | null>(null);
   const selectedRef = useRef<string | null>(null);
-  selectedRef.current = selected;
+  useEffect(() => { selectedRef.current = selected; }, [selected]);
 
   const refreshThreads = useCallback(async () => {
     try {
@@ -83,7 +83,7 @@ export default function WhatsAppPage() {
   useEffect(() => {
     if (!active) return;
     void refreshChat(active);
-  }, [selected, active?.phone, active?.phoneNumberId, refreshChat]);
+  }, [active, refreshChat]);
   useEffect(() => {
     const timer = window.setInterval(() => {
       if (document.visibilityState !== 'visible') return;

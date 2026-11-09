@@ -13,7 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm install && npm run build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - run: corepack enable
+      - name: Install and build with the repository's lockfile
+        run: yarn install --frozen-lockfile --non-interactive && yarn build
         env:
           VITE_API_URL: ${{ github.base_ref == 'dev' && 'https://dev.restora.live' || 'https://restora.live' }}
           VITE_APP_URL: https://app.restora.live
