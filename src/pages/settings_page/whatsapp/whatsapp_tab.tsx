@@ -63,10 +63,12 @@ function MetaSignupButton({ appId, configId, onConnected }: {
     let wabaId = '';
     let phoneNumberId: string | undefined;
     let finished = false;
+    let codeFallbackTimeout: number | undefined;
     setStatus({ ready: true, busy: true, message: 'Waiting for Meta authorization…' });
 
     const cleanUp = () => {
       window.clearTimeout(timeout);
+      window.clearTimeout(codeFallbackTimeout);
       window.removeEventListener('message', onMessage);
     };
     const fail = (message: string) => {
@@ -75,21 +77,22 @@ function MetaSignupButton({ appId, configId, onConnected }: {
       cleanUp();
       setStatus({ ready: true, busy: false, message });
     };
-    const tryFinish = () => {
-      if (!code || !wabaId || finished) return;
+    const tryFinish = (allowCodeOnly = false) => {
+      if (!code || (!wabaId && !allowCodeOnly) || finished) return;
       finished = true;
       cleanUp();
       setStatus({ ready: true, busy: true, message: 'Connecting your WhatsApp number…' });
-      api.post<SignupResult>('/whatsapp/signup/complete', { code, wabaId, phoneNumberId })
-        .then(({ data }) => {
-          onConnected(data);
-          setStatus({ ready: true, busy: false,
-            message: data.status === 'connected' ? 'WhatsApp connected successfully.' : 'Meta authorized the number. Register it with a PIN below.' });
-          toast.success('WhatsApp authorization saved');
-        }).catch(err => {
-          setStatus({ ready: true, busy: false, message: getAxiosMessage(err) });
-          toast.error(getAxiosMessage(err));
-        });
+      api.post<SignupResult>('/whatsapp/signup/complete', {
+        code, ...(wabaId ? { wabaId } : {}), ...(phoneNumberId ? { phoneNumberId } : {}),
+      }).then(({ data }) => {
+        onConnected(data);
+        setStatus({ ready: true, busy: false,
+          message: data.status === 'connected' ? 'WhatsApp connected successfully.' : 'Meta authorized the number. Register it with a PIN below.' });
+        toast.success('WhatsApp authorization saved');
+      }).catch(err => {
+        setStatus({ ready: true, busy: false, message: getAxiosMessage(err) });
+        toast.error(getAxiosMessage(err));
+      });
     };
     const onMessage = (event: MessageEvent) => {
       if (!['https://www.facebook.com', 'https://web.facebook.com', 'https://business.facebook.com'].includes(event.origin)) return;
@@ -98,19 +101,23 @@ function MetaSignupButton({ appId, configId, onConnected }: {
         try { value = JSON.parse(value); } catch { return; }
       }
       if (!value || typeof value !== 'object') return;
-      const message = value as { type?: string; event?: string; data?: { waba_id?: string; phone_number_id?: string } };
+      const message = value as { type?: string; event?: string; data?: {
+        waba_id?: string; waba_ids?: string[]; phone_number_id?: string; error_message?: string;
+      } };
       if (message.type !== 'WA_EMBEDDED_SIGNUP') return;
       if (message.event === 'CANCEL' || message.event === 'ERROR') {
-        fail(message.event === 'CANCEL' ? 'Meta signup was cancelled.' : 'Meta signup failed. Please try again.');
+        fail(message.event === 'CANCEL' ? 'Meta signup was cancelled.' :
+          message.data?.error_message || 'Meta signup failed. Please try again.');
         return;
       }
-      if (!['FINISH', 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'].includes(message.event || '')) return;
-      if (!message.data?.waba_id) {
-        fail('Meta did not provide a WhatsApp Business Account. Please retry.');
+      if (!['FINISH', 'FINISH_ONLY_WABA', 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
+        'FINISH_GRANT_ONLY_API_ACCESS', 'FINISH_OBO_MIGRATION'].includes(message.event || '')) return;
+      if (!message.data?.waba_id && message.data?.waba_ids && message.data.waba_ids.length > 1) {
+        fail('Meta returned multiple WhatsApp accounts. Select one account and retry.');
         return;
       }
-      wabaId = message.data.waba_id;
-      phoneNumberId = message.data.phone_number_id;
+      wabaId = message.data?.waba_id || message.data?.waba_ids?.[0] || wabaId;
+      phoneNumberId = message.data?.phone_number_id || phoneNumberId;
       tryFinish();
     };
     const timeout = window.setTimeout(() => fail('Meta signup timed out. Please try again.'), 120000);
@@ -118,15 +125,22 @@ function MetaSignupButton({ appId, configId, onConnected }: {
     try {
       window.FB.login(response => {
         if (!response.authResponse?.code) {
-          fail('Meta did not grant access. Close the popup and retry.');
+          fail('Meta did not return an authorization code. Finish the Meta signup and try again.');
           return;
         }
         code = response.authResponse.code;
-        tryFinish();
+        if (wabaId) tryFinish();
+        else {
+          setStatus({ ready: true, busy: true, message: 'Verifying your Meta authorization…' });
+          // Meta sends the account IDs separately from the short-lived code.
+          // Give its session event a moment, then let the backend verify one authorized WABA.
+          codeFallbackTimeout = window.setTimeout(() => tryFinish(true), 1200);
+        }
       }, {
         config_id: configId,
         response_type: 'code',
         override_default_response_type: true,
+        extras: {},
       });
     } catch (error) {
       fail(error instanceof Error ? error.message : 'Meta signup could not open.');
