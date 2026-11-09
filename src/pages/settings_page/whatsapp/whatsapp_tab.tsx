@@ -112,12 +112,12 @@ function MetaSignupButton({ appId, configId, onConnected }: {
       }
       if (!['FINISH', 'FINISH_ONLY_WABA', 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
         'FINISH_GRANT_ONLY_API_ACCESS', 'FINISH_OBO_MIGRATION'].includes(message.event || '')) return;
-      if (message.data?.waba_ids && message.data.waba_ids.length > 1) {
+      if (!message.data?.waba_id && message.data?.waba_ids && message.data.waba_ids.length > 1) {
         fail('Meta returned multiple WhatsApp accounts. Select one account and retry.');
         return;
       }
-      wabaId = message.data?.waba_id || message.data?.waba_ids?.[0] || '';
-      phoneNumberId = message.data?.phone_number_id;
+      wabaId = message.data?.waba_id || message.data?.waba_ids?.[0] || wabaId;
+      phoneNumberId = message.data?.phone_number_id || phoneNumberId;
       tryFinish();
     };
     const timeout = window.setTimeout(() => fail('Meta signup timed out. Please try again.'), 120000);
