@@ -21,6 +21,7 @@ import NotFoundPage from './pages/not_found_page';
 import OnboardingPage from './pages/onboarding_page';
 import PrintTablesPage from './pages/print_tables_page';
 import OrdersPage from './pages/orders_page';
+import WhatsAppPage from './pages/whatsapp_page';
 import PosPage from './pages/pos_page';
 import ReservationsPage from './pages/reservations_page';
 import ResetPasswordPage from './pages/reset_password_page';
@@ -80,6 +81,9 @@ export default function App() {
               </Route>
               <Route element={<RequirePermission permission="orders:view" />}>
                 <Route path="orders" element={<OrdersPage />} />
+              </Route>
+              <Route element={<RequirePermission permission="orders:view" />}>
+                <Route path="whatsapp" element={<WhatsAppPage />} />
               </Route>
               <Route element={<RequirePermission permission="orders:create" />}>
                 <Route path="orders/new" element={<NewOrderPage />} />
