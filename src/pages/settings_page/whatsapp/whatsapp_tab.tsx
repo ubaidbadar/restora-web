@@ -138,6 +138,8 @@ function MetaSignupButton({ appId, configId, onConnected }: {
         }
       }, {
         config_id: configId,
+        // Meta v4 recommends re-requesting permissions for users who already authorized Restora.
+        auth_type: 'rerequest',
         response_type: 'code',
         override_default_response_type: true,
         extras: {},
