@@ -28,6 +28,9 @@ async function launch() {
   await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
   fireEvent.click(button);
   expect(loginCallback).toBeDefined();
+  expect(window.FB?.login).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({
+    auth_type: 'rerequest', response_type: 'code', override_default_response_type: true,
+  }));
 }
 
 describe('Meta WhatsApp Embedded Signup completion', () => {
