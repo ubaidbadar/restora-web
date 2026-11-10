@@ -22,6 +22,7 @@ type Connection = {
   _id: string; phoneNumberId: string; phoneNumberDisplay: string;
   status: 'connected' | 'disconnected' | 'token_expired' | 'number_pending';
   invoiceOnComplete?: boolean;
+  isPlatformNumber?: boolean;
 };
 type SignupResult = { id: string; phoneNumberId: string; phoneNumberDisplay: string; status: Connection['status'] };
 type SignupConfig = { enabled: boolean; appId: string | null; configId: string | null };
@@ -329,9 +330,10 @@ function InvoicePreference({ connection, onSaved }: { connection: Connection; on
 
 export default function WhatsAppTab() {
   const { data: connections = [], loading, error, get, update } = useGet<Connection[]>('/whatsapp/connections');
+  const restaurantConnections = connections.filter(connection => !connection.isPlatformNumber);
   return (
     <div className="flex flex-col gap-5">
-      <SignupSection connections={connections} onConnected={result =>
+      <SignupSection connections={restaurantConnections} onConnected={result =>
         update(current => {
           const connection: Connection = { _id: result.id, phoneNumberId: result.phoneNumberId,
             phoneNumberDisplay: result.phoneNumberDisplay, status: result.status };
@@ -341,15 +343,14 @@ export default function WhatsAppTab() {
             : [...existing, connection];
         })}/>
       <SectionCard title="Connected numbers"
-        description={`${connections.length} ${connections.length === 1 ? "number" : "numbers"} configured for your selected restaurant branch.`}>
+        description={`${restaurantConnections.length} ${restaurantConnections.length === 1 ? "number" : "numbers"} configured for your selected restaurant branch.`}>
         {loading && !connections.length && <SkeletonList rows={2} variant="lines"/>}
         {error && !connections.length && <LoadFailed what="WhatsApp connections" onRetry={() => get()}/>}
-        {!loading && !error && !connections.length &&
+        {!loading && !error && !restaurantConnections.length &&
           <div className="rounded-control bg-canvas p-4 text-sm text-muted">
             <CircleHelp size={20} className="mb-2" />
-            <p className="font-semibold text-ink">No WhatsApp number connected yet</p>
-            <p>Facebook Business Integrations showing Restora as active is only authorization.
-              Finish the connection above before a number appears here.</p>
+            <p className="font-semibold text-ink">No restaurant WhatsApp number connected yet</p>
+            <p>Restora's own OTP number is not a restaurant inbox. Connect your restaurant's WhatsApp Business number above.</p>
           </div>}
         <div className="flex flex-col gap-3">
           {connections.map(connection => (
@@ -357,8 +358,9 @@ export default function WhatsAppTab() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-medium text-ink">{connection.phoneNumberDisplay}</p>
-                  <p className={`mt-1 text-xs font-medium ${connection.status === 'connected' ? 'text-accent-text' : 'text-muted'}`}>
-                    {connection.status === 'connected' ? 'Connected · Ready for messages' :
+                  <p className={`mt-1 text-xs font-medium ${connection.isPlatformNumber ? 'text-warning-800' : connection.status === 'connected' ? 'text-accent-text' : 'text-muted'}`}>
+                    {connection.isPlatformNumber ? 'Restora OTP number · Not for restaurant messages' :
+                      connection.status === 'connected' ? 'Connected · Ready for messages' :
                       connection.status === 'number_pending' ? 'Registration required' :
                       connection.status === 'token_expired' ? 'Reconnect required' : 'Disconnected'}
                   </p>
@@ -366,7 +368,9 @@ export default function WhatsAppTab() {
                 {connection.status !== 'disconnected' &&
                   <ConfirmModal
                     title="Disconnect WhatsApp?"
-                    description="Future WhatsApp replies and ordering will stop until you reconnect this number."
+                    description={connection.isPlatformNumber
+                      ? "This is Restora's platform OTP number, not a restaurant number. Disconnect this link before connecting your restaurant's own number."
+                      : "Future WhatsApp replies and ordering will stop until you reconnect this number."}
                     confirmText="Disconnect"
                     confirmVariant="danger"
                     onConfirm={() =>
@@ -380,7 +384,7 @@ export default function WhatsAppTab() {
                     component={({ open }) => <Button variant="outline" onClick={open}>Disconnect</Button>}
                   />}
               </div>
-              {connection.status === 'number_pending' &&
+              {connection.status === 'number_pending' && !connection.isPlatformNumber &&
                 <div className="mt-3 rounded-control bg-canvas p-3">
                   <p className="mb-2 text-sm font-semibold text-ink">Finish registering this number</p>
                   <PendingRegistration connection={connection} onRegistered={id =>
@@ -390,7 +394,10 @@ export default function WhatsAppTab() {
                 Authorization expired. Reconnect this number through Meta above.</p>}
               {connection.status === 'disconnected' && <p className="mt-3 text-sm text-muted">
                 Disconnected. Reconnect through Meta above to resume messages.</p>}
-              {connection.status === 'connected' && (
+              {connection.isPlatformNumber && <p role="alert" className="mt-3 rounded-control bg-warning-50 p-3 text-sm text-warning-800">
+                This number is reserved for Restora login codes. It cannot receive restaurant orders or customer chats. Disconnect it and connect your restaurant's own WhatsApp Business number.
+              </p>}
+              {connection.status === 'connected' && !connection.isPlatformNumber && (
                 <div className="mt-3 border-t border-border pt-3">
                   <Button as={Link} to="/whatsapp" variant="outline" icon={MessageSquareText}>Open inbox</Button>
                   <InvoicePreference connection={connection} onSaved={enabled =>
