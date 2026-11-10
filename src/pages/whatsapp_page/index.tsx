@@ -21,7 +21,7 @@ type Message = {
 };
 type Conversation = {
   phoneNumberId: string; phone: string; customerName: string | null;
-  count: number; last: Message; lastInboundAt?: string | null; unread: boolean; replyWindowOpen: boolean;
+  count: number; last: Message; lastInboundAt?: string | null; unread?: boolean; replyWindowOpen?: boolean;
 };
 const replySchema = z.object({ text: z.string().trim().min(1, 'Write a message').max(4096) });
 
@@ -36,7 +36,9 @@ function formatTime(value: string) {
 
 function ReplyForm({ thread, onSent }: { thread: Conversation; onSent: (message: Message) => void }) {
   const mayReply = useCan('orders:update');
-  const windowOpen = thread.replyWindowOpen;
+  // Older API releases omit this flag. Let the API enforce the 24-hour
+  // window until the new backend is deployed; never block every reply locally.
+  const windowOpen = thread.replyWindowOpen !== false;
   const enabled = mayReply && windowOpen;
   return (
     <Form
