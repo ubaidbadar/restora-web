@@ -1,7 +1,7 @@
-import useOrderAlertStore from '../../store/order_alert_store';
+import useWhatsAppInboxStatus from '../../hooks/useWhatsAppInboxStatus';
 
 export default function WhatsAppLiveStatus() {
-  const inbox = useOrderAlertStore(state => state.whatsappInbox);
+  const inbox = useWhatsAppInboxStatus();
   const updated = inbox.lastSyncedAt
     ? new Date(inbox.lastSyncedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
     : null;
