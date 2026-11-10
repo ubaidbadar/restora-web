@@ -15,6 +15,7 @@ import Form from '../../../ui/form';
 import ConfirmModal from '../../../ui/confirm_modal/modal';
 import toast from '../../../utils/toast';
 import getAxiosMessage from '../../../utils/get_axios_message';
+import parseWhatsAppSignupMessage from '../../../utils/parse_whatsapp_signup_message';
 import navigate from '../../../utils/navigate';
 
 type Connection = {
@@ -25,56 +26,133 @@ type Connection = {
 type SignupResult = { id: string; phoneNumberId: string; phoneNumberDisplay: string; status: Connection['status'] };
 type SignupConfig = { enabled: boolean; appId: string | null; configId: string | null };
 
-// The full-page Meta authorization flow returns a short-lived one-time code to
-// this exact redirect URI. The backend must use the same redirect when exchanging it.
+// Meta returns the selected WABA/phone IDs through WA_EMBEDDED_SIGNUP and the one-time code through FB.login.
 const META_DIALOG_VERSION = 'v26.0';
-const META_REDIRECT_URI = 'https://app.restora.live/settings/whatsapp';
-const SIGNUP_STATE_KEY = 'restora:whatsapp-signup-state';
-const SIGNUP_BRANCH_KEY = 'restora:whatsapp-signup-branch';
 
-function randomState(): string {
-  const bytes = new Uint8Array(24);
-  window.crypto.getRandomValues(bytes);
-  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+type MetaLoginResponse = { authResponse?: { code?: string } | null };
+type MetaSdk = {
+  init: (options: { appId: string; autoLogAppEvents: boolean; xfbml: boolean; version: string }) => void;
+  login: (
+    callback: (response: MetaLoginResponse) => void,
+    options: {
+      config_id: string;
+      auth_type: 'rerequest';
+      response_type: 'code';
+      override_default_response_type: true;
+      extras: { setup: Record<string, never> };
+    },
+  ) => void;
+};
+declare global {
+  interface Window {
+    FB?: MetaSdk;
+    fbAsyncInit?: () => void;
+  }
 }
+
+let metaSdkPromise: Promise<MetaSdk> | undefined;
+let metaSdkAppId: string | undefined;
+function loadMetaSdk(appId: string): Promise<MetaSdk> {
+  const initialize = (sdk: MetaSdk) => {
+    if (metaSdkAppId !== appId) {
+      sdk.init({ appId, autoLogAppEvents: true, xfbml: false, version: META_DIALOG_VERSION });
+      metaSdkAppId = appId;
+    }
+    return sdk;
+  };
+  if (window.FB) return Promise.resolve(initialize(window.FB));
+  if (!metaSdkPromise) {
+    metaSdkPromise = new Promise((resolve, reject) => {
+      window.fbAsyncInit = () => {
+        if (window.FB) resolve(window.FB);
+        else reject(new Error('Meta sign-in did not initialize.'));
+      };
+      const script = document.getElementById('facebook-jssdk') as HTMLScriptElement | null;
+      if (script) {
+        script.addEventListener('load', () => {
+          if (window.FB) resolve(window.FB);
+          else reject(new Error('Meta sign-in did not initialize.'));
+        }, { once: true });
+        script.addEventListener('error', () => reject(new Error('Meta sign-in could not be loaded.')), { once: true });
+        return;
+      }
+      const added = document.createElement('script');
+      added.id = 'facebook-jssdk';
+      added.src = 'https://connect.facebook.net/en_US/sdk.js';
+      added.async = true;
+      added.defer = true;
+      added.crossOrigin = 'anonymous';
+      added.onerror = () => reject(new Error('Meta sign-in could not be loaded.'));
+      document.head.appendChild(added);
+    }).catch((error) => {
+      metaSdkPromise = undefined;
+      throw error;
+    });
+  }
+  return metaSdkPromise.then(initialize);
+}
+
+type SignupUiState = {
+  ready: boolean;
+  busy: boolean;
+  message: string;
+  signupBranchId?: string;
+  code?: string;
+  wabaId?: string;
+  phoneNumberId?: string;
+  submitting?: boolean;
+};
 
 function MetaSignupButton({ appId, configId, branchId, hasConnection, onConnected }: {
   appId: string; configId: string; branchId: string; hasConnection: boolean; onConnected: (result: SignupResult) => void;
 }) {
-  const [status, setStatus] = useState({ ready: true, busy: false, message: '' });
+  const [status, setStatus] = useState<SignupUiState>({ ready: false, busy: false, message: 'Loading Meta sign-in…' });
 
-  // Meta redirects back to this settings page with ?code=…&state=… after the
-  // user finishes the Embedded Signup dialog. The code is one-use and lives
-  // ~30s, so consume it as soon as the page boots. This button only mounts once
-  // a branch is selected (BranchGuard), which the backend needs to complete
-  // the signup. Meta returns no WABA/phone IDs in the redirect URL; the
-  // backend resolves the authorized account from the code (debug_token).
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const error = params.get('error');
-    if (!code && !error) return;
-    // Strip the one-use code (and any error) from the URL immediately so a
-    // reload cannot replay it.
-    const url = new URL(window.location.href);
-    for (const key of ['code', 'state', 'error', 'error_description', 'error_reason']) url.searchParams.delete(key);
-    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
-    if (error) {
+    let active = true;
+    loadMetaSdk(appId).then(() => {
+      if (active) setStatus(current => ({ ...current, ready: true, message: '' }));
+    }).catch(() => {
+      if (active) setStatus({ ready: false, busy: false,
+        message: 'Meta sign-in could not be loaded. Check your connection and allow connect.facebook.net.' });
+    });
+    return () => { active = false; };
+  }, [appId]);
+
+  useEffect(() => {
+    const onMetaMessage = (event: MessageEvent) => {
+      if (!status.busy || status.signupBranchId !== branchId) return;
+      const result = parseWhatsAppSignupMessage(event.origin, event.data);
+      if (!result) return;
+      if (result.event === 'finish') {
+        setStatus(current => current.signupBranchId === branchId ? {
+          ...current, wabaId: result.wabaId, phoneNumberId: result.phoneNumberId,
+          message: 'Meta selected your WhatsApp number. Finishing the secure connection…',
+        } : current);
+      } else {
+        setStatus({
+          ready: true, busy: false,
+          message: result.event === 'cancel' ? 'Meta signup was cancelled. You can try again.' :
+            result.event === 'invalid' ? 'Meta did not return a valid WhatsApp account and phone number. Please try again.' :
+              'Meta reported a signup error. Please try again or contact support.',
+        });
+      }
+    };
+    window.addEventListener('message', onMetaMessage);
+    return () => window.removeEventListener('message', onMetaMessage);
+  }, [status.busy, status.signupBranchId, branchId]);
+
+  useEffect(() => {
+    if (!status.code || !status.wabaId || !status.phoneNumberId || status.submitting) return;
+    if (status.signupBranchId !== branchId) {
       setStatus({ ready: true, busy: false,
-        message: params.get('error_description') || 'Meta signup was cancelled.' });
+        message: 'The selected branch changed during Meta authorization. Please start again from the intended branch.' });
       return;
     }
-    const storedState = window.sessionStorage.getItem(SIGNUP_STATE_KEY);
-    const storedBranch = window.sessionStorage.getItem(SIGNUP_BRANCH_KEY);
-    window.sessionStorage.removeItem(SIGNUP_STATE_KEY);
-    window.sessionStorage.removeItem(SIGNUP_BRANCH_KEY);
-    if (!storedState || storedState !== params.get('state') || (storedBranch && storedBranch !== branchId)) {
-      setStatus({ ready: true, busy: false,
-        message: 'Meta authorization cannot be applied to a different restaurant branch. Select the original branch and try again.' });
-      return;
-    }
-    setStatus({ ready: true, busy: true, message: 'Connecting your WhatsApp number…' });
-    api.post<SignupResult>('/whatsapp/signup/complete', { code }).then(({ data }) => {
+    setStatus(current => ({ ...current, submitting: true, message: 'Verifying and saving your restaurant number…' }));
+    api.post<SignupResult>('/whatsapp/signup/complete', {
+      code: status.code, wabaId: status.wabaId, phoneNumberId: status.phoneNumberId,
+    }).then(({ data }) => {
       onConnected(data);
       setStatus({ ready: true, busy: false,
         message: data.status === 'connected' ? 'WhatsApp connected successfully.' : 'Meta authorized the number. Register it with a PIN below.' });
@@ -83,27 +161,39 @@ function MetaSignupButton({ appId, configId, branchId, hasConnection, onConnecte
       setStatus({ ready: true, busy: false, message: getAxiosMessage(err) });
       toast.error(getAxiosMessage(err));
     });
-  }, [onConnected]);
+  }, [status.code, status.wabaId, status.phoneNumberId, status.submitting, status.signupBranchId, branchId, onConnected]);
 
   const connect = () => {
-    if (status.busy) return;
-    setStatus({ ready: true, busy: true, message: 'Opening Meta…' });
-    const state = randomState();
-    window.sessionStorage.setItem(SIGNUP_STATE_KEY, state);
-    window.sessionStorage.setItem(SIGNUP_BRANCH_KEY, branchId);
-    const dialog = new URL(`https://www.facebook.com/${META_DIALOG_VERSION}/dialog/oauth`);
-    dialog.searchParams.set('client_id', appId);
-    dialog.searchParams.set('redirect_uri', META_REDIRECT_URI);
-    dialog.searchParams.set('config_id', configId);
-    dialog.searchParams.set('response_type', 'code');
-    dialog.searchParams.set('override_default_response_type', 'true');
-    dialog.searchParams.set('state', state);
-    navigate(dialog.toString());
+    if (!window.FB || !status.ready || status.busy) return;
+    setStatus({ ready: true, busy: true, message: 'Opening Meta…', signupBranchId: branchId });
+    try {
+      window.FB.login((response) => {
+        const code = response.authResponse?.code;
+        if (!code) {
+          setStatus(current => current.signupBranchId === branchId
+            ? { ready: true, busy: false, message: 'Meta did not return an authorization code. Please try again.' }
+            : current);
+          return;
+        }
+        setStatus(current => current.signupBranchId === branchId
+          ? { ...current, code, message: 'Waiting for Meta to confirm the selected WhatsApp number…' }
+          : current);
+      }, {
+        config_id: configId,
+        auth_type: 'rerequest',
+        response_type: 'code',
+        override_default_response_type: true,
+        extras: { setup: {} },
+      });
+    } catch {
+      setStatus({ ready: true, busy: false, message: 'Meta could not open the signup dialog. Please try again.' });
+    }
   };
+
   return (
     <div className="flex flex-col gap-2">
-      <div><Button onClick={connect} disabled={status.busy}>
-        {status.busy ? 'Connecting to Meta…' : hasConnection ? 'Connect another number' : 'Connect WhatsApp Business'}
+      <div><Button onClick={connect} disabled={!status.ready || status.busy}>
+        {!status.ready ? 'Loading Meta…' : status.busy ? 'Connecting to Meta…' : hasConnection ? 'Connect another number' : 'Connect WhatsApp Business'}
       </Button></div>
       {status.message && <p role="status" className="text-sm text-muted">{status.message}</p>}
     </div>
