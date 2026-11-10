@@ -94,7 +94,8 @@ function ConversationPanel({ thread, onSent }: { thread: Conversation; onSent: (
   );
   const [params, setParams] = useSearchParams();
   const messages = data?.messages ?? [];
-  const latestInbound = [...messages].reverse().find(message => message.direction === 'inbound');
+  const latestInboundId = [...messages].reverse().find(message => message.direction === 'inbound')?.metaMessageId;
+  const latestMessageId = messages.at(-1)?.metaMessageId;
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -106,10 +107,10 @@ function ConversationPanel({ thread, onSent }: { thread: Conversation; onSent: (
   }, [get]);
 
   useEffect(() => {
-    if (!latestInbound) return;
+    if (!latestInboundId) return;
     let active = true;
     api.post(`/whatsapp/conversations/${encodeURIComponent(thread.phone)}/read`, {
-      phoneNumberId: thread.phoneNumberId, messageId: latestInbound.metaMessageId,
+      phoneNumberId: thread.phoneNumberId, messageId: latestInboundId,
     }).then(() => {
       if (!active) return;
       getCache.update<Conversation[]>(getCache.keyOf('/whatsapp/conversations'), rows =>
@@ -117,7 +118,12 @@ function ConversationPanel({ thread, onSent }: { thread: Conversation; onSent: (
           ? { ...row, unread: false } : row));
     }).catch(() => {});
     return () => { active = false; };
-  }, [thread.phoneNumberId, thread.phone, latestInbound?.metaMessageId]);
+  }, [thread.phoneNumberId, thread.phone, latestInboundId]);
+
+  useEffect(() => {
+    const container = document.getElementById('whatsapp-message-list');
+    if (container) container.scrollTop = container.scrollHeight;
+  }, [latestMessageId]);
 
   return (
     <section aria-label="WhatsApp chat" className="flex min-w-0 flex-col bg-surface">
@@ -136,7 +142,7 @@ function ConversationPanel({ thread, onSent }: { thread: Conversation; onSent: (
         </div>
         <Button icon={RefreshCw} variant="outline" size="sm" onClick={() => get()}>Refresh</Button>
       </header>
-      <div className="flex min-h-[22rem] max-h-[60dvh] flex-1 flex-col gap-3 overflow-y-auto bg-canvas p-4" aria-live="polite">
+      <div id="whatsapp-message-list" className="flex min-h-[22rem] max-h-[60dvh] flex-1 flex-col gap-3 overflow-y-auto bg-canvas p-4" aria-live="polite">
         {loading && !data && <SkeletonList rows={5} variant="lines" />}
         {!loading && error && !data && <LoadFailed what="this WhatsApp conversation" onRetry={() => get()} />}
         {!loading && !error && messages.length === 0 &&
