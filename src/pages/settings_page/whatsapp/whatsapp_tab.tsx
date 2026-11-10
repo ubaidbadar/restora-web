@@ -86,6 +86,7 @@ function loadMetaSdk(appId: string): Promise<MetaSdk> {
       document.head.appendChild(added);
     }).catch((error) => {
       metaSdkPromise = undefined;
+      document.getElementById('facebook-jssdk')?.remove();
       throw error;
     });
   }
@@ -143,12 +144,12 @@ function MetaSignupButton({ appId, configId, branchId, hasConnection, onConnecte
   }, [status.busy, status.signupBranchId, branchId]);
 
   useEffect(() => {
-    if (!status.code || !status.wabaId || !status.phoneNumberId || status.submitting) return;
-    if (status.signupBranchId !== branchId) {
+    if (status.busy && status.signupBranchId && status.signupBranchId !== branchId) {
       setStatus({ ready: true, busy: false,
         message: 'The selected branch changed during Meta authorization. Please start again from the intended branch.' });
       return;
     }
+    if (!status.code || !status.wabaId || !status.phoneNumberId || status.submitting) return;
     setStatus(current => ({ ...current, submitting: true, message: 'Verifying and saving your restaurant number…' }));
     api.post<SignupResult>('/whatsapp/signup/complete', {
       code: status.code, wabaId: status.wabaId, phoneNumberId: status.phoneNumberId,
@@ -196,6 +197,10 @@ function MetaSignupButton({ appId, configId, branchId, hasConnection, onConnecte
         {!status.ready ? 'Loading Meta…' : status.busy ? 'Connecting to Meta…' : hasConnection ? 'Connect another number' : 'Connect WhatsApp Business'}
       </Button></div>
       {status.message && <p role="status" className="text-sm text-muted">{status.message}</p>}
+      {status.busy && !status.submitting && <Button variant="primaryLink" size="sm"
+        onClick={() => setStatus({ ready: true, busy: false, message: 'Signup attempt cancelled. You can try again.' })}>
+        Cancel attempt
+      </Button>}
     </div>
   );
 }
