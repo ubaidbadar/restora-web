@@ -13,6 +13,7 @@ import getCache from '../../store/get_cache';
 import Button from '../../ui/button';
 import Form from '../../ui/form';
 import Textarea from '../../ui/textarea';
+import WhatsAppLiveStatus from './live_status';
 
 type Message = {
   _id: string; metaMessageId: string; phoneNumberId: string;
@@ -216,21 +217,13 @@ export default function WhatsAppPage() {
       (localPhoneSearch.length >= 4 && thread.phone.includes(localPhoneSearch)) ||
       (thread.customerName || '').toLowerCase().includes(search)));
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === 'visible' && navigator.onLine) get();
-    }, 12_000);
-    const onFocus = () => { if (navigator.onLine) get(); };
-    window.addEventListener('focus', onFocus);
-    return () => { window.clearInterval(timer); window.removeEventListener('focus', onFocus); };
-  }, [get]);
-
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <PageHeader title="WhatsApp inbox"
         subtitle={`${threads.length} conversations · ${unreadCount} unread`} />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <WhatsAppLiveStatus />
           <Button variant="outline" icon={RefreshCw} onClick={() => get()}>Refresh</Button>
           <Button as={Link} to="/settings/whatsapp" variant="outline" icon={Settings2}>Connections</Button>
         </div>
