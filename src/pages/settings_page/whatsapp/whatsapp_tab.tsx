@@ -16,7 +16,6 @@ import ConfirmModal from '../../../ui/confirm_modal/modal';
 import toast from '../../../utils/toast';
 import getAxiosMessage from '../../../utils/get_axios_message';
 import parseWhatsAppSignupMessage from '../../../utils/parse_whatsapp_signup_message';
-import navigate from '../../../utils/navigate';
 
 type Connection = {
   _id: string; phoneNumberId: string; phoneNumberDisplay: string;
@@ -61,36 +60,34 @@ function loadMetaSdk(appId: string): Promise<MetaSdk> {
     return sdk;
   };
   if (window.FB) return Promise.resolve(initialize(window.FB));
-  if (!metaSdkPromise) {
-    metaSdkPromise = new Promise((resolve, reject) => {
-      window.fbAsyncInit = () => {
+  const pending = (metaSdkPromise ??= new Promise<MetaSdk>((resolve, reject) => {
+    window.fbAsyncInit = () => {
+      if (window.FB) resolve(window.FB);
+      else reject(new Error('Meta sign-in did not initialize.'));
+    };
+    const script = document.getElementById('facebook-jssdk') as HTMLScriptElement | null;
+    if (script) {
+      script.addEventListener('load', () => {
         if (window.FB) resolve(window.FB);
         else reject(new Error('Meta sign-in did not initialize.'));
-      };
-      const script = document.getElementById('facebook-jssdk') as HTMLScriptElement | null;
-      if (script) {
-        script.addEventListener('load', () => {
-          if (window.FB) resolve(window.FB);
-          else reject(new Error('Meta sign-in did not initialize.'));
-        }, { once: true });
-        script.addEventListener('error', () => reject(new Error('Meta sign-in could not be loaded.')), { once: true });
-        return;
-      }
-      const added = document.createElement('script');
-      added.id = 'facebook-jssdk';
-      added.src = 'https://connect.facebook.net/en_US/sdk.js';
-      added.async = true;
-      added.defer = true;
-      added.crossOrigin = 'anonymous';
-      added.onerror = () => reject(new Error('Meta sign-in could not be loaded.'));
-      document.head.appendChild(added);
-    }).catch((error) => {
-      metaSdkPromise = undefined;
-      document.getElementById('facebook-jssdk')?.remove();
-      throw error;
-    });
-  }
-  return metaSdkPromise.then(initialize);
+      }, { once: true });
+      script.addEventListener('error', () => reject(new Error('Meta sign-in could not be loaded.')), { once: true });
+      return;
+    }
+    const added = document.createElement('script');
+    added.id = 'facebook-jssdk';
+    added.src = 'https://connect.facebook.net/en_US/sdk.js';
+    added.async = true;
+    added.defer = true;
+    added.crossOrigin = 'anonymous';
+    added.onerror = () => reject(new Error('Meta sign-in could not be loaded.'));
+    document.head.appendChild(added);
+  }).catch((error: unknown) => {
+    metaSdkPromise = undefined;
+    document.getElementById('facebook-jssdk')?.remove();
+    throw error;
+  }));
+  return pending.then(initialize);
 }
 
 type SignupUiState = {
