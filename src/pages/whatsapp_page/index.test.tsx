@@ -1,8 +1,13 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, useSearchParams } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import WhatsAppPage from './index';
+
+function QueryProbe() {
+  const [params] = useSearchParams();
+  return <output data-testid="search-query">{params.get('q') || ''}</output>;
+}
 
 const conversations = [
   {
@@ -41,19 +46,34 @@ describe('WhatsApp inbox experience', () => {
     expect(screen.getByText('Existing Customer')).toBeTruthy();
   });
 
-  it('searches by customer name', () => {
+  it('searches by customer name after the short typing pause', async () => {
     render(<MemoryRouter initialEntries={['/whatsapp']}><WhatsAppPage /></MemoryRouter>);
-    fireEvent.change(screen.getByPlaceholderText('Search name or number'), {
+    fireEvent.change(screen.getByPlaceholderText('Search by name or phone number'), {
       target: { value: 'Existing' },
     });
-    expect(screen.getByText('Existing Customer')).toBeTruthy();
-    expect(screen.queryByText('New Customer')).toBeNull();
+    await waitFor(() => {
+      expect(screen.getByText('Existing Customer')).toBeTruthy();
+      expect(screen.queryByText('New Customer')).toBeNull();
+    });
+  });
+
+  it('keeps a fast phone-number entry intact and syncs it after typing pauses', async () => {
+    render(<MemoryRouter initialEntries={['/whatsapp']}>
+      <WhatsAppPage />
+      <QueryProbe />
+    </MemoryRouter>);
+    const input = screen.getByPlaceholderText('Search by name or phone number') as HTMLInputElement;
+    for (const value of ['0', '03', '034', '0347']) {
+      fireEvent.change(input, { target: { value } });
+    }
+    expect(input.value).toBe('0347');
+    await waitFor(() => expect(screen.getByTestId('search-query').textContent).toBe('0347'));
   });
 
   it('explains the empty inbox and links to connection settings', () => {
     rows = [];
     render(<MemoryRouter initialEntries={['/whatsapp']}><WhatsAppPage /></MemoryRouter>);
     expect(screen.getByText('No WhatsApp messages yet.')).toBeTruthy();
-    expect(screen.getByText('Check your connected numbers')).toBeTruthy();
+    expect(screen.getByText('Check your connected number')).toBeTruthy();
   });
 });
