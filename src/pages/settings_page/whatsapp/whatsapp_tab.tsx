@@ -305,11 +305,12 @@ function InvoicePreference({ connection, onSaved }: { connection: Connection; on
   const [saving, setSaving] = useState(false);
   return (
     <div className="mt-3 flex flex-col gap-2">
-      <Toggle
-        label="Send an invoice when a WhatsApp order is completed"
-        checked={Boolean(connection.invoiceOnComplete)}
-        disabled={saving}
-        onChange={event => {
+      <div className="flex flex-wrap items-center gap-3">
+        <Toggle
+          label="Send an invoice when a WhatsApp order is completed"
+          checked={Boolean(connection.invoiceOnComplete)}
+          disabled={saving}
+          onChange={event => {
           const enabled = event.target.checked;
           setSaving(true);
           api.patch(`/whatsapp/connections/${connection._id}`, { invoiceOnComplete: enabled })
@@ -319,8 +320,12 @@ function InvoicePreference({ connection, onSaved }: { connection: Connection; on
             })
             .catch(error => toast.error(getAxiosMessage(error)))
             .finally(() => setSaving(false));
-        }}
-      />
+          }}
+        />
+        <span className="text-xs font-medium text-muted">
+          Automatic invoices: {connection.invoiceOnComplete ? 'On' : 'Off'}
+        </span>
+      </div>
       <p className="text-xs text-muted">
         For orders placed through this number. Restora sends the invoice to the customer who placed the order when staff mark it completed, while the 24-hour WhatsApp service window is open.
       </p>
