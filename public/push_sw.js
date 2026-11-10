@@ -1,7 +1,7 @@
 // Web push for guests' orders and calls, loaded into the app's service worker (vite.config.ts, workbox.importScripts).
 // The server sends { title, body, screen, tag }. While Restora is the window in front, the live stream has already
 // chimed and shown a toast, so nothing more is shown.
-const SCREENS = { orders: '/orders', tables: '/tables' };
+const SCREENS = { orders: '/orders', tables: '/tables', whatsapp: '/whatsapp' };
 
 self.addEventListener('push', (event) => {
   const alert = event.data ? event.data.json() : {};
