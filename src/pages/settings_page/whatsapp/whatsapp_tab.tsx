@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import api from '../../../config/api';
 import SectionCard from '../../../components/section_card';
@@ -12,6 +12,7 @@ import Form from '../../../ui/form';
 import ConfirmModal from '../../../ui/confirm_modal/modal';
 import toast from '../../../utils/toast';
 import getAxiosMessage from '../../../utils/get_axios_message';
+import navigate from '../../../utils/navigate';
 
 type Connection = {
   _id: string; phoneNumberId: string; phoneNumberDisplay: string;
@@ -20,138 +21,87 @@ type Connection = {
 };
 type SignupResult = { id: string; phoneNumberId: string; phoneNumberDisplay: string; status: Connection['status'] };
 type SignupConfig = { enabled: boolean; appId: string | null; configId: string | null };
-type MetaSDK = {
-  init: (options: { appId: string; cookie: boolean; xfbml: boolean; version: string }) => void;
-  login: (callback: (response: { authResponse?: { code?: string } }) => void, options: Record<string, unknown>) => void;
-};
-declare global { interface Window { FB?: MetaSDK; fbAsyncInit?: () => void } }
+
+// Manual redirect flow for Meta Embedded Signup (Meta's documented path).
+// The JavaScript SDK popup (FB.login) can never work here: with "Use Strict Mode
+// for Redirect URIs" on, Meta requires the code-exchange redirect_uri to be both
+// identical to the dialog's and owned by the app, while the SDK dialog always
+// uses Meta's own channel URL — no value satisfies both. The redirect flow sends
+// the user to the dialog and back to this settings page with ?code=…&state=….
+const META_DIALOG_VERSION = 'v26.0';
+const META_REDIRECT_URI = 'https://app.restora.live/settings/whatsapp';
+const SIGNUP_STATE_KEY = 'restora:whatsapp-signup-state';
+
+function randomState(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
 
 function MetaSignupButton({ appId, configId, onConnected }: {
   appId: string; configId: string; onConnected: (result: SignupResult) => void;
 }) {
-  const [status, setStatus] = useState({ ready: false, busy: false, message: '' });
+  const [status, setStatus] = useState({ ready: true, busy: false, message: '' });
+  const consumedRef = useRef(false);
 
+  // Meta redirects back to this settings page with ?code=…&state=… after the
+  // user finishes the Embedded Signup dialog. The code is one-use and lives
+  // ~30s, so consume it as soon as the page boots. This button only mounts once
+  // a branch is selected (BranchGuard), which the backend needs to complete
+  // the signup. Meta returns no WABA/phone IDs in the redirect URL; the
+  // backend resolves the authorized account from the code (debug_token).
   useEffect(() => {
-    let mounted = true;
-    const ready = () => {
-      if (!mounted || !window.FB) return;
-      window.FB.init({ appId, cookie: true, xfbml: false, version: 'v26.0' });
-      setStatus({ ready: true, busy: false, message: '' });
-    };
-    if (window.FB) {
-      Promise.resolve().then(ready);
-    } else {
-      window.fbAsyncInit = ready;
-      if (!document.getElementById('meta-facebook-sdk')) {
-        const script = document.createElement('script');
-        script.id = 'meta-facebook-sdk';
-        script.src = 'https://connect.facebook.net/en_US/sdk.js';
-        script.async = true;
-        script.crossOrigin = 'anonymous';
-        script.onerror = () => {
-          if (mounted) setStatus({ ready: false, busy: false, message: 'Could not load Meta. Check privacy settings and reload.' });
-        };
-        document.head.appendChild(script);
-      }
+    if (consumedRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const error = params.get('error');
+    if (!code && !error) return;
+    consumedRef.current = true;
+    // Strip the one-use code (and any error) from the URL immediately so a
+    // reload cannot replay it.
+    const url = new URL(window.location.href);
+    for (const key of ['code', 'state', 'error', 'error_description', 'error_reason']) url.searchParams.delete(key);
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    if (error) {
+      setStatus({ ready: true, busy: false,
+        message: params.get('error_description') || 'Meta signup was cancelled.' });
+      return;
     }
-    return () => { mounted = false; };
-  }, [appId]);
+    const storedState = window.sessionStorage.getItem(SIGNUP_STATE_KEY);
+    window.sessionStorage.removeItem(SIGNUP_STATE_KEY);
+    if (!storedState || storedState !== params.get('state')) {
+      setStatus({ ready: true, busy: false, message: 'Meta signup could not be verified. Please try again.' });
+      return;
+    }
+    setStatus({ ready: true, busy: true, message: 'Connecting your WhatsApp number…' });
+    api.post<SignupResult>('/whatsapp/signup/complete', { code }).then(({ data }) => {
+      onConnected(data);
+      setStatus({ ready: true, busy: false,
+        message: data.status === 'connected' ? 'WhatsApp connected successfully.' : 'Meta authorized the number. Register it with a PIN below.' });
+      toast.success('WhatsApp authorization saved');
+    }).catch(err => {
+      setStatus({ ready: true, busy: false, message: getAxiosMessage(err) });
+      toast.error(getAxiosMessage(err));
+    });
+  }, [onConnected]);
 
   const connect = () => {
-    if (!window.FB || status.busy || !status.ready) return;
-    let code = '';
-    let wabaId = '';
-    let phoneNumberId: string | undefined;
-    let finished = false;
-    let codeFallbackTimeout: number | undefined;
-    setStatus({ ready: true, busy: true, message: 'Waiting for Meta authorization…' });
-
-    const cleanUp = () => {
-      window.clearTimeout(timeout);
-      window.clearTimeout(codeFallbackTimeout);
-      window.removeEventListener('message', onMessage);
-    };
-    const fail = (message: string) => {
-      if (finished) return;
-      finished = true;
-      cleanUp();
-      setStatus({ ready: true, busy: false, message });
-    };
-    const tryFinish = (allowCodeOnly = false) => {
-      if (!code || (!wabaId && !allowCodeOnly) || finished) return;
-      finished = true;
-      cleanUp();
-      setStatus({ ready: true, busy: true, message: 'Connecting your WhatsApp number…' });
-      api.post<SignupResult>('/whatsapp/signup/complete', {
-        code, ...(wabaId ? { wabaId } : {}), ...(phoneNumberId ? { phoneNumberId } : {}),
-      }).then(({ data }) => {
-        onConnected(data);
-        setStatus({ ready: true, busy: false,
-          message: data.status === 'connected' ? 'WhatsApp connected successfully.' : 'Meta authorized the number. Register it with a PIN below.' });
-        toast.success('WhatsApp authorization saved');
-      }).catch(err => {
-        setStatus({ ready: true, busy: false, message: getAxiosMessage(err) });
-        toast.error(getAxiosMessage(err));
-      });
-    };
-    const onMessage = (event: MessageEvent) => {
-      if (!['https://www.facebook.com', 'https://web.facebook.com', 'https://business.facebook.com'].includes(event.origin)) return;
-      let value: unknown = event.data;
-      if (typeof value === 'string') {
-        try { value = JSON.parse(value); } catch { return; }
-      }
-      if (!value || typeof value !== 'object') return;
-      const message = value as { type?: string; event?: string; data?: {
-        waba_id?: string; waba_ids?: string[]; phone_number_id?: string; error_message?: string;
-      } };
-      if (message.type !== 'WA_EMBEDDED_SIGNUP') return;
-      if (message.event === 'CANCEL' || message.event === 'ERROR') {
-        fail(message.event === 'CANCEL' ? 'Meta signup was cancelled.' :
-          message.data?.error_message || 'Meta signup failed. Please try again.');
-        return;
-      }
-      if (!['FINISH', 'FINISH_ONLY_WABA', 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
-        'FINISH_GRANT_ONLY_API_ACCESS', 'FINISH_OBO_MIGRATION'].includes(message.event || '')) return;
-      if (!message.data?.waba_id && message.data?.waba_ids && message.data.waba_ids.length > 1) {
-        fail('Meta returned multiple WhatsApp accounts. Select one account and retry.');
-        return;
-      }
-      wabaId = message.data?.waba_id || message.data?.waba_ids?.[0] || wabaId;
-      phoneNumberId = message.data?.phone_number_id || phoneNumberId;
-      tryFinish();
-    };
-    const timeout = window.setTimeout(() => fail('Meta signup timed out. Please try again.'), 120000);
-    window.addEventListener('message', onMessage);
-    try {
-      window.FB.login(response => {
-        if (!response.authResponse?.code) {
-          fail('Meta did not return an authorization code. Finish the Meta signup and try again.');
-          return;
-        }
-        code = response.authResponse.code;
-        if (wabaId) tryFinish();
-        else {
-          setStatus({ ready: true, busy: true, message: 'Verifying your Meta authorization…' });
-          // Meta sends the account IDs separately from the short-lived code.
-          // Give its session event a moment, then let the backend verify one authorized WABA.
-          codeFallbackTimeout = window.setTimeout(() => tryFinish(true), 1200);
-        }
-      }, {
-        config_id: configId,
-        // Meta v4 recommends re-requesting permissions for users who already authorized Restora.
-        auth_type: 'rerequest',
-        response_type: 'code',
-        override_default_response_type: true,
-        extras: {},
-      });
-    } catch (error) {
-      fail(error instanceof Error ? error.message : 'Meta signup could not open.');
-    }
+    if (status.busy) return;
+    setStatus({ ready: true, busy: true, message: 'Opening Meta…' });
+    const state = randomState();
+    window.sessionStorage.setItem(SIGNUP_STATE_KEY, state);
+    const dialog = new URL(`https://www.facebook.com/${META_DIALOG_VERSION}/dialog/oauth`);
+    dialog.searchParams.set('client_id', appId);
+    dialog.searchParams.set('redirect_uri', META_REDIRECT_URI);
+    dialog.searchParams.set('config_id', configId);
+    dialog.searchParams.set('response_type', 'code');
+    dialog.searchParams.set('override_default_response_type', 'true');
+    dialog.searchParams.set('state', state);
+    navigate(dialog.toString());
   };
   return (
     <div className="flex flex-col gap-2">
-      <div><Button onClick={connect} disabled={!status.ready || status.busy}>
-        {status.busy ? 'Connecting to Meta…' : status.ready ? 'Connect WhatsApp Business' : 'Loading Meta…'}
+      <div><Button onClick={connect} disabled={status.busy}>
+        {status.busy ? 'Connecting to Meta…' : 'Connect WhatsApp Business'}
       </Button></div>
       {status.message && <p role="status" className="text-sm text-muted">{status.message}</p>}
     </div>
