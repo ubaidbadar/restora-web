@@ -6,7 +6,7 @@ import api from '../config/api';
  */
 export default async function subscribeWebPush(): Promise<string | null> {
   const registration = await navigator.serviceWorker?.getRegistration();
-  if (!registration || !('PushManager' in window)) return 'This browser cannot show alerts. Install Restora or use Chrome, Edge, Firefox or Safari.';
+  if (!registration || !('PushManager' in window) || !('Notification' in window)) return 'This browser cannot show alerts. Install Restora or use Chrome, Edge, Firefox or Safari.';
   if ((await Notification.requestPermission()) !== 'granted') return 'Notifications are blocked for Restora. Allow them in the browser’s site settings.';
   const { publicKey } = (await api.get<{ publicKey: string | null }>('/push-devices/web-key')).data;
   if (!publicKey) return 'Alerts are not set up on the server yet.';
