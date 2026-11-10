@@ -159,7 +159,7 @@ function MetaSignupButton({ appId, configId, branchId, hasConnection, onConnecte
       setStatus({ ready: true, busy: false, message: getAxiosMessage(err) });
       toast.error(getAxiosMessage(err));
     });
-  }, [status.code, status.wabaId, status.phoneNumberId, status.submitting, status.signupBranchId, branchId, onConnected]);
+  }, [status.busy, status.code, status.wabaId, status.phoneNumberId, status.submitting, status.signupBranchId, branchId, onConnected]);
 
   const connect = () => {
     if (!window.FB || !status.ready || status.busy) return;
