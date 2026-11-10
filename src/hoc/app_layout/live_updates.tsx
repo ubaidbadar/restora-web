@@ -140,7 +140,7 @@ export default function LiveUpdates() {
     // Keep the shared inbox cache fresh on every page and show a gentle alert
     // while Restora is focused. The service worker handles background push.
     type InboxRow = {
-      phoneNumberId: string; phone: string; lastInboundAt?: string | null;
+      phoneNumberId: string; phone: string; lastInboundAt?: string | null; unread?: boolean;
     };
     let inboxReady = false;
     let inboxReading = false;
