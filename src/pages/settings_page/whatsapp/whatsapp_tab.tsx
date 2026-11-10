@@ -32,13 +32,20 @@ const META_DIALOG_VERSION = 'v26.0';
 const META_REDIRECT_URI = 'https://app.restora.live/settings/whatsapp';
 const SIGNUP_STATE_KEY = 'restora:whatsapp-signup-state';
 
-// Restora's own platform number (WABA 2025669858106128, +92 339 6262068).
+// Restora's own platform number (+92 339 6262068).
 // The Meta dialog is only the login handshake here: Embedded Signup onboarding
 // (which would pick the account) is blocked until the app passes App Review,
 // so for our own number we pass its known IDs and the backend validates the
 // login token against that account directly. Other restaurants will use the
 // picker once onboarding is approved.
-const META_WABA_ID = '2025669858106128';
+// NOTE: META_MESSAGING_ACCOUNT_ID is the Messaging Account ID, NOT the
+// WhatsApp Account (WABA) ID 2025669858106128. Under Meta's new account model
+// the WABA was split in two: the WhatsApp Account holds the number, while
+// the Messaging Account holds templates, billing and webhook subscriptions.
+// The WABA ID rejects the phone-numbers list and subscribed_apps calls
+// ("This API is not supported for this WhatsApp Business Account"); the
+// Messaging Account ID accepts them.
+const META_MESSAGING_ACCOUNT_ID = '1506044834668577';
 const META_PHONE_NUMBER_ID = '1441060799087277';
 
 function randomState(): string {
@@ -84,7 +91,7 @@ function MetaSignupButton({ appId, configId, onConnected }: {
     }
     setStatus({ ready: true, busy: true, message: 'Connecting your WhatsApp number…' });
     api.post<SignupResult>('/whatsapp/signup/complete', {
-      code, wabaId: META_WABA_ID, phoneNumberId: META_PHONE_NUMBER_ID,
+      code, wabaId: META_MESSAGING_ACCOUNT_ID, phoneNumberId: META_PHONE_NUMBER_ID,
     }).then(({ data }) => {
       onConnected(data);
       setStatus({ ready: true, busy: false,
