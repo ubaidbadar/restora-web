@@ -130,9 +130,11 @@ export default function LiveUpdates() {
       };
     };
     const reconnect = () => {
-      if (source?.readyState === EventSource.OPEN) return;
-      window.clearTimeout(retry);
-      connect();
+      if (source?.readyState !== EventSource.OPEN) {
+        window.clearTimeout(retry);
+        connect();
+      }
+      void syncInbox();
     };
 
     // WhatsApp messages arrive through Meta webhooks, not the orders stream.
