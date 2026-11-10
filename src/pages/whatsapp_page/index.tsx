@@ -21,7 +21,7 @@ type Message = {
 };
 type Conversation = {
   phoneNumberId: string; phone: string; customerName: string | null;
-  count: number; last: Message; lastInboundAt?: string | null; unread: boolean;
+  count: number; last: Message; lastInboundAt?: string | null; unread: boolean; replyWindowOpen: boolean;
 };
 const replySchema = z.object({ text: z.string().trim().min(1, 'Write a message').max(4096) });
 
@@ -36,9 +36,7 @@ function formatTime(value: string) {
 
 function ReplyForm({ thread, onSent }: { thread: Conversation; onSent: (message: Message) => void }) {
   const mayReply = useCan('orders:update');
-  const lastInbound = thread.lastInboundAt ? new Date(thread.lastInboundAt).getTime() : 0;
-  const windowOpen = lastInbound > 0 && Date.now() - lastInbound < 24 * 60 * 60 * 1000 &&
-    lastInbound <= Date.now() + 60_000;
+  const windowOpen = thread.replyWindowOpen;
   const enabled = mayReply && windowOpen;
   return (
     <Form
