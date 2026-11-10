@@ -22,6 +22,7 @@ vi.mock('../../../utils/toast', () => ({
 vi.mock('../../../utils/navigate', () => ({ default: vi.fn() }));
 
 const STATE_KEY = 'restora:whatsapp-signup-state';
+const BRANCH_KEY = 'restora:whatsapp-signup-branch';
 
 describe('Meta WhatsApp Embedded Signup redirect flow', () => {
   beforeEach(() => {
@@ -57,6 +58,7 @@ describe('Meta WhatsApp Embedded Signup redirect flow', () => {
     const state = url.searchParams.get('state');
     expect(state).toBeTruthy();
     expect(window.sessionStorage.getItem(STATE_KEY)).toBe(state);
+    expect(window.sessionStorage.getItem(BRANCH_KEY)).toBe('branch-1');
   });
 
   it('consumes the returned code once the state matches and strips it from the URL', async () => {
@@ -65,8 +67,6 @@ describe('Meta WhatsApp Embedded Signup redirect flow', () => {
     render(<WhatsAppTab />);
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/whatsapp/signup/complete', {
       code: 'test-meta-code',
-      wabaId: '1506044834668577',
-      phoneNumberId: '1441060799087277',
     }));
     expect(window.location.search).toBe('');
     await waitFor(() => expect(screen.getByText('WhatsApp connected successfully.')).toBeTruthy());
@@ -76,9 +76,18 @@ describe('Meta WhatsApp Embedded Signup redirect flow', () => {
     window.history.pushState({}, '', '/settings/whatsapp?code=test-meta-code&state=wrong-state');
     window.sessionStorage.setItem(STATE_KEY, 'test-state');
     render(<WhatsAppTab />);
-    expect(screen.getByText('Meta signup could not be verified. Please try again.')).toBeTruthy();
+    expect(screen.getByText('Meta authorization cannot be applied to a different restaurant branch. Select the original branch and try again.')).toBeTruthy();
     expect(api.post).not.toHaveBeenCalled();
     expect(window.location.search).toBe('');
+  });
+
+  it('rejects a Meta return if the restaurant branch changed during authorization', async () => {
+    window.history.pushState({}, '', '/settings/whatsapp?code=test-meta-code&state=test-state');
+    window.sessionStorage.setItem(STATE_KEY, 'test-state');
+    window.sessionStorage.setItem(BRANCH_KEY, 'another-branch');
+    render(<WhatsAppTab />);
+    expect(screen.getByText('Meta authorization cannot be applied to a different restaurant branch. Select the original branch and try again.')).toBeTruthy();
+    expect(api.post).not.toHaveBeenCalled();
   });
 
   it('reports a cancelled Meta signup instead of posting anything', async () => {

@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { z } from 'zod';
+import { Link } from 'react-router';
+import { CheckCircle2, CircleHelp, MessageSquareText, ShieldCheck } from 'lucide-react';
 import api from '../../../config/api';
 import SectionCard from '../../../components/section_card';
+import WhatsAppPushControls from '../../../components/whatsapp_push_controls';
 import SkeletonList from '../../../components/skeleton_list';
 import LoadFailed from '../../../components/load_failed';
 import useGet from '../../../hooks/useGet';
@@ -22,57 +25,35 @@ type Connection = {
 type SignupResult = { id: string; phoneNumberId: string; phoneNumberDisplay: string; status: Connection['status'] };
 type SignupConfig = { enabled: boolean; appId: string | null; configId: string | null };
 
-// Manual redirect flow for Meta Embedded Signup (Meta's documented path).
-// The JavaScript SDK popup (FB.login) can never work here: with "Use Strict Mode
-// for Redirect URIs" on, Meta requires the code-exchange redirect_uri to be both
-// identical to the dialog's and owned by the app, while the SDK dialog always
-// uses Meta's own channel URL — no value satisfies both. The redirect flow sends
-// the user to the dialog and back to this settings page with ?code=…&state=….
+// The full-page Meta authorization flow returns a short-lived one-time code to
+// this exact redirect URI. The backend must use the same redirect when exchanging it.
 const META_DIALOG_VERSION = 'v26.0';
 const META_REDIRECT_URI = 'https://app.restora.live/settings/whatsapp';
 const SIGNUP_STATE_KEY = 'restora:whatsapp-signup-state';
-
-// Restora's own platform number (+92 339 6262068).
-// The Meta dialog is only the login handshake here: Embedded Signup onboarding
-// (which would pick the account) is blocked until the app passes App Review,
-// so for our own number we pass its known IDs and the backend validates the
-// login token against that account directly. Other restaurants will use the
-// picker once onboarding is approved.
-// NOTE: META_MESSAGING_ACCOUNT_ID is the Messaging Account ID, NOT the
-// WhatsApp Account (WABA) ID 2025669858106128. Under Meta's new account model
-// the WABA was split in two: the WhatsApp Account holds the number, while
-// the Messaging Account holds templates, billing and webhook subscriptions.
-// The WABA ID rejects the phone-numbers list and subscribed_apps calls
-// ("This API is not supported for this WhatsApp Business Account"); the
-// Messaging Account ID accepts them.
-const META_MESSAGING_ACCOUNT_ID = '1506044834668577';
-const META_PHONE_NUMBER_ID = '1441060799087277';
+const SIGNUP_BRANCH_KEY = 'restora:whatsapp-signup-branch';
 
 function randomState(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+  const bytes = new Uint8Array(24);
+  window.crypto.getRandomValues(bytes);
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-function MetaSignupButton({ appId, configId, onConnected }: {
-  appId: string; configId: string; onConnected: (result: SignupResult) => void;
+function MetaSignupButton({ appId, configId, branchId, hasConnection, onConnected }: {
+  appId: string; configId: string; branchId: string; hasConnection: boolean; onConnected: (result: SignupResult) => void;
 }) {
   const [status, setStatus] = useState({ ready: true, busy: false, message: '' });
-  const consumedRef = useRef(false);
 
   // Meta redirects back to this settings page with ?code=…&state=… after the
-  // user finishes the Meta login dialog. The code is one-use and lives
+  // user finishes the Embedded Signup dialog. The code is one-use and lives
   // ~30s, so consume it as soon as the page boots. This button only mounts once
   // a branch is selected (BranchGuard), which the backend needs to complete
-  // the signup. Meta returns no WABA/phone IDs in the redirect URL; we send
-  // Restora's own known IDs with the code and the backend validates the login
-  // token against that account directly.
+  // the signup. Meta returns no WABA/phone IDs in the redirect URL; the
+  // backend resolves the authorized account from the code (debug_token).
   useEffect(() => {
-    if (consumedRef.current) return;
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     const error = params.get('error');
     if (!code && !error) return;
-    consumedRef.current = true;
     // Strip the one-use code (and any error) from the URL immediately so a
     // reload cannot replay it.
     const url = new URL(window.location.href);
@@ -84,15 +65,16 @@ function MetaSignupButton({ appId, configId, onConnected }: {
       return;
     }
     const storedState = window.sessionStorage.getItem(SIGNUP_STATE_KEY);
+    const storedBranch = window.sessionStorage.getItem(SIGNUP_BRANCH_KEY);
     window.sessionStorage.removeItem(SIGNUP_STATE_KEY);
-    if (!storedState || storedState !== params.get('state')) {
-      setStatus({ ready: true, busy: false, message: 'Meta signup could not be verified. Please try again.' });
+    window.sessionStorage.removeItem(SIGNUP_BRANCH_KEY);
+    if (!storedState || storedState !== params.get('state') || (storedBranch && storedBranch !== branchId)) {
+      setStatus({ ready: true, busy: false,
+        message: 'Meta authorization cannot be applied to a different restaurant branch. Select the original branch and try again.' });
       return;
     }
     setStatus({ ready: true, busy: true, message: 'Connecting your WhatsApp number…' });
-    api.post<SignupResult>('/whatsapp/signup/complete', {
-      code, wabaId: META_MESSAGING_ACCOUNT_ID, phoneNumberId: META_PHONE_NUMBER_ID,
-    }).then(({ data }) => {
+    api.post<SignupResult>('/whatsapp/signup/complete', { code }).then(({ data }) => {
       onConnected(data);
       setStatus({ ready: true, busy: false,
         message: data.status === 'connected' ? 'WhatsApp connected successfully.' : 'Meta authorized the number. Register it with a PIN below.' });
@@ -108,6 +90,7 @@ function MetaSignupButton({ appId, configId, onConnected }: {
     setStatus({ ready: true, busy: true, message: 'Opening Meta…' });
     const state = randomState();
     window.sessionStorage.setItem(SIGNUP_STATE_KEY, state);
+    window.sessionStorage.setItem(SIGNUP_BRANCH_KEY, branchId);
     const dialog = new URL(`https://www.facebook.com/${META_DIALOG_VERSION}/dialog/oauth`);
     dialog.searchParams.set('client_id', appId);
     dialog.searchParams.set('redirect_uri', META_REDIRECT_URI);
@@ -120,15 +103,15 @@ function MetaSignupButton({ appId, configId, onConnected }: {
   return (
     <div className="flex flex-col gap-2">
       <div><Button onClick={connect} disabled={status.busy}>
-        {status.busy ? 'Connecting to Meta…' : 'Connect WhatsApp Business'}
+        {status.busy ? 'Connecting to Meta…' : hasConnection ? 'Connect another number' : 'Connect WhatsApp Business'}
       </Button></div>
       {status.message && <p role="status" className="text-sm text-muted">{status.message}</p>}
     </div>
   );
 }
 
-function BranchGuard({ config, onConnected }: {
-  config: SignupConfig; onConnected: (result: SignupResult) => void;
+function BranchGuard({ config, hasConnection, onConnected }: {
+  config: SignupConfig; hasConnection: boolean; onConnected: (result: SignupResult) => void;
 }) {
   const workplace = useWorkplace();
   if (!workplace?.branch?._id) return (
@@ -136,10 +119,11 @@ function BranchGuard({ config, onConnected }: {
       Select a restaurant branch before connecting WhatsApp.
     </p>
   );
-  return <MetaSignupButton appId={config.appId!} configId={config.configId!} onConnected={onConnected}/>;
+  return <MetaSignupButton appId={config.appId!} configId={config.configId!} branchId={workplace.branch._id}
+    hasConnection={hasConnection} onConnected={onConnected}/>;
 }
 
-function SignupSection({ onConnected }: { onConnected: (result: SignupResult) => void }) {
+function SignupSection({ connections, onConnected }: { connections: Connection[]; onConnected: (result: SignupResult) => void }) {
   const { data, loading, error, get } = useGet<SignupConfig>('/whatsapp/signup/config');
   return (
     <SectionCard title="WhatsApp Business"
@@ -149,9 +133,23 @@ function SignupSection({ onConnected }: { onConnected: (result: SignupResult) =>
       {data && !data.enabled && <p role="alert" className="rounded-control bg-warning-50 p-3 text-sm text-warning-800">
         Meta Embedded Signup is not configured on the Restora backend. Contact support.
       </p>}
+      <div className="mb-4 grid gap-3 text-sm text-ink sm:grid-cols-3">
+        <div className="rounded-control bg-canvas p-3"><strong className="block">1. Authorize</strong>
+          Choose your WhatsApp Business number in Meta.</div>
+        <div className="rounded-control bg-canvas p-3"><strong className="block">2. Verify</strong>
+          Restora securely verifies and saves the number.</div>
+        <div className="rounded-control bg-canvas p-3"><strong className="block">3. Start messaging</strong>
+          Register with a PIN if needed, then use your inbox.</div>
+      </div>
+      {connections.some(row => row.status === 'connected') &&
+        <p role="status" className="mb-3 flex items-center gap-2 text-sm text-accent-text">
+          <CheckCircle2 size={18} /> WhatsApp is connected. You can add another number for this branch.
+        </p>}
       {data?.enabled && data.appId && data.configId &&
-        <BranchGuard config={data} onConnected={onConnected}/>}
-      <p className="mt-3 text-xs text-muted">Sign in through your Facebook Business account. Restora does not receive your Facebook password.</p>
+        <BranchGuard config={data} hasConnection={connections.some(row => row.status === 'connected')} onConnected={onConnected}/>}
+      <p className="mt-3 flex items-start gap-2 text-xs text-muted"><ShieldCheck size={16} className="shrink-0" />
+        Meta handles sign-in. Restora never receives your Facebook password; a connected phone only appears after verification succeeds.
+      </p>
     </SectionCard>
   );
 }
@@ -194,7 +192,7 @@ export default function WhatsAppTab() {
   const { data: connections = [], loading, error, get, update } = useGet<Connection[]>('/whatsapp/connections');
   return (
     <div className="flex flex-col gap-5">
-      <SignupSection onConnected={result =>
+      <SignupSection connections={connections} onConnected={result =>
         update(current => {
           const connection: Connection = { _id: result.id, phoneNumberId: result.phoneNumberId,
             phoneNumberDisplay: result.phoneNumberDisplay, status: result.status };
@@ -204,17 +202,27 @@ export default function WhatsAppTab() {
             : [...existing, connection];
         })}/>
       <SectionCard title="Connected numbers"
-        description="WhatsApp connections for your selected restaurant branch.">
+        description={`${connections.length} numbers for your selected restaurant branch.`}>
         {loading && !connections.length && <SkeletonList rows={2} variant="lines"/>}
         {error && !connections.length && <LoadFailed what="WhatsApp connections" onRetry={() => get()}/>}
-        {!loading && !error && !connections.length && <p className="text-sm text-muted">No WhatsApp number connected yet.</p>}
+        {!loading && !error && !connections.length &&
+          <div className="rounded-control bg-canvas p-4 text-sm text-muted">
+            <CircleHelp size={20} className="mb-2" />
+            <p className="font-semibold text-ink">No WhatsApp number connected yet</p>
+            <p>Facebook Business Integrations showing Restora as active is only authorization.
+              Finish the connection above before a number appears here.</p>
+          </div>}
         <div className="flex flex-col gap-3">
           {connections.map(connection => (
             <div key={connection._id} className="rounded-card border border-border p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-medium text-ink">{connection.phoneNumberDisplay}</p>
-                  <p className="text-xs text-muted">Status: {connection.status.replaceAll('_', ' ')}</p>
+                  <p className={`mt-1 text-xs font-medium ${connection.status === 'connected' ? 'text-accent-text' : 'text-muted'}`}>
+                    {connection.status === 'connected' ? 'Connected · Ready for messages' :
+                      connection.status === 'number_pending' ? 'Registration required' :
+                      connection.status === 'token_expired' ? 'Reconnect required' : 'Disconnected'}
+                  </p>
                 </div>
                 {connection.status !== 'disconnected' &&
                   <ConfirmModal
@@ -234,11 +242,38 @@ export default function WhatsAppTab() {
                   />}
               </div>
               {connection.status === 'number_pending' &&
-                <PendingRegistration connection={connection} onRegistered={id =>
-                  update(rows => rows?.map(row => row._id === id ? { ...row, status: 'connected' } : row))}/>}
+                <div className="mt-3 rounded-control bg-canvas p-3">
+                  <p className="mb-2 text-sm font-semibold text-ink">Finish registering this number</p>
+                  <PendingRegistration connection={connection} onRegistered={id =>
+                    update(rows => rows?.map(row => row._id === id ? { ...row, status: 'connected' } : row))}/>
+                </div>}
+              {connection.status === 'token_expired' && <p className="mt-3 text-sm text-warning-800">
+                Authorization expired. Reconnect this number through Meta above.</p>}
+              {connection.status === 'disconnected' && <p className="mt-3 text-sm text-muted">
+                Disconnected. Reconnect through Meta above to resume messages.</p>}
+              {connection.status === 'connected' && <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                <Button as={Link} to="/whatsapp" variant="outline" icon={MessageSquareText}>Open inbox</Button>
+                <Button variant="outline" onClick={() => {
+                  api.patch(`/whatsapp/connections/${connection._id}`, { invoiceOnComplete: !connection.invoiceOnComplete })
+                    .then(() => {
+                      update(rows => rows?.map(row => row._id === connection._id
+                        ? { ...row, invoiceOnComplete: !connection.invoiceOnComplete } : row));
+                      toast.success('Invoice preference saved');
+                    }).catch(error => toast.error(getAxiosMessage(error)));
+                }}>
+                  {connection.invoiceOnComplete ? 'Completed-order invoices: On' : 'Completed-order invoices: Off'}
+                </Button>
+              </div>}
             </div>
           ))}
         </div>
+      </SectionCard>
+      <SectionCard title="New message alerts"
+        description="Get notified when customers message your restaurant, even if this tab is closed.">
+        <WhatsAppPushControls />
+        <p className="mt-2 text-xs text-muted">
+          Browser permission also enables alerts for orders and table calls. Turning alerts off disables all Restora web push on this browser. Staff permissions and branch access still apply.
+        </p>
       </SectionCard>
     </div>
   );
