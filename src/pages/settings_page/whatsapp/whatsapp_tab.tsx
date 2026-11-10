@@ -268,7 +268,7 @@ export default function WhatsAppTab() {
         description="Get notified when customers message your restaurant, even if this tab is closed.">
         <WhatsAppPushControls />
         <p className="mt-2 text-xs text-muted">
-          Alerts require browser permission. Only authorized staff in the selected restaurant and branch can receive them.
+          Browser permission also enables alerts for orders and table calls. Turning alerts off disables all Restora web push on this browser. Staff permissions and branch access still apply.
         </p>
       </SectionCard>
     </div>
