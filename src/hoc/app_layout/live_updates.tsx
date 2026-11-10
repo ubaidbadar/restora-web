@@ -134,7 +134,6 @@ export default function LiveUpdates() {
         window.clearTimeout(retry);
         connect();
       }
-      void syncInbox();
     };
 
     // WhatsApp messages arrive through Meta webhooks, not the orders stream.
@@ -189,19 +188,20 @@ export default function LiveUpdates() {
       }
     };
     const inboxTimer = window.setInterval(() => void syncInbox(), 15_000);
+    const onlineInbox = () => { reconnect(); void syncInbox(); };
     const focusInbox = () => void syncInbox();
     const visibilityInbox = () => void syncInbox();
     const offlineInbox = () => useOrderAlertStore.getState().setWhatsAppInbox({ status: 'offline' });
     void syncInbox();
     connect();
-    window.addEventListener('online', reconnect);
+    window.addEventListener('online', onlineInbox);
     window.addEventListener('offline', offlineInbox);
     window.addEventListener('focus', focusInbox);
     document.addEventListener('visibilitychange', visibilityInbox);
     return () => {
       window.clearTimeout(retry);
       window.clearInterval(inboxTimer);
-      window.removeEventListener('online', reconnect);
+      window.removeEventListener('online', onlineInbox);
       window.removeEventListener('offline', offlineInbox);
       window.removeEventListener('focus', focusInbox);
       document.removeEventListener('visibilitychange', visibilityInbox);
