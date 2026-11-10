@@ -32,6 +32,15 @@ const META_DIALOG_VERSION = 'v26.0';
 const META_REDIRECT_URI = 'https://app.restora.live/settings/whatsapp';
 const SIGNUP_STATE_KEY = 'restora:whatsapp-signup-state';
 
+// Restora's own platform number (WABA 2025669858106128, +92 339 6262068).
+// The Meta dialog is only the login handshake here: Embedded Signup onboarding
+// (which would pick the account) is blocked until the app passes App Review,
+// so for our own number we pass its known IDs and the backend validates the
+// login token against that account directly. Other restaurants will use the
+// picker once onboarding is approved.
+const META_WABA_ID = '2025669858106128';
+const META_PHONE_NUMBER_ID = '1441060799087277';
+
 function randomState(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
@@ -44,11 +53,12 @@ function MetaSignupButton({ appId, configId, onConnected }: {
   const consumedRef = useRef(false);
 
   // Meta redirects back to this settings page with ?code=…&state=… after the
-  // user finishes the Embedded Signup dialog. The code is one-use and lives
+  // user finishes the Meta login dialog. The code is one-use and lives
   // ~30s, so consume it as soon as the page boots. This button only mounts once
   // a branch is selected (BranchGuard), which the backend needs to complete
-  // the signup. Meta returns no WABA/phone IDs in the redirect URL; the
-  // backend resolves the authorized account from the code (debug_token).
+  // the signup. Meta returns no WABA/phone IDs in the redirect URL; we send
+  // Restora's own known IDs with the code and the backend validates the login
+  // token against that account directly.
   useEffect(() => {
     if (consumedRef.current) return;
     const params = new URLSearchParams(window.location.search);
@@ -73,7 +83,9 @@ function MetaSignupButton({ appId, configId, onConnected }: {
       return;
     }
     setStatus({ ready: true, busy: true, message: 'Connecting your WhatsApp number…' });
-    api.post<SignupResult>('/whatsapp/signup/complete', { code }).then(({ data }) => {
+    api.post<SignupResult>('/whatsapp/signup/complete', {
+      code, wabaId: META_WABA_ID, phoneNumberId: META_PHONE_NUMBER_ID,
+    }).then(({ data }) => {
       onConnected(data);
       setStatus({ ready: true, busy: false,
         message: data.status === 'connected' ? 'WhatsApp connected successfully.' : 'Meta authorized the number. Register it with a PIN below.' });

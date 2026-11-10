@@ -65,6 +65,8 @@ describe('Meta WhatsApp Embedded Signup redirect flow', () => {
     render(<WhatsAppTab />);
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/whatsapp/signup/complete', {
       code: 'test-meta-code',
+      wabaId: '2025669858106128',
+      phoneNumberId: '1441060799087277',
     }));
     expect(window.location.search).toBe('');
     await waitFor(() => expect(screen.getByText('WhatsApp connected successfully.')).toBeTruthy());
