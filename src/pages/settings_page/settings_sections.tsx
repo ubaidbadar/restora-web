@@ -34,7 +34,7 @@ const SETTINGS_SECTIONS: SettingsSectionItem[] = [
   { value: 'roles', label: 'Roles', icon: ShieldCheck, group: 'Team', content: <RolesCard />, permission: 'roles:manage' },
   { value: 'teams', label: 'Teams', icon: UsersRound, group: 'Team', content: <TeamsTab />, permission: 'teams:manage' },
   { value: 'devices', label: 'Devices', icon: MonitorSmartphone, group: 'Devices', content: <DevicesTab />, permission: 'devices:manage' },
-  { value: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, group: 'Devices', content: <WhatsAppTab />, permission: 'devices:manage' },
+  { value: 'whatsapp', label: 'WhatsApp connection', icon: MessageCircle, group: 'Devices', content: <WhatsAppTab />, permission: 'devices:manage' },
   { value: 'printers', label: 'Printers', icon: Printer, group: 'Devices', content: <PrintersTab />, permission: 'devices:manage' },
   { value: 'activity', label: 'Activity', icon: History, group: 'Records', content: <ActivityCard />, permission: 'audit:view' },
   { value: 'account', label: 'My account', icon: UserCog, group: 'You', content: <AccountTab /> },

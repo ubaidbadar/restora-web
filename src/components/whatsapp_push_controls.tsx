@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bell, BellOff } from 'lucide-react';
-import Button from '../ui/button';
+import Toggle from '../ui/toggle';
 import api from '../config/api';
 import subscribeWebPush from '../utils/subscribe_web_push';
 import getAxiosMessage from '../utils/get_axios_message';
@@ -51,11 +50,12 @@ export default function WhatsAppPushControls() {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Button variant="outline" icon={status.enabled ? BellOff : Bell}
-        disabled={status.busy} onClick={() => void toggle()}>
-        {status.busy ? 'Checking alerts…' : status.enabled ? 'Turn off all alerts' : 'Enable browser alerts'}
-      </Button>
+    <div className="flex flex-wrap items-center gap-3">
+      <Toggle label="Browser alerts" checked={status.enabled} disabled={status.busy}
+        onChange={() => void toggle()} />
+      <span className="text-xs font-medium text-muted">
+        {status.busy ? 'Checking alerts…' : `Alerts: ${status.enabled ? 'On' : 'Off'}`}
+      </span>
       {status.message && <p role="status" className="text-xs text-muted">{status.message}</p>}
     </div>
   );

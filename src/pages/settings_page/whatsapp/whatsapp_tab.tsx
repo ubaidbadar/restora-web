@@ -11,6 +11,7 @@ import useGet from '../../../hooks/useGet';
 import useWorkplace from '../../../hooks/useWorkplace';
 import Button from '../../../ui/button';
 import Input from '../../../ui/input';
+import Toggle from '../../../ui/toggle';
 import Form from '../../../ui/form';
 import ConfirmModal from '../../../ui/confirm_modal/modal';
 import toast from '../../../utils/toast';
@@ -217,30 +218,49 @@ function BranchGuard({ config, hasConnection, onConnected }: {
 
 function SignupSection({ connections, onConnected }: { connections: Connection[]; onConnected: (result: SignupResult) => void }) {
   const { data, loading, error, get } = useGet<SignupConfig>('/whatsapp/signup/config');
+  const hasConnection = connections.length > 0;
+  const verified = connections.some(row => row.status === 'connected' || row.status === 'number_pending');
+  const ready = connections.some(row => row.status === 'connected');
+  const needsPin = connections.some(row => row.status === 'number_pending');
+  const needsReconnect = !verified && connections.some(row => row.status === 'token_expired' || row.status === 'disconnected');
+  const steps = [
+    { title: 'Authorize', detail: "Choose your restaurant's WhatsApp Business number in Meta.", state: needsReconnect ? 'Reconnect' : hasConnection ? 'Done' : 'Next' },
+    { title: 'Verify', detail: 'Restora securely verifies and saves the number.', state: verified ? 'Done' : needsReconnect ? 'Reconnect' : 'Waiting' },
+    { title: 'Start messaging', detail: ready ? 'Your number is ready to receive messages.' : needsPin ? 'Register this number with its six-digit PIN below.' : needsReconnect ? 'Reconnect the number to resume messaging.' : 'Waiting for verification.', state: ready ? 'Ready' : needsPin ? 'PIN needed' : needsReconnect ? 'Reconnect' : 'Waiting' },
+  ];
   return (
     <SectionCard title="WhatsApp Business"
       description="Connect your restaurant's own WhatsApp Business number through Meta.">
-      {loading && !data && <SkeletonList rows={1} variant="lines"/>}
-      {error && !data && <LoadFailed what="WhatsApp signup settings" onRetry={() => get()}/>}
+      {loading && !data && <SkeletonList rows={1} variant="lines" />}
+      {error && !data && <LoadFailed what="WhatsApp signup settings" onRetry={() => get()} />}
       {data && !data.enabled && <p role="alert" className="rounded-control bg-warning-50 p-3 text-sm text-warning-800">
         Meta Embedded Signup is not configured on the Restora backend. Contact support.
       </p>}
-      <div className="mb-4 grid gap-3 text-sm text-ink sm:grid-cols-3">
-        <div className="rounded-control bg-canvas p-3"><strong className="block">1. Authorize</strong>
-          Choose your WhatsApp Business number in Meta.</div>
-        <div className="rounded-control bg-canvas p-3"><strong className="block">2. Verify</strong>
-          Restora securely verifies and saves the number.</div>
-        <div className="rounded-control bg-canvas p-3"><strong className="block">3. Start messaging</strong>
-          Register with a PIN if needed, then use your inbox.</div>
-      </div>
-      {connections.some(row => row.status === 'connected') &&
+      <ol className="mb-4 grid gap-3 text-sm text-ink sm:grid-cols-3" aria-label="WhatsApp connection progress">
+        {steps.map((step, index) => (
+          <li key={step.title} className="rounded-control bg-canvas p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <strong>{index + 1}. {step.title}</strong>
+              <span className={`rounded-pill px-2 py-0.5 text-xs font-semibold ${
+                step.state === 'Done' || step.state === 'Ready'
+                  ? 'bg-primary-soft text-accent-text'
+                  : step.state === 'PIN needed' || step.state === 'Reconnect'
+                    ? 'bg-warning-50 text-warning-800'
+                    : 'bg-surface text-muted'
+              }`}>{step.state}</span>
+            </div>
+            <p className="mt-2 text-muted">{step.detail}</p>
+          </li>
+        ))}
+      </ol>
+      {ready &&
         <p role="status" className="mb-3 flex items-center gap-2 text-sm text-accent-text">
           <CheckCircle2 size={18} /> WhatsApp is connected. You can add another number for this branch.
         </p>}
       {data?.enabled && data.appId && data.configId &&
-        <BranchGuard config={data} hasConnection={connections.some(row => row.status === 'connected')} onConnected={onConnected}/>}
+        <BranchGuard config={data} hasConnection={hasConnection} onConnected={onConnected} />}
       <p className="mt-3 flex items-start gap-2 text-xs text-muted"><ShieldCheck size={16} className="shrink-0" />
-        Meta handles sign-in. Restora never receives your Facebook password; a connected phone only appears after verification succeeds.
+        Meta handles sign-in. Restora never receives your Facebook password; a connected number only appears after verification succeeds.
       </p>
     </SectionCard>
   );
@@ -257,7 +277,7 @@ function PendingRegistration({ connection, onRegistered }: {
         api.post(`/whatsapp/connections/${connection._id}/register`, { pin: data.pin })
           .then(() => {
             onRegistered(connection._id);
-            onSuccess('Phone registered successfully.');
+            onSuccess('Number registered successfully.');
           }).catch(onError)
       }
       component={({ register, errors, loading, message, error }) => (
@@ -277,6 +297,33 @@ function PendingRegistration({ connection, onRegistered }: {
         </>
       )}
     />
+  );
+}
+
+function InvoicePreference({ connection, onSaved }: { connection: Connection; onSaved: (enabled: boolean) => void }) {
+  const [saving, setSaving] = useState(false);
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      <Toggle
+        label="Send an invoice when a WhatsApp order is completed"
+        checked={Boolean(connection.invoiceOnComplete)}
+        disabled={saving}
+        onChange={event => {
+          const enabled = event.target.checked;
+          setSaving(true);
+          api.patch(`/whatsapp/connections/${connection._id}`, { invoiceOnComplete: enabled })
+            .then(() => {
+              onSaved(enabled);
+              toast.success('Invoice preference saved');
+            })
+            .catch(error => toast.error(getAxiosMessage(error)))
+            .finally(() => setSaving(false));
+        }}
+      />
+      <p className="text-xs text-muted">
+        For orders placed through this number. Restora sends the invoice to the customer who placed the order when staff mark it completed, while the 24-hour WhatsApp service window is open.
+      </p>
+    </div>
   );
 }
 
@@ -343,19 +390,14 @@ export default function WhatsAppTab() {
                 Authorization expired. Reconnect this number through Meta above.</p>}
               {connection.status === 'disconnected' && <p className="mt-3 text-sm text-muted">
                 Disconnected. Reconnect through Meta above to resume messages.</p>}
-              {connection.status === 'connected' && <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-                <Button as={Link} to="/whatsapp" variant="outline" icon={MessageSquareText}>Open inbox</Button>
-                <Button variant="outline" onClick={() => {
-                  api.patch(`/whatsapp/connections/${connection._id}`, { invoiceOnComplete: !connection.invoiceOnComplete })
-                    .then(() => {
-                      update(rows => rows?.map(row => row._id === connection._id
-                        ? { ...row, invoiceOnComplete: !connection.invoiceOnComplete } : row));
-                      toast.success('Invoice preference saved');
-                    }).catch(error => toast.error(getAxiosMessage(error)));
-                }}>
-                  {connection.invoiceOnComplete ? 'Completed-order invoices: On' : 'Completed-order invoices: Off'}
-                </Button>
-              </div>}
+              {connection.status === 'connected' && (
+                <div className="mt-3 border-t border-border pt-3">
+                  <Button as={Link} to="/whatsapp" variant="outline" icon={MessageSquareText}>Open inbox</Button>
+                  <InvoicePreference connection={connection} onSaved={enabled =>
+                    update(rows => rows?.map(row => row._id === connection._id
+                      ? { ...row, invoiceOnComplete: enabled } : row))} />
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -364,7 +406,7 @@ export default function WhatsAppTab() {
         description="Get notified when customers message your restaurant, even if this tab is closed.">
         <WhatsAppPushControls />
         <p className="mt-2 text-xs text-muted">
-          Browser permission also enables alerts for orders and table calls. Turning alerts off disables all Restora web push on this browser. Staff permissions and branch access still apply.
+          This browser setting also controls alerts for new orders and table calls. Turn it on or off here. Each staff member enables alerts on their own browser; permissions and branch access still apply.
         </p>
       </SectionCard>
     </div>
