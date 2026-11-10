@@ -25,22 +25,21 @@ type Connection = {
 type SignupResult = { id: string; phoneNumberId: string; phoneNumberDisplay: string; status: Connection['status'] };
 type SignupConfig = { enabled: boolean; appId: string | null; configId: string | null };
 
-// Manual redirect flow for Meta Embedded Signup (Meta's documented path).
-// The JavaScript SDK popup (FB.login) can never work here: with "Use Strict Mode
-// for Redirect URIs" on, Meta requires the code-exchange redirect_uri to be both
-// identical to the dialog's and owned by the app, while the SDK dialog always
-// uses Meta's own channel URL — no value satisfies both. The redirect flow sends
-// the user to the dialog and back to this settings page with ?code=…&state=….
+// The full-page Meta authorization flow returns a short-lived one-time code to
+// this exact redirect URI. The backend must use the same redirect when exchanging it.
 const META_DIALOG_VERSION = 'v26.0';
 const META_REDIRECT_URI = 'https://app.restora.live/settings/whatsapp';
 const SIGNUP_STATE_KEY = 'restora:whatsapp-signup-state';
+const SIGNUP_BRANCH_KEY = 'restora:whatsapp-signup-branch';
 
 function randomState(): string {
-  return window.crypto.randomUUID();
+  const bytes = new Uint8Array(24);
+  window.crypto.getRandomValues(bytes);
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-function MetaSignupButton({ appId, configId, hasConnection, onConnected }: {
-  appId: string; configId: string; hasConnection: boolean; onConnected: (result: SignupResult) => void;
+function MetaSignupButton({ appId, configId, branchId, hasConnection, onConnected }: {
+  appId: string; configId: string; branchId: string; hasConnection: boolean; onConnected: (result: SignupResult) => void;
 }) {
   const [status, setStatus] = useState({ ready: true, busy: false, message: '' });
 
@@ -66,9 +65,12 @@ function MetaSignupButton({ appId, configId, hasConnection, onConnected }: {
       return;
     }
     const storedState = window.sessionStorage.getItem(SIGNUP_STATE_KEY);
+    const storedBranch = window.sessionStorage.getItem(SIGNUP_BRANCH_KEY);
     window.sessionStorage.removeItem(SIGNUP_STATE_KEY);
-    if (!storedState || storedState !== params.get('state')) {
-      setStatus({ ready: true, busy: false, message: 'Meta signup could not be verified. Please try again.' });
+    window.sessionStorage.removeItem(SIGNUP_BRANCH_KEY);
+    if (!storedState || storedState !== params.get('state') || (storedBranch && storedBranch !== branchId)) {
+      setStatus({ ready: true, busy: false,
+        message: 'Meta authorization cannot be applied to a different restaurant branch. Select the original branch and try again.' });
       return;
     }
     setStatus({ ready: true, busy: true, message: 'Connecting your WhatsApp number…' });
@@ -88,6 +90,7 @@ function MetaSignupButton({ appId, configId, hasConnection, onConnected }: {
     setStatus({ ready: true, busy: true, message: 'Opening Meta…' });
     const state = randomState();
     window.sessionStorage.setItem(SIGNUP_STATE_KEY, state);
+    window.sessionStorage.setItem(SIGNUP_BRANCH_KEY, branchId);
     const dialog = new URL(`https://www.facebook.com/${META_DIALOG_VERSION}/dialog/oauth`);
     dialog.searchParams.set('client_id', appId);
     dialog.searchParams.set('redirect_uri', META_REDIRECT_URI);
@@ -116,7 +119,8 @@ function BranchGuard({ config, hasConnection, onConnected }: {
       Select a restaurant branch before connecting WhatsApp.
     </p>
   );
-  return <MetaSignupButton appId={config.appId!} configId={config.configId!} hasConnection={hasConnection} onConnected={onConnected}/>;
+  return <MetaSignupButton appId={config.appId!} configId={config.configId!} branchId={workplace.branch._id}
+    hasConnection={hasConnection} onConnected={onConnected}/>;
 }
 
 function SignupSection({ connections, onConnected }: { connections: Connection[]; onConnected: (result: SignupResult) => void }) {
