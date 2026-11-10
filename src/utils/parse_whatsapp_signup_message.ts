@@ -1,13 +1,13 @@
 /** Parse only Meta's signed-origin Embedded Signup session messages; never trust arbitrary postMessage data. */
 export default function parseWhatsAppSignupMessage(origin: string, raw: unknown) {
-  let host = '';
+  let url: URL;
   try {
-    const url = new URL(origin);
-    if (url.protocol !== 'https:') return null;
-    host = url.hostname.toLowerCase();
+    url = new URL(origin);
   } catch {
     return null;
   }
+  if (url.protocol !== 'https:') return null;
+  const host = url.hostname.toLowerCase();
   if (host !== 'facebook.com' && !host.endsWith('.facebook.com')) return null;
 
   let value: unknown = raw;
