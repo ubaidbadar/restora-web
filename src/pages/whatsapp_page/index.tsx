@@ -209,7 +209,7 @@ export default function WhatsAppPage() {
   const threads = conversations ?? [];
   const unreadCount = threads.filter(thread => thread.unread).length;
   const active = threads.find(thread => `${thread.phoneNumberId}:${thread.phone}` === selected);
-  const phoneDigits = search.replace(/\\D/g, '');
+  const phoneDigits = search.replace(/\D/g, '');
   const localPhoneSearch = phoneDigits.startsWith('92') ? '0' + phoneDigits.slice(2) : phoneDigits;
   const visible = threads.filter(thread =>
     (!unreadOnly || thread.unread) &&
