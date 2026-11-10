@@ -1,9 +1,12 @@
-import { act, renderHook } from '@testing-library/react';
+// @vitest-environment jsdom
+import { act, cleanup, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import useOrderAlertStore from '../store/order_alert_store';
 import useWhatsAppInboxStatus from './useWhatsAppInboxStatus';
 
 describe('useWhatsAppInboxStatus', () => {
+  afterEach(cleanup);
   beforeEach(() => useOrderAlertStore.setState({
     fresh: [], muted: false,
     whatsappInbox: { status: 'checking', lastSyncedAt: null, unreadCount: 0 },
