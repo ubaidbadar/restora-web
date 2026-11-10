@@ -47,14 +47,27 @@ function ReplyForm({ thread, onSent }: { thread: Conversation; onSent: (message:
       defaultValues={{ text: '' }}
       className="border-t border-border bg-surface p-4"
       onSubmit={({ data, onReset, onSuccess, onError }) =>
-        api.post<{ message?: Message; logged?: boolean }>(
+        api.post<{ message?: Message; messageId?: string; sent?: boolean; logged?: boolean }>(
           `/whatsapp/conversations/${encodeURIComponent(thread.phone)}/reply`,
           { phoneNumberId: thread.phoneNumberId, text: data.text },
         ).then(({ data: response, status }) => {
           if (status === 201 && response.message) onSent(response.message);
+          else if (status === 202 && response.sent && response.messageId) {
+            onSent({
+              _id: 'unlogged-' + response.messageId,
+              metaMessageId: response.messageId,
+              phoneNumberId: thread.phoneNumberId,
+              phone: thread.phone,
+              direction: 'outbound',
+              text: data.text.trim(),
+              messageType: 'text',
+              receivedAt: new Date().toISOString(),
+              deliveryStatus: 'sent',
+            });
+          }
           onReset();
           onSuccess(status === 202 || response.logged === false
-            ? 'WhatsApp accepted the reply, but Restora could not save it. Do not resend blindly.'
+            ? 'WhatsApp accepted the reply, but Restora could not save it. It is shown here temporarily; do not resend blindly.'
             : 'Reply sent.');
         }).catch(onError)
       }
@@ -195,9 +208,13 @@ export default function WhatsAppPage() {
   const threads = conversations ?? [];
   const unreadCount = threads.filter(thread => thread.unread).length;
   const active = threads.find(thread => `${thread.phoneNumberId}:${thread.phone}` === selected);
+  const phoneDigits = search.replace(/\\D/g, '');
+  const localPhoneSearch = phoneDigits.startsWith('92') ? '0' + phoneDigits.slice(2) : phoneDigits;
   const visible = threads.filter(thread =>
     (!unreadOnly || thread.unread) &&
-    (thread.phone.includes(search) || (thread.customerName || '').toLowerCase().includes(search)));
+    (thread.phone.includes(search) ||
+      (localPhoneSearch.length >= 4 && thread.phone.includes(localPhoneSearch)) ||
+      (thread.customerName || '').toLowerCase().includes(search)));
 
   useEffect(() => {
     const timer = window.setInterval(() => {
