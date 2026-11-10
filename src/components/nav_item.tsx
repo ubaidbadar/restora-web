@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router';
 import type NavLinkItem from '../types/nav_link_item';
-import useOrderAlertStore from '../store/order_alert_store';
+import useWhatsAppInboxStatus from '../hooks/useWhatsAppInboxStatus';
 
 interface NavItemProps extends NavLinkItem {
   /** Icon above the label (bottom bar) instead of beside it (sidebar). */
@@ -23,7 +23,8 @@ const layouts = {
 
 export default function NavItem({ to, label, icon: Icon, end, stacked = false }: NavItemProps) {
   const layout = stacked ? layouts.stacked : layouts.row;
-  const unread = useOrderAlertStore(state => to === '/whatsapp' ? state.whatsappInbox.unreadCount : 0);
+  const inbox = useWhatsAppInboxStatus();
+  const unread = to === '/whatsapp' ? inbox.unreadCount : 0;
 
   return (
     <NavLink
