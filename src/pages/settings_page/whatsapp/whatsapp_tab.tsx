@@ -202,7 +202,7 @@ export default function WhatsAppTab() {
             : [...existing, connection];
         })}/>
       <SectionCard title="Connected numbers"
-        description={`${connections.length} numbers for your selected restaurant branch.`}>
+        description={`${connections.length} ${connections.length === 1 ? "number" : "numbers"} configured for your selected restaurant branch.`}>
         {loading && !connections.length && <SkeletonList rows={2} variant="lines"/>}
         {error && !connections.length && <LoadFailed what="WhatsApp connections" onRetry={() => get()}/>}
         {!loading && !error && !connections.length &&
