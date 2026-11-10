@@ -41,6 +41,7 @@ export default function LiveUpdates() {
   useEffect(() => {
     const ordersKey = getCache.keyOf('/orders');
     const floorKey = getCache.keyOf('/tables/floor');
+    const inboxKey = getCache.keyOf('/whatsapp/conversations');
 
     // Chimes (unless this browser is muted) and shows the toast. Until someone taps the page the browser holds sound
     // back; then the toast asks for that tap.
@@ -134,11 +135,56 @@ export default function LiveUpdates() {
       connect();
     };
 
+    // WhatsApp messages arrive through Meta webhooks, not the orders stream.
+    // Keep the shared inbox cache fresh on every page and show a gentle alert
+    // while Restora is focused. The service worker handles background push.
+    type InboxRow = {
+      phoneNumberId: string; phone: string; lastInboundAt?: string | null;
+    };
+    let inboxReady = false;
+    let inboxReading = false;
+    let lastInbound = new Map<string, string>();
+    const syncInbox = async () => {
+      if (document.visibilityState !== 'visible' || !navigator.onLine || inboxReading) return;
+      inboxReading = true;
+      try {
+        const { data } = await api.get<InboxRow[]>('/whatsapp/conversations');
+        if (inboxReady && window.location.pathname !== '/whatsapp') {
+          const hasNewMessage = data.some(thread => {
+            const last = thread.lastInboundAt || '';
+            const previous = lastInbound.get(`${thread.phoneNumberId}:${thread.phone}`);
+            return Boolean(last && previous !== undefined && last > previous);
+          });
+          if (hasNewMessage) {
+            const heard = useOrderAlertStore.getState().muted || playChime();
+            flashTitle();
+            toast.info('New WhatsApp message', heard
+              ? { label: 'Open inbox', onClick: () => navigate('/whatsapp') }
+              : { label: 'Turn on sound', onClick: () => playChime() });
+          }
+        }
+        inboxReady = true;
+        lastInbound = new Map(data.map(thread => [
+          `${thread.phoneNumberId}:${thread.phone}`, thread.lastInboundAt || '',
+        ]));
+        getCache.set(inboxKey, data);
+      } catch {
+        // A temporary network failure must not disrupt the order stream.
+      } finally {
+        inboxReading = false;
+      }
+    };
+    const inboxTimer = window.setInterval(() => void syncInbox(), 15_000);
+    const focusInbox = () => void syncInbox();
+    void syncInbox();
     connect();
     window.addEventListener('online', reconnect);
+    window.addEventListener('focus', focusInbox);
     return () => {
       window.clearTimeout(retry);
+      window.clearInterval(inboxTimer);
       window.removeEventListener('online', reconnect);
+      window.removeEventListener('focus', focusInbox);
       source?.close();
     };
   }, [navigate]);
