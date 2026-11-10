@@ -13,9 +13,9 @@ import withParam from '../../utils/with_param';
 
 /** The restaurant-wide list of customers with an outstanding khata balance. */
 export default function KhataPage() {
-  const { data, loading, error, get } = useGet<Customer[]>('/customers', { params: { segment: 'khata' } });
+  const { data, loading, error, get } = useGet<Customer[]>('/customers');
   const [params, setParams] = useSearchParams();
-  const customers = data ?? [];
+  const customers = (data ?? []).filter(customer => customer.khataBalance > 0);
   const search = params.get('q') ?? '';
   const q = search.trim().toLowerCase();
   const digits = q.replace(/\D/g, '').replace(/^(?:0092|92|0)(?=3)/, '');
