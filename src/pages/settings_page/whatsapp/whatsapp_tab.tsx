@@ -374,7 +374,7 @@ export default function WhatsAppTab() {
                   <ConfirmModal
                     title="Disconnect WhatsApp?"
                     description={connection.isPlatformNumber
-                      ? "This is Restora's platform OTP number, not a restaurant number. Disconnect this link before connecting your restaurant's own number."
+                      ? "This only removes the OTP number from this restaurant in Restora. It does not unregister the Meta number or change Restora's OTP setup. Afterward, use Connect WhatsApp Business above and select your restaurant's own number in Meta."
                       : "Future WhatsApp replies and ordering will stop until you reconnect this number."}
                     confirmText="Disconnect"
                     confirmVariant="danger"
@@ -386,7 +386,9 @@ export default function WhatsAppTab() {
                           toast.success('WhatsApp disconnected from Restora');
                         }).catch(err => toast.error(getAxiosMessage(err)))
                     }
-                    component={({ open }) => <Button variant="outline" onClick={open}>Disconnect</Button>}
+                    component={({ open }) => <Button variant="outline" onClick={open}>
+                      {connection.isPlatformNumber ? 'Disconnect OTP number' : 'Disconnect'}
+                    </Button>}
                   />}
               </div>
               {connection.status === 'number_pending' && !connection.isPlatformNumber &&
@@ -400,7 +402,9 @@ export default function WhatsAppTab() {
               {connection.status === 'disconnected' && <p className="mt-3 text-sm text-muted">
                 Disconnected. Reconnect through Meta above to resume messages.</p>}
               {connection.isPlatformNumber && <p role="alert" className="mt-3 rounded-control bg-warning-50 p-3 text-sm text-warning-800">
-                This number is reserved for Restora login codes. It cannot receive restaurant orders or customer chats. Disconnect it and connect your restaurant's own WhatsApp Business number.
+                {connection.status === 'disconnected'
+                  ? "Disconnected from this restaurant. This number remains reserved for Restora login codes. Connect your restaurant's own WhatsApp Business number above."
+                  : "This number is reserved for Restora login codes, not restaurant orders or customer chats. Disconnect it here, then connect your restaurant's own number above."}
               </p>}
               {connection.status === 'connected' && !connection.isPlatformNumber && (
                 <div className="mt-3 border-t border-border pt-3">
