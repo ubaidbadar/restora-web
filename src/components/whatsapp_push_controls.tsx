@@ -31,7 +31,7 @@ export default function WhatsAppPushControls() {
     if (!status.enabled) {
       try {
         const error = await subscribeWebPush();
-        setStatus({ enabled: !error, busy: false, message: error || 'Browser alerts are on for this workplace.' });
+        setStatus({ enabled: !error, busy: false, message: error || 'Restora alerts are on for messages, orders and table calls.' });
       } catch (error) {
         setStatus({ enabled: false, busy: false, message: getAxiosMessage(error) });
       }
@@ -44,7 +44,7 @@ export default function WhatsAppPushControls() {
         await api.post('/push-devices/remove', { token: subscription.endpoint });
         await subscription.unsubscribe();
       }
-      setStatus({ enabled: false, busy: false, message: 'Browser alerts are off on this device.' });
+      setStatus({ enabled: false, busy: false, message: 'All Restora browser alerts are off on this device.' });
     } catch (error) {
       setStatus({ enabled: true, busy: false, message: getAxiosMessage(error) });
     }
@@ -54,7 +54,7 @@ export default function WhatsAppPushControls() {
     <div className="flex flex-wrap items-center gap-2">
       <Button variant="outline" icon={status.enabled ? BellOff : Bell}
         disabled={status.busy} onClick={() => void toggle()}>
-        {status.busy ? 'Checking alerts…' : status.enabled ? 'Turn off alerts' : 'Enable message alerts'}
+        {status.busy ? 'Checking alerts…' : status.enabled ? 'Turn off all alerts' : 'Enable browser alerts'}
       </Button>
       {status.message && <p role="status" className="text-xs text-muted">{status.message}</p>}
     </div>
