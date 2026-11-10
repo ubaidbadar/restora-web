@@ -153,7 +153,7 @@ export default function LiveUpdates() {
           const hasNewMessage = data.some(thread => {
             const last = thread.lastInboundAt || '';
             const previous = lastInbound.get(`${thread.phoneNumberId}:${thread.phone}`);
-            return Boolean(last && previous !== undefined && last > previous);
+            return Boolean(last && (previous === undefined || last > previous));
           });
           if (hasNewMessage) {
             const heard = useOrderAlertStore.getState().muted || playChime();
