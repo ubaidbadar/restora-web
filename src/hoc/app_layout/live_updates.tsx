@@ -130,22 +130,31 @@ export default function LiveUpdates() {
       };
     };
     const reconnect = () => {
-      if (source?.readyState === EventSource.OPEN) return;
-      window.clearTimeout(retry);
-      connect();
+      if (source?.readyState !== EventSource.OPEN) {
+        window.clearTimeout(retry);
+        connect();
+      }
     };
 
     // WhatsApp messages arrive through Meta webhooks, not the orders stream.
     // Keep the shared inbox cache fresh on every page and show a gentle alert
     // while Restora is focused. The service worker handles background push.
     type InboxRow = {
-      phoneNumberId: string; phone: string; lastInboundAt?: string | null;
+      phoneNumberId: string; phone: string; lastInboundAt?: string | null; unread?: boolean;
     };
     let inboxReady = false;
     let inboxReading = false;
     let lastInbound = new Map<string, string>();
     const syncInbox = async () => {
-      if (document.visibilityState !== 'visible' || !navigator.onLine || inboxReading) return;
+      if (document.visibilityState !== 'visible') {
+        useOrderAlertStore.getState().setWhatsAppInbox({ status: 'paused' });
+        return;
+      }
+      if (!navigator.onLine) {
+        useOrderAlertStore.getState().setWhatsAppInbox({ status: 'offline' });
+        return;
+      }
+      if (inboxReading) return;
       inboxReading = true;
       try {
         const { data } = await api.get<InboxRow[]>('/whatsapp/conversations');
@@ -168,23 +177,34 @@ export default function LiveUpdates() {
           `${thread.phoneNumberId}:${thread.phone}`, thread.lastInboundAt || '',
         ]));
         getCache.set(inboxKey, data);
+        useOrderAlertStore.getState().setWhatsAppInbox({
+          status: 'live', lastSyncedAt: Date.now(), unreadCount: data.filter(thread => thread.unread).length,
+        });
       } catch {
+        useOrderAlertStore.getState().setWhatsAppInbox({ status: 'offline' });
         // A temporary network failure must not disrupt the order stream.
       } finally {
         inboxReading = false;
       }
     };
     const inboxTimer = window.setInterval(() => void syncInbox(), 15_000);
+    const onlineInbox = () => { reconnect(); void syncInbox(); };
     const focusInbox = () => void syncInbox();
+    const visibilityInbox = () => void syncInbox();
+    const offlineInbox = () => useOrderAlertStore.getState().setWhatsAppInbox({ status: 'offline' });
     void syncInbox();
     connect();
-    window.addEventListener('online', reconnect);
+    window.addEventListener('online', onlineInbox);
+    window.addEventListener('offline', offlineInbox);
     window.addEventListener('focus', focusInbox);
+    document.addEventListener('visibilitychange', visibilityInbox);
     return () => {
       window.clearTimeout(retry);
       window.clearInterval(inboxTimer);
-      window.removeEventListener('online', reconnect);
+      window.removeEventListener('online', onlineInbox);
+      window.removeEventListener('offline', offlineInbox);
       window.removeEventListener('focus', focusInbox);
+      document.removeEventListener('visibilitychange', visibilityInbox);
       source?.close();
     };
   }, [navigate]);

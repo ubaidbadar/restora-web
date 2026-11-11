@@ -22,7 +22,7 @@ export default function RestaurantFields(props: FormComponentProps) {
           <Input label="NTN" inputMode="text" autoComplete="off" {...register('receipt.ntn')} error={fieldError(errors, 'receipt.ntn')} />
           <Input label="STRN" inputMode="text" autoComplete="off" {...register('receipt.strn')} error={fieldError(errors, 'receipt.strn')} />
         </div>
-        <Input label="Closing line" dir="auto" placeholder="Complaints or feedback: 0300 1234567" {...register('receipt.footer')} error={fieldError(errors, 'receipt.footer')} />
+        <Input label="Closing line" dir="auto" placeholder="Thank you for visiting. We appreciate your feedback." {...register('receipt.footer')} error={fieldError(errors, 'receipt.footer')} />
       </fieldset>
     </div>
   );

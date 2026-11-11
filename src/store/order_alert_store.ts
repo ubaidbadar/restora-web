@@ -18,12 +18,14 @@ const readMuted = () => {
 const useOrderAlertStore = createStore<OrderAlertState>((set, get) => ({
   fresh: [],
   muted: readMuted(),
+  whatsappInbox: { status: 'checking', lastSyncedAt: null, unreadCount: 0 },
   add: (id) => {
     if (!get().fresh.includes(id)) set({ fresh: [...get().fresh, id] });
   },
   seen: (id) => {
     if (get().fresh.includes(id)) set({ fresh: get().fresh.filter((item) => item !== id) });
   },
+  setWhatsAppInbox: (patch) => set({ whatsappInbox: { ...get().whatsappInbox, ...patch } }),
   setMuted: (muted) => {
     try {
       localStorage.setItem(MUTED_KEY, muted ? '1' : '0');

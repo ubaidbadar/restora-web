@@ -1,11 +1,10 @@
-import { ClipboardList, Plus } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { ClipboardList } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 import EmptyState from '../../components/empty_state';
 import useOutboxStore from '../../store/outbox_store';
 import type Order from '../../types/order';
 import orderMatches from '../../utils/order_matches';
 import withOutbox from '../../utils/with_outbox';
-import Button from '../../ui/button';
 import BoardColumns from './board_columns';
 import TodayList from './today_list';
 
@@ -24,17 +23,20 @@ export default function BoardWithOutbox({ orders, onOrderUpdated }: BoardWithOut
   const items = useOutboxStore((state) => state.items);
   // `items` is read so the board updates as the outbox changes; withOutbox reads the outbox itself.
   const all = items.length ? withOutbox(orders) : orders;
-  const q = params.get('q') ?? '';
+  const q = (params.get('q') ?? '').trim();
   const type = params.get('type') ?? 'all';
   const shown = all.filter((order) => (type === 'all' || order.type === type) && orderMatches(order, q));
 
-  if (!all.length) {
+  if (!shown.length) {
+    const searching = Boolean(q);
     return (
-      <EmptyState icon={ClipboardList} title="No orders today yet" text="Orders you place show here, from new to served and paid.">
-        <Button as={Link} to="/orders/new" icon={Plus}>
-          New order
-        </Button>
-      </EmptyState>
+      <EmptyState
+        icon={ClipboardList}
+        title={!searching && type === 'all' ? 'No orders today yet' : searching ? 'No matching orders' : 'No orders match this filter'}
+        text={!searching && type === 'all'
+          ? 'Orders you place show here, from new to served and paid.'
+          : searching ? 'Try another search or clear it to see today’s orders.' : 'Change the order type filter to see more orders.'}
+      />
     );
   }
   return params.get('view') === 'list' ? <TodayList orders={shown} onOrderUpdated={onOrderUpdated} /> : <BoardColumns orders={shown} onOrderUpdated={onOrderUpdated} />;

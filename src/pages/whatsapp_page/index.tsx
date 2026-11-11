@@ -1,29 +1,40 @@
 import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { Bell, CheckCheck, Clock3, Inbox, MessageCircle, MessageSquareText, RefreshCw, Search, Send, Settings2 } from 'lucide-react';
+import { Bell, CheckCheck, Clock3, Inbox, MessageCircle, MessageSquareText, RefreshCw, Send, Settings2 } from 'lucide-react';
 import { z } from 'zod';
 import PageHeader from '../../components/page_header';
+import SearchInput from '../../components/search_input';
 import LoadFailed from '../../components/load_failed';
 import SkeletonList from '../../components/skeleton_list';
-import WhatsAppPushControls from '../../components/whatsapp_push_controls';
 import useGet from '../../hooks/useGet';
 import useCan from '../../hooks/useCan';
 import api from '../../config/api';
+import withParam from '../../utils/with_param';
 import getCache from '../../store/get_cache';
 import Button from '../../ui/button';
 import Form from '../../ui/form';
 import Textarea from '../../ui/textarea';
+import WhatsAppLiveStatus from './live_status';
 
 type Message = {
   _id: string; metaMessageId: string; phoneNumberId: string;
   phone: string; direction: 'inbound' | 'outbound'; text?: string;
   messageType: string; receivedAt: string; deliveryStatus?: string;
+  mediaId?: string; mediaMimeType?: string;
 };
 type Conversation = {
   phoneNumberId: string; phone: string; customerName: string | null;
   count: number; last: Message; lastInboundAt?: string | null; unread?: boolean; replyWindowOpen?: boolean;
 };
 const replySchema = z.object({ text: z.string().trim().min(1, 'Write a message').max(4096) });
+const MESSAGE_LABELS: Record<string, string> = {
+  image: 'Photo message', voice: 'Voice message', audio: 'Audio message',
+  video: 'Video message', document: 'Document message', sticker: 'Sticker message',
+  location: 'Location shared', contacts: 'Contact shared',
+};
+function messageText(message: Message) {
+  return message.text || MESSAGE_LABELS[message.messageType] || 'WhatsApp message';
+}
 
 function formatTime(value: string) {
   const date = new Date(value);
@@ -47,14 +58,27 @@ function ReplyForm({ thread, onSent }: { thread: Conversation; onSent: (message:
       defaultValues={{ text: '' }}
       className="border-t border-border bg-surface p-4"
       onSubmit={({ data, onReset, onSuccess, onError }) =>
-        api.post<{ message?: Message; logged?: boolean }>(
+        api.post<{ message?: Message; messageId?: string; sent?: boolean; logged?: boolean }>(
           `/whatsapp/conversations/${encodeURIComponent(thread.phone)}/reply`,
           { phoneNumberId: thread.phoneNumberId, text: data.text },
         ).then(({ data: response, status }) => {
           if (status === 201 && response.message) onSent(response.message);
+          else if (status === 202 && response.sent && response.messageId) {
+            onSent({
+              _id: 'unlogged-' + response.messageId,
+              metaMessageId: response.messageId,
+              phoneNumberId: thread.phoneNumberId,
+              phone: thread.phone,
+              direction: 'outbound',
+              text: data.text.trim(),
+              messageType: 'text',
+              receivedAt: new Date().toISOString(),
+              deliveryStatus: 'sent',
+            });
+          }
           onReset();
           onSuccess(status === 202 || response.logged === false
-            ? 'WhatsApp accepted the reply, but Restora could not save it. Do not resend blindly.'
+            ? 'WhatsApp accepted the reply, but Restora could not save it. It is shown here temporarily; do not resend blindly.'
             : 'Reply sent.');
         }).catch(onError)
       }
@@ -161,10 +185,7 @@ function ConversationPanel({ thread, onSent }: { thread: Conversation; onSent: (
               </p>}
               <div className={`max-w-[88%] rounded-card border border-border p-3 text-sm shadow-card sm:max-w-[75%] ${message.direction === 'outbound'
                 ? 'ms-auto bg-primary-soft text-ink' : 'me-auto bg-surface text-ink'}`}>
-                <p className="whitespace-pre-wrap break-words">{message.text || (
-                  message.messageType === 'image' ? 'Photo message' :
-                  message.messageType === 'document' ? 'Document message' : 'WhatsApp message'
-                )}</p>
+                <p className="whitespace-pre-wrap break-words">{messageText(message)}</p>
                 <div className="mt-2 flex items-center justify-end gap-1 text-xs text-muted">
                   {formatTime(message.receivedAt)}
                   {message.direction === 'outbound' &&
@@ -195,29 +216,22 @@ export default function WhatsAppPage() {
   const threads = conversations ?? [];
   const unreadCount = threads.filter(thread => thread.unread).length;
   const active = threads.find(thread => `${thread.phoneNumberId}:${thread.phone}` === selected);
+  const phoneDigits = search.replace(/\D/g, '');
+  const localPhoneSearch = phoneDigits.startsWith('92') ? '0' + phoneDigits.slice(2) : phoneDigits;
   const visible = threads.filter(thread =>
     (!unreadOnly || thread.unread) &&
-    (thread.phone.includes(search) || (thread.customerName || '').toLowerCase().includes(search)));
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === 'visible' && navigator.onLine) get();
-    }, 12_000);
-    const onFocus = () => { if (navigator.onLine) get(); };
-    window.addEventListener('focus', onFocus);
-    return () => { window.clearInterval(timer); window.removeEventListener('focus', onFocus); };
-  }, [get]);
+    (thread.phone.includes(search) ||
+      (localPhoneSearch.length >= 4 && thread.phone.includes(localPhoneSearch)) ||
+      (thread.customerName || '').toLowerCase().includes(search)));
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <PageHeader title="WhatsApp inbox"
         subtitle={`${threads.length} conversations · ${unreadCount} unread`} />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" icon={RefreshCw} onClick={() => get()}>Refresh</Button>
-          <Button as={Link} to="/settings/whatsapp" variant="outline" icon={Settings2}>Connections</Button>
-        </div>
-        <WhatsAppPushControls />
+      <div className="flex flex-wrap items-center gap-3">
+        <WhatsAppLiveStatus />
+        <Button variant="outline" icon={RefreshCw} onClick={() => get()}>Refresh</Button>
+        <Button as={Link} to="/settings/whatsapp" variant="outline" icon={Settings2}>WhatsApp settings</Button>
       </div>
       {error && !conversations && <LoadFailed what="WhatsApp conversations" onRetry={() => get()} />}
       <div className="grid min-h-[65dvh] overflow-hidden rounded-card border border-border bg-surface shadow-card md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)]">
@@ -229,18 +243,13 @@ export default function WhatsAppPage() {
               {unreadCount > 0 && <span aria-label={`${unreadCount} unread conversations`}
                 className="rounded-chip bg-primary-soft px-2 py-0.5 text-xs font-semibold text-accent-text">{unreadCount} new</span>}
             </div>
-            <label htmlFor="whatsapp-search" className="relative block">
-              <span className="sr-only">Search by name or phone number</span>
-              <Search size={16} aria-hidden="true" className="absolute start-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input id="whatsapp-search" placeholder="Search name or number"
-                value={params.get('q') || ''} onChange={event => {
-                  const next = new URLSearchParams(params);
-                  if (event.target.value) next.set('q', event.target.value);
-                  else next.delete('q');
-                  setParams(next, { replace: true });
-                }}
-                className="w-full rounded-control border border-border bg-canvas py-2 pe-3 ps-9 text-sm text-ink" />
-            </label>
+            <SearchInput
+              label="Search by name or phone number"
+              placeholder="Search by name or phone number"
+              initialValue={params.get('q') || ''}
+              onSearch={value => setParams(prev => withParam(prev, 'q', value), { replace: true })}
+              delay={300}
+            />
             <div className="flex gap-2" aria-label="Conversation filter">
               {(['all', 'unread'] as const).map(filter => (
                 <button type="button" key={filter} aria-pressed={(unreadOnly ? 'unread' : 'all') === filter}
@@ -262,10 +271,13 @@ export default function WhatsAppPage() {
             {!loading && conversations && visible.length === 0 &&
               <div className="flex flex-col items-center gap-3 px-6 py-12 text-center text-sm text-muted">
                 <Inbox size={30} />
-                <p>{search ? 'No matching conversations.' : unreadOnly ? 'All conversations are read.' : 'No WhatsApp messages yet.'}</p>
-                {!search && !unreadOnly && <Link className="text-accent-text underline" to="/settings/whatsapp">
-                  Check your connected numbers
-                </Link>}
+                <p>{search ? 'No matching conversations.' : threads.length === 0 ? 'No WhatsApp messages yet.' : 'No unread conversations.'}</p>
+                {!search && threads.length === 0 && <>
+                  <p className="max-w-xs text-xs">Send MENU from a customer's WhatsApp account to start a conversation.</p>
+                  <Link className="text-accent-text underline" to="/settings/whatsapp">
+                    Check your connected number
+                  </Link>
+                </>}
               </div>}
             {visible.map(thread => {
               const key = `${thread.phoneNumberId}:${thread.phone}`;
@@ -293,7 +305,7 @@ export default function WhatsAppPage() {
                     <span className="mt-1 flex items-center gap-2">
                       <span className="min-w-0 flex-1 truncate text-xs text-muted">
                         {thread.last?.direction === 'outbound' ? 'You: ' : ''}
-                        {thread.last?.text || 'WhatsApp message'}
+                        {thread.last ? messageText(thread.last) : 'WhatsApp message'}
                       </span>
                       {thread.unread && <span className="size-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />}
                     </span>

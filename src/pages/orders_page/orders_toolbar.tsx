@@ -8,7 +8,7 @@ export default function OrdersToolbar() {
 
   return (
     <div className="mb-4 lg:max-w-md">
-      <SearchInput label="Search by token, name, phone or table" placeholder="Search orders" initialValue={params.get('q') ?? ''} onSearch={(value) => setParams((prev) => withParam(prev, 'q', value), { replace: true })} delay={300} />
+      <SearchInput label="Search by token, name, phone or table" placeholder="Search by token, name, phone or table" initialValue={params.get('q') ?? ''} onSearch={(value) => setParams((prev) => withParam(prev, 'q', value), { replace: true })} delay={300} />
     </div>
   );
 }

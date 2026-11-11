@@ -12,6 +12,7 @@ import CustomersImportPage from './pages/customers_import_page';
 import CustomersPage from './pages/customers_page';
 import DashboardPage from './pages/dashboard_page';
 import InvitePage from './pages/invite_page';
+import KhataPage from './pages/khata_page';
 import LoginPage from './pages/login_page';
 import MenuPage from './pages/menu_page';
 import MorePage from './pages/more_page';
@@ -103,6 +104,7 @@ export default function App() {
               <Route element={<RequirePermission permission="customers:view" />}>
                 <Route path="customers" element={<CustomersPage />} />
                 <Route path="customers/:id" element={<CustomerPage />} />
+                <Route path="khata" element={<KhataPage />} />
               </Route>
               <Route element={<RequirePermission permission="customers:import" />}>
                 <Route path="customers/import" element={<CustomersImportPage />} />
