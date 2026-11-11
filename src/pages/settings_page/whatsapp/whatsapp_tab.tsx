@@ -238,21 +238,29 @@ function SignupSection({ connections, onConnected }: { connections: Connection[]
         Meta Embedded Signup is not configured on the Restora backend. Contact support.
       </p>}
       <ol className="mb-4 grid gap-3 text-sm text-ink sm:grid-cols-3" aria-label="WhatsApp connection progress">
-        {steps.map((step, index) => (
-          <li key={step.title} className="rounded-control bg-canvas p-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <strong>{index + 1}. {step.title}</strong>
-              <span className={`rounded-pill px-2 py-0.5 text-xs font-semibold ${
-                step.state === 'Done' || step.state === 'Ready'
-                  ? 'bg-primary-soft text-accent-text'
-                  : step.state === 'PIN needed' || step.state === 'Reconnect'
-                    ? 'bg-warning-50 text-warning-800'
-                    : 'bg-surface text-muted'
-              }`}>{step.state}</span>
-            </div>
-            <p className="mt-2 text-muted">{step.detail}</p>
-          </li>
-        ))}
+        {steps.map((step, index) => {
+          const complete = step.state === 'Done' || step.state === 'Ready';
+          const needsAttention = step.state === 'PIN needed' || step.state === 'Reconnect';
+          const current = step.state === 'Next' || needsAttention;
+          return (
+            <li key={step.title} aria-current={current ? 'step' : undefined}
+              className={`rounded-control border p-3 ${
+                complete ? 'border-primary-soft bg-primary-soft' :
+                  needsAttention ? 'border-warning-200 bg-warning-50' :
+                    current ? 'border-primary bg-surface' : 'border-border bg-canvas'
+              }`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <strong>{index + 1}. {step.title}</strong>
+                <span className={`rounded-pill px-2 py-1 text-xs font-semibold ${
+                  complete ? 'bg-surface text-accent-text' :
+                    needsAttention ? 'bg-surface text-warning-800' :
+                      current ? 'bg-primary-soft text-accent-text' : 'bg-surface text-muted'
+                }`}>{step.state}</span>
+              </div>
+              <p className="mt-2 text-muted">{step.detail}</p>
+            </li>
+          );
+        })}
       </ol>
       {ready &&
         <p role="status" className="mb-3 flex items-center gap-2 text-sm text-accent-text">
@@ -363,7 +371,12 @@ export default function WhatsAppTab() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-medium text-ink">{connection.phoneNumberDisplay}</p>
-                  <p className={`mt-1 text-xs font-medium ${connection.isPlatformNumber ? 'text-warning-800' : connection.status === 'connected' ? 'text-accent-text' : 'text-muted'}`}>
+                  <p className={`mt-1 inline-flex min-h-8 items-center rounded-pill px-3 text-xs font-semibold ${
+                    connection.isPlatformNumber ? 'bg-warning-50 text-warning-800' :
+                      connection.status === 'connected' ? 'bg-primary-soft text-accent-text' :
+                        connection.status === 'number_pending' || connection.status === 'token_expired'
+                          ? 'bg-warning-50 text-warning-800' : 'bg-surface text-muted'
+                  }`}>
                     {connection.isPlatformNumber ? 'Restora OTP number · Not for restaurant messages' :
                       connection.status === 'connected' ? 'Connected · Ready for messages' :
                       connection.status === 'number_pending' ? 'Registration required' :
@@ -401,10 +414,8 @@ export default function WhatsAppTab() {
                 Authorization expired. Reconnect this number through Meta above.</p>}
               {connection.status === 'disconnected' && <p className="mt-3 text-sm text-muted">
                 Disconnected. Reconnect through Meta above to resume messages.</p>}
-              {connection.isPlatformNumber && <p role="alert" className="mt-3 rounded-control bg-warning-50 p-3 text-sm text-warning-800">
-                {connection.status === 'disconnected'
-                  ? "Disconnected from this restaurant. This number remains reserved for Restora login codes. Connect your restaurant's own WhatsApp Business number above."
-                  : "This number is reserved for Restora login codes, not restaurant orders or customer chats. Disconnect it here, then connect your restaurant's own number above."}
+              {connection.isPlatformNumber && <p role="note" className="mt-3 rounded-control bg-warning-50 p-3 text-sm text-warning-800">
+                This number is reserved for Restora login codes. It is not a restaurant messaging number and will never appear in the WhatsApp inbox.
               </p>}
               {connection.status === 'connected' && !connection.isPlatformNumber && (
                 <div className="mt-3 border-t border-border pt-3">
