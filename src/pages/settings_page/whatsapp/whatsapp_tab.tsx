@@ -372,11 +372,8 @@ export default function WhatsAppTab() {
                 <div>
                   <p className="font-medium text-ink">{connection.phoneNumberDisplay}</p>
                   <p className={`mt-1 inline-flex min-h-8 items-center rounded-pill px-3 text-xs font-semibold ${
-                    connection.isPlatformNumber ? 'bg-warning-50 text-warning-800' :
-                      connection.status === 'connected' ? 'bg-primary-soft text-accent-text' :
-                        connection.status === 'number_pending' || connection.status === 'token_expired' ||
-                          connection.status === 'disconnected' && !connection.isPlatformNumber
-                          ? 'bg-warning-50 text-warning-800' : 'bg-warning-50 text-warning-800'
+                    connection.status === 'connected' && !connection.isPlatformNumber
+                      ? 'bg-primary-soft text-accent-text' : 'bg-warning-50 text-warning-800'
                   }`}>
                     {connection.isPlatformNumber ? 'Restora OTP number · Not for restaurant messages' :
                       connection.status === 'connected' ? 'Connected · Ready for messages' :
