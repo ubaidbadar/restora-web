@@ -269,7 +269,7 @@ function SignupSection({ connections, onConnected }: { connections: Connection[]
       {data?.enabled && data.appId && data.configId &&
         <BranchGuard config={data} hasConnection={hasConnection} onConnected={onConnected} />}
       <p className="mt-3 flex items-start gap-2 text-xs text-muted"><ShieldCheck size={16} className="shrink-0" />
-        Meta handles sign-in. Restora never receives your Facebook password; a connected number only appears after verification succeeds.
+        Meta handles sign-in. Restora never receives your Facebook password. Numbers appear here after verification.
       </p>
     </SectionCard>
   );
@@ -372,10 +372,8 @@ export default function WhatsAppTab() {
                 <div>
                   <p className="font-medium text-ink">{connection.phoneNumberDisplay}</p>
                   <p className={`mt-1 inline-flex min-h-8 items-center rounded-pill px-3 text-xs font-semibold ${
-                    connection.isPlatformNumber ? 'bg-warning-50 text-warning-800' :
-                      connection.status === 'connected' ? 'bg-primary-soft text-accent-text' :
-                        connection.status === 'number_pending' || connection.status === 'token_expired'
-                          ? 'bg-warning-50 text-warning-800' : 'bg-surface text-muted'
+                    connection.status === 'connected' && !connection.isPlatformNumber
+                      ? 'bg-primary-soft text-accent-text' : 'bg-warning-50 text-warning-800'
                   }`}>
                     {connection.isPlatformNumber ? 'Restora OTP number · Not for restaurant messages' :
                       connection.status === 'connected' ? 'Connected · Ready for messages' :
@@ -412,7 +410,7 @@ export default function WhatsAppTab() {
                 </div>}
               {connection.status === 'token_expired' && <p className="mt-3 text-sm text-warning-800">
                 Authorization expired. Reconnect this number through Meta above.</p>}
-              {connection.status === 'disconnected' && <p className="mt-3 text-sm text-muted">
+              {connection.status === 'disconnected' && !connection.isPlatformNumber && <p className="mt-3 text-sm text-warning-800">
                 Disconnected. Reconnect through Meta above to resume messages.</p>}
               {connection.isPlatformNumber && <p role="note" className="mt-3 rounded-control bg-warning-50 p-3 text-sm text-warning-800">
                 This number is reserved for Restora login codes. It is not a restaurant messaging number and will never appear in the WhatsApp inbox.
