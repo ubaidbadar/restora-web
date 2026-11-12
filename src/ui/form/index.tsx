@@ -56,7 +56,6 @@ export default function Form({ component, onSubmit, defaultValues, schema, ...pr
         errors: formState.errors,
         ...status,
         setValue,
-        dirtyFields: formState.dirtyFields,
         watch,
         control,
         onSubmit: handleFormSubmit,
