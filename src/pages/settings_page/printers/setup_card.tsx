@@ -40,7 +40,7 @@ export default function SetupCard({ agent, onAdded, onSaved, onRefresh }: SetupC
           <Button as="a" href={AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer" variant="outline" icon={Download}>
             Download for Windows
           </Button>
-          <p className="mt-2 text-sm text-muted">Windows 10 or 11. Open the file and it starts by itself.</p>
+          <p className="mt-2 text-sm text-muted">Windows 10 or 11. Install the agent from Microsoft Store, then open it.</p>
         </SetupStep>
 
         <SetupStep number={2} title="Name this PC" done={!!agent} summary={agent?.name}>
