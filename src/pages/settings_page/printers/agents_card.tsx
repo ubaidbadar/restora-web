@@ -40,10 +40,7 @@ export default function AgentsCard({
 
   // Once the list is known: the agent on this PC, if it has not paired yet, pairs by itself.
   const thisPc = !loading && (
-    <ThisPc
-      waiting={agents.find((agent) => !agent.lastSeenAt && agent.pairing)}
-      onPaired={() => get()}
-    />
+    <ThisPc onPaired={() => get()} />
   );
 
   if (!loading && !agents.some((agent) => agent.lastSeenAt)) {
@@ -83,11 +80,11 @@ export default function AgentsCard({
               title="Add a PC"
               schema={agentSchema}
               defaultValues={{ name: "Counter PC" }}
-              submitLabel="Get pairing code"
+              submitLabel="Get connection code"
               onSave={(values) =>
                 api.post("/print-agents", values).then((res) => {
                   add(res.data);
-                  toast.success("Type the pairing code into the agent");
+                  toast.success("Open Agent diagnostics and enter the connection code.");
                 })
               }
               fields={({ register, errors }) => (
@@ -103,7 +100,7 @@ export default function AgentsCard({
               )}
               component={({ open }) => (
                 <Button variant="outline" icon={Plus} onClick={open}>
-                  Add a PC
+                  Connect another PC manually
                 </Button>
               )}
             />
