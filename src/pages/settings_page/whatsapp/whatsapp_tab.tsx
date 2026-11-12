@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { z } from 'zod';
 import { Link } from 'react-router';
-import { CheckCircle2, CircleHelp, MessageSquareText, ShieldCheck } from 'lucide-react';
+import { MessageSquareText } from 'lucide-react';
 import api from '../../../config/api';
 import SectionCard from '../../../components/section_card';
 import WhatsAppPushControls from '../../../components/whatsapp_push_controls';
@@ -16,7 +16,7 @@ import Form from '../../../ui/form';
 import ConfirmModal from '../../../ui/confirm_modal/modal';
 import toast from '../../../utils/toast';
 import getAxiosMessage from '../../../utils/get_axios_message';
-import parseWhatsAppSignupMessage from '../../../utils/parse_whatsapp_signup_message';
+import WhatsAppSignupButton from '../../../components/whatsapp_signup_button';
 
 type Connection = {
   _id: string; phoneNumberId: string; phoneNumberDisplay: string;
@@ -27,183 +27,6 @@ type Connection = {
 type SignupResult = { id: string; phoneNumberId: string; phoneNumberDisplay: string; status: Connection['status'] };
 type SignupConfig = { enabled: boolean; appId: string | null; configId: string | null };
 
-// Meta returns the selected WABA/phone IDs through WA_EMBEDDED_SIGNUP and the one-time code through FB.login.
-const META_DIALOG_VERSION = 'v26.0';
-
-type MetaLoginResponse = { authResponse?: { code?: string } | null };
-type MetaSdk = {
-  init: (options: { appId: string; autoLogAppEvents: boolean; xfbml: boolean; version: string }) => void;
-  login: (
-    callback: (response: MetaLoginResponse) => void,
-    options: {
-      config_id: string;
-      auth_type: 'rerequest';
-      response_type: 'code';
-      override_default_response_type: true;
-      extras: { setup: Record<string, never> };
-    },
-  ) => void;
-};
-declare global {
-  interface Window {
-    FB?: MetaSdk;
-    fbAsyncInit?: () => void;
-  }
-}
-
-let metaSdkPromise: Promise<MetaSdk> | undefined;
-let metaSdkAppId: string | undefined;
-function loadMetaSdk(appId: string): Promise<MetaSdk> {
-  const initialize = (sdk: MetaSdk) => {
-    if (metaSdkAppId !== appId) {
-      sdk.init({ appId, autoLogAppEvents: true, xfbml: false, version: META_DIALOG_VERSION });
-      metaSdkAppId = appId;
-    }
-    return sdk;
-  };
-  if (window.FB) return Promise.resolve(initialize(window.FB));
-  const pending = (metaSdkPromise ??= new Promise<MetaSdk>((resolve, reject) => {
-    window.fbAsyncInit = () => {
-      if (window.FB) resolve(window.FB);
-      else reject(new Error('Meta sign-in did not initialize.'));
-    };
-    const script = document.getElementById('facebook-jssdk') as HTMLScriptElement | null;
-    if (script) {
-      script.addEventListener('load', () => {
-        if (window.FB) resolve(window.FB);
-        else reject(new Error('Meta sign-in did not initialize.'));
-      }, { once: true });
-      script.addEventListener('error', () => reject(new Error('Meta sign-in could not be loaded.')), { once: true });
-      return;
-    }
-    const added = document.createElement('script');
-    added.id = 'facebook-jssdk';
-    added.src = 'https://connect.facebook.net/en_US/sdk.js';
-    added.async = true;
-    added.defer = true;
-    added.crossOrigin = 'anonymous';
-    added.onerror = () => reject(new Error('Meta sign-in could not be loaded.'));
-    document.head.appendChild(added);
-  }).catch((error: unknown) => {
-    metaSdkPromise = undefined;
-    document.getElementById('facebook-jssdk')?.remove();
-    throw error;
-  }));
-  return pending.then(initialize);
-}
-
-type SignupUiState = {
-  ready: boolean;
-  busy: boolean;
-  message: string;
-  signupBranchId?: string;
-  code?: string;
-  wabaId?: string;
-  phoneNumberId?: string;
-  submitting?: boolean;
-};
-
-function MetaSignupButton({ appId, configId, branchId, hasConnection, onConnected }: {
-  appId: string; configId: string; branchId: string; hasConnection: boolean; onConnected: (result: SignupResult) => void;
-}) {
-  const [status, setStatus] = useState<SignupUiState>({ ready: false, busy: false, message: 'Loading Meta sign-in…' });
-
-  useEffect(() => {
-    let active = true;
-    loadMetaSdk(appId).then(() => {
-      if (active) setStatus(current => ({ ...current, ready: true, message: '' }));
-    }).catch(() => {
-      if (active) setStatus({ ready: false, busy: false,
-        message: 'Meta sign-in could not be loaded. Check your connection and allow connect.facebook.net.' });
-    });
-    return () => { active = false; };
-  }, [appId]);
-
-  useEffect(() => {
-    const onMetaMessage = (event: MessageEvent) => {
-      if (!status.busy || status.signupBranchId !== branchId) return;
-      const result = parseWhatsAppSignupMessage(event.origin, event.data);
-      if (!result) return;
-      if (result.event === 'finish') {
-        setStatus(current => current.signupBranchId === branchId ? {
-          ...current, wabaId: result.wabaId, phoneNumberId: result.phoneNumberId,
-          message: 'Meta selected your WhatsApp number. Finishing the secure connection…',
-        } : current);
-      } else {
-        setStatus({
-          ready: true, busy: false,
-          message: result.event === 'cancel' ? 'Meta signup was cancelled. You can try again.' :
-            result.event === 'invalid' ? 'Meta did not return a valid WhatsApp account and phone number. Please try again.' :
-              'Meta reported a signup error. Please try again or contact support.',
-        });
-      }
-    };
-    window.addEventListener('message', onMetaMessage);
-    return () => window.removeEventListener('message', onMetaMessage);
-  }, [status.busy, status.signupBranchId, branchId]);
-
-  useEffect(() => {
-    if (status.busy && status.signupBranchId && status.signupBranchId !== branchId) {
-      setStatus({ ready: true, busy: false,
-        message: 'The selected branch changed during Meta authorization. Please start again from the intended branch.' });
-      return;
-    }
-    if (!status.code || !status.wabaId || !status.phoneNumberId || status.submitting) return;
-    setStatus(current => ({ ...current, submitting: true, message: 'Verifying and saving your restaurant number…' }));
-    api.post<SignupResult>('/whatsapp/signup/complete', {
-      code: status.code, wabaId: status.wabaId, phoneNumberId: status.phoneNumberId,
-    }).then(({ data }) => {
-      onConnected(data);
-      setStatus({ ready: true, busy: false,
-        message: data.status === 'connected' ? 'WhatsApp connected successfully.' : 'Meta authorized the number. Register it with a PIN below.' });
-      toast.success('WhatsApp authorization saved');
-    }).catch(err => {
-      setStatus({ ready: true, busy: false, message: getAxiosMessage(err) });
-      toast.error(getAxiosMessage(err));
-    });
-  }, [status.busy, status.code, status.wabaId, status.phoneNumberId, status.submitting, status.signupBranchId, branchId, onConnected]);
-
-  const connect = () => {
-    if (!window.FB || !status.ready || status.busy) return;
-    setStatus({ ready: true, busy: true, message: 'Opening Meta…', signupBranchId: branchId });
-    try {
-      window.FB.login((response) => {
-        const code = response.authResponse?.code;
-        if (!code) {
-          setStatus(current => current.signupBranchId === branchId
-            ? { ready: true, busy: false, message: 'Meta did not return an authorization code. Please try again.' }
-            : current);
-          return;
-        }
-        setStatus(current => current.signupBranchId === branchId
-          ? { ...current, code, message: 'Waiting for Meta to confirm the selected WhatsApp number…' }
-          : current);
-      }, {
-        config_id: configId,
-        auth_type: 'rerequest',
-        response_type: 'code',
-        override_default_response_type: true,
-        extras: { setup: {} },
-      });
-    } catch {
-      setStatus({ ready: true, busy: false, message: 'Meta could not open the signup dialog. Please try again.' });
-    }
-  };
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="hidden"><Button onClick={connect} disabled={!status.ready || status.busy}>
-        {!status.ready ? 'Loading Meta…' : status.busy ? 'Connecting to Meta…' : hasConnection ? 'Connect another number' : 'Connect WhatsApp Business'}
-      </Button></div>
-      {status.message && <p role="status" className="text-sm text-muted">{status.message}</p>}
-      {status.busy && !status.submitting && <Button variant="primaryLink" size="sm"
-        onClick={() => setStatus({ ready: true, busy: false, message: 'Signup attempt cancelled. You can try again.' })}>
-        Cancel attempt
-      </Button>}
-    </div>
-  );
-}
-
 function BranchGuard({ config, hasConnection, onConnected }: {
   config: SignupConfig; hasConnection: boolean; onConnected: (result: SignupResult) => void;
 }) {
@@ -213,64 +36,22 @@ function BranchGuard({ config, hasConnection, onConnected }: {
       Select a restaurant branch before connecting WhatsApp.
     </p>
   );
-  return <MetaSignupButton appId={config.appId!} configId={config.configId!} branchId={workplace.branch._id}
+  return <WhatsAppSignupButton appId={config.appId!} configId={config.configId!} branchId={workplace.branch._id}
     hasConnection={hasConnection} onConnected={onConnected}/>;
 }
 
 function SignupSection({ connections, onConnected }: { connections: Connection[]; onConnected: (result: SignupResult) => void }) {
   const { data, loading, error, get } = useGet<SignupConfig>('/whatsapp/signup/config');
-  const hasConnection = connections.length > 0;
-  const verified = connections.some(row => row.status === 'connected' || row.status === 'number_pending');
-  const ready = connections.some(row => row.status === 'connected');
-  const needsPin = connections.some(row => row.status === 'number_pending');
-  const needsReconnect = !verified && connections.some(row => row.status === 'token_expired' || row.status === 'disconnected');
-  const steps = [
-    { title: 'Authorize', detail: "Choose your restaurant's WhatsApp Business number in Meta.", state: needsReconnect ? 'Reconnect' : hasConnection ? 'Done' : 'Next' },
-    { title: 'Verify', detail: 'Restora securely verifies and saves the number.', state: verified ? 'Done' : needsReconnect ? 'Reconnect' : 'Waiting' },
-    { title: 'Start messaging', detail: ready ? 'Your number is ready to receive messages.' : needsPin ? 'Register this number with its six-digit PIN below.' : needsReconnect ? 'Reconnect the number to resume messaging.' : 'Waiting for verification.', state: ready ? 'Ready' : needsPin ? 'PIN needed' : needsReconnect ? 'Reconnect' : 'Waiting' },
-  ];
   return (
-    <SectionCard title="WhatsApp Business"
-      description="Connect your restaurant's own WhatsApp Business number through Meta.">
-      {loading && !data && <SkeletonList rows={1} variant="lines" />}
+    <SectionCard title="Connect your restaurant's WhatsApp"
+      description="Receive customer messages and send order updates from your own WhatsApp Business number.">
+      {loading && !data && <SkeletonList rows={3} variant="lines" />}
       {error && !data && <LoadFailed what="WhatsApp signup settings" onRetry={() => get()} />}
       {data && !data.enabled && <p role="alert" className="rounded-control bg-warning-50 p-3 text-sm text-warning-800">
-        Meta Embedded Signup is not configured on the Restora backend. Contact support.
+        WhatsApp connection setup is not available right now. Please contact Restora support.
       </p>}
-      <ol className="mb-4 grid gap-3 text-sm text-ink sm:grid-cols-3" aria-label="WhatsApp connection progress">
-        {steps.map((step, index) => {
-          const complete = step.state === 'Done' || step.state === 'Ready';
-          const needsAttention = step.state === 'PIN needed' || step.state === 'Reconnect';
-          const current = step.state === 'Next' || needsAttention;
-          return (
-            <li key={step.title} aria-current={current ? 'step' : undefined}
-              className={`rounded-control border p-3 ${
-                complete ? 'border-primary-soft bg-primary-soft' :
-                  needsAttention ? 'border-warning-200 bg-warning-50' :
-                    current ? 'border-primary bg-surface' : 'border-border bg-canvas'
-              }`}>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <strong>{index + 1}. {step.title}</strong>
-                <span className={`rounded-pill px-2 py-1 text-xs font-semibold ${
-                  complete ? 'bg-surface text-accent-text' :
-                    needsAttention ? 'bg-surface text-warning-800' :
-                      current ? 'bg-primary-soft text-accent-text' : 'bg-surface text-muted'
-                }`}>{step.state}</span>
-              </div>
-              <p className="mt-2 text-muted">{step.detail}</p>
-            </li>
-          );
-        })}
-      </ol>
-      {ready &&
-        <p role="status" className="mb-3 flex items-center gap-2 text-sm text-accent-text">
-          <CheckCircle2 size={18} /> WhatsApp is connected. You can add another number for this branch.
-        </p>}
       {data?.enabled && data.appId && data.configId &&
-        <BranchGuard config={data} hasConnection={hasConnection} onConnected={onConnected} />}
-      <p className="mt-3 flex items-start gap-2 text-xs text-muted"><ShieldCheck size={16} className="shrink-0" />
-        Meta handles sign-in. Restora never receives your Facebook password. Numbers appear here after verification.
-      </p>
+        <BranchGuard config={data} hasConnection={connections.length > 0} onConnected={onConnected} />}
     </SectionCard>
   );
 }
@@ -343,95 +124,129 @@ function InvoicePreference({ connection, onSaved }: { connection: Connection; on
 
 export default function WhatsAppTab() {
   const { data: connections = [], loading, error, get, update } = useGet<Connection[]>('/whatsapp/connections');
+  const workplace = useWorkplace();
   const restaurantConnections = connections.filter(connection => !connection.isPlatformNumber);
+  const activeConnections = restaurantConnections.filter(connection => connection.status === 'connected');
+  const otherConnections = connections.filter(connection =>
+    connection.isPlatformNumber ? connection.status !== 'disconnected' : connection.status !== 'connected');
+
   return (
     <div className="flex flex-col gap-5">
-      <SignupSection connections={restaurantConnections} onConnected={result =>
-        update(current => {
-          const connection: Connection = { _id: result.id, phoneNumberId: result.phoneNumberId,
-            phoneNumberDisplay: result.phoneNumberDisplay, status: result.status };
-          const existing = current ?? [];
-          return existing.some(row => row._id === connection._id)
-            ? existing.map(row => row._id === connection._id ? { ...row, ...connection } : row)
-            : [...existing, connection];
-        })}/>
-      <SectionCard title="Connected numbers"
-        description={`${restaurantConnections.length} ${restaurantConnections.length === 1 ? "number" : "numbers"} configured for your selected restaurant branch.`}>
-        {loading && !connections.length && <SkeletonList rows={2} variant="lines"/>}
-        {error && !connections.length && <LoadFailed what="WhatsApp connections" onRetry={() => get()}/>}
-        {!loading && !error && !restaurantConnections.length &&
-          <div className="rounded-control bg-canvas p-4 text-sm text-muted">
-            <CircleHelp size={20} className="mb-2" />
-            <p className="font-semibold text-ink">No restaurant WhatsApp number connected yet</p>
-            <p>Restora's own OTP number is not a restaurant inbox. Connect your restaurant's WhatsApp Business number above.</p>
-          </div>}
-        <div className="flex flex-col gap-3">
-          {connections.map(connection => (
-            <div key={connection._id} className="rounded-card border border-border p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <p className="font-medium text-ink">{connection.phoneNumberDisplay}</p>
-                  <p className={`mt-1 inline-flex min-h-8 items-center rounded-pill px-3 text-xs font-semibold ${
-                    connection.status === 'connected' && !connection.isPlatformNumber
-                      ? 'bg-primary-soft text-accent-text' : 'bg-warning-50 text-warning-800'
-                  }`}>
-                    {connection.isPlatformNumber ? 'Restora OTP number · Not for restaurant messages' :
-                      connection.status === 'connected' ? 'Connected · Ready for messages' :
-                      connection.status === 'number_pending' ? 'Registration required' :
-                      connection.status === 'token_expired' ? 'Reconnect required' : 'Disconnected'}
-                  </p>
-                </div>
-                {connection.status !== 'disconnected' &&
-                  <ConfirmModal
-                    title="Disconnect WhatsApp?"
-                    description={connection.isPlatformNumber
-                      ? "This only removes the OTP number from this restaurant in Restora. It does not unregister the Meta number or change Restora's OTP setup. Afterward, use Connect WhatsApp Business above and select your restaurant's own number in Meta."
-                      : "Future WhatsApp replies and ordering will stop until you reconnect this number."}
-                    confirmText="Disconnect"
-                    confirmVariant="danger"
-                    onConfirm={() =>
-                      api.post(`/whatsapp/connections/${connection._id}/disconnect`)
+      {loading && !connections.length && <SkeletonList rows={2} variant="lines" />}
+      {error && !connections.length && <LoadFailed what="WhatsApp connections" onRetry={() => get()} />}
+      {!loading && !error && (
+        <>
+          {activeConnections.length > 0 ? (
+            <SectionCard title="WhatsApp connected"
+              description="Customer messages now arrive in your WhatsApp inbox.">
+              <div className="flex flex-col gap-4">
+                {activeConnections.map(connection => (
+                  <div key={connection._id} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border p-4">
+                    <div>
+                      <p className="font-semibold text-ink">{connection.phoneNumberDisplay}</p>
+                      <p className="mt-1 text-sm text-muted">Branch: {workplace?.branch?.name ?? 'Selected branch'}</p>
+                    </div>
+                    <span className="rounded-pill bg-success-50 px-3 py-1 text-sm font-semibold text-success-700">
+                      Connected
+                    </span>
+                    <div className="w-full flex flex-wrap gap-3">
+                      <Button as="a"
+                        href={`https://wa.me/${connection.phoneNumberDisplay.replace(/\D/g, '')}`}
+                        target="_blank" rel="noopener noreferrer" variant="outline">
+                        Send test message
+                      </Button>
+                      <InvoicePreference connection={connection} onSaved={enabled =>
+                        update(rows => rows?.map(row => row._id === connection._id
+                          ? { ...row, invoiceOnComplete: enabled } : row))} />
+                    </div>
+                  </div>
+                ))}
+                <div className="flex flex-wrap gap-3">
+                  <Button as={Link} to="/whatsapp" icon={MessageSquareText}>Open WhatsApp inbox</Button>
+                  {activeConnections.map(connection => (
+                    <ConfirmModal key={connection._id}
+                      title="Disconnect WhatsApp?"
+                      description="Future WhatsApp replies and ordering will stop until you reconnect this number."
+                      confirmText="Disconnect"
+                      confirmVariant="danger"
+                      onConfirm={() => api.post('/whatsapp/connections/' + connection._id + '/disconnect')
                         .then(() => {
                           update(rows => rows?.map(row => row._id === connection._id
                             ? { ...row, status: 'disconnected' } : row));
                           toast.success('WhatsApp disconnected from Restora');
-                        }).catch(err => toast.error(getAxiosMessage(err)))
-                    }
-                    component={({ open }) => <Button variant="outline" onClick={open}>
-                      {connection.isPlatformNumber ? 'Disconnect OTP number' : 'Disconnect'}
-                    </Button>}
-                  />}
-              </div>
-              {connection.status === 'number_pending' && !connection.isPlatformNumber &&
-                <div className="mt-3 rounded-control bg-canvas p-3">
-                  <p className="mb-2 text-sm font-semibold text-ink">Finish registering this number</p>
-                  <PendingRegistration connection={connection} onRegistered={id =>
-                    update(rows => rows?.map(row => row._id === id ? { ...row, status: 'connected' } : row))}/>
-                </div>}
-              {connection.status === 'token_expired' && <p className="mt-3 text-sm text-warning-800">
-                Authorization expired. Reconnect this number through Meta above.</p>}
-              {connection.status === 'disconnected' && !connection.isPlatformNumber && <p className="mt-3 text-sm text-warning-800">
-                Disconnected. Reconnect through Meta above to resume messages.</p>}
-              {connection.isPlatformNumber && <p role="note" className="mt-3 rounded-control bg-warning-50 p-3 text-sm text-warning-800">
-                This number is reserved for Restora login codes. It is not a restaurant messaging number and will never appear in the WhatsApp inbox.
-              </p>}
-              {connection.status === 'connected' && !connection.isPlatformNumber && (
-                <div className="mt-3 border-t border-border pt-3">
-                  <Button as={Link} to="/whatsapp" variant="outline" icon={MessageSquareText}>Open inbox</Button>
-                  <InvoicePreference connection={connection} onSaved={enabled =>
-                    update(rows => rows?.map(row => row._id === connection._id
-                      ? { ...row, invoiceOnComplete: enabled } : row))} />
+                        }).catch(err => toast.error(getAxiosMessage(err)))}
+                      component={({ open }) => <Button variant="outline" onClick={open}>
+                        Disconnect {activeConnections.length > 1 ? connection.phoneNumberDisplay : ''}
+                      </Button>}
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
+            </SectionCard>
+          ) : <SignupSection connections={restaurantConnections} onConnected={result =>
+            update(current => {
+              const connection: Connection = { _id: result.id, phoneNumberId: result.phoneNumberId,
+                phoneNumberDisplay: result.phoneNumberDisplay, status: result.status };
+              const existing = current ?? [];
+              return existing.some(row => row._id === connection._id)
+                ? existing.map(row => row._id === connection._id ? { ...row, ...connection } : row)
+                : [...existing, connection];
+            })} />}
+          {otherConnections.length > 0 && <SectionCard title="Other WhatsApp numbers">
+            <div className="flex flex-col gap-3">
+              {otherConnections.map(connection => (
+                <div key={connection._id} className="rounded-card border border-border p-4">
+                  <p className="font-semibold text-ink">{connection.phoneNumberDisplay}</p>
+                  <p className="mt-1 text-sm text-warning-800">
+                    {connection.isPlatformNumber ? 'Restora OTP number · Not for restaurant messages' :
+                      connection.status === 'number_pending' ? 'Registration required' :
+                        connection.status === 'token_expired' ? 'Reconnect required' : 'Disconnected'}
+                  </p>
+                  {connection.isPlatformNumber ? <p className="mt-2 text-sm text-muted">
+                    This number is reserved for Restora login codes. It is not a restaurant messaging number.
+                  </p> : connection.status === 'number_pending' ?
+                    <PendingRegistration connection={connection} onRegistered={id =>
+                      update(rows => rows?.map(row => row._id === id ? { ...row, status: 'connected' } : row))} /> :
+                    <p className="mt-2 text-sm text-muted">Connect this restaurant number again through Meta.</p>}
+                  {connection.isPlatformNumber && <ConfirmModal
+                    title="Disconnect OTP number?"
+                    description="Remove this OTP-only number from this restaurant. Restora's platform OTP setup remains unchanged."
+                    confirmText="Disconnect OTP number"
+                    confirmVariant="danger"
+                    onConfirm={() => api.post('/whatsapp/connections/' + connection._id + '/disconnect')
+                      .then(() => {
+                        update(rows => rows?.map(row => row._id === connection._id
+                          ? { ...row, status: 'disconnected' } : row));
+                        toast.success('OTP number disconnected from this restaurant');
+                      }).catch(err => toast.error(getAxiosMessage(err)))}
+                    component={({ open }) => <Button variant="outline" className="mt-3" onClick={open}>
+                      Disconnect OTP number
+                    </Button>} />}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </SectionCard>
+          </SectionCard>}
+          {activeConnections.length > 0 && <details className="hidden rounded-card border border-border bg-surface p-4">
+            <summary className="cursor-pointer font-medium text-accent-text">Connect another WhatsApp number</summary>
+            <div className="mt-4">
+              <SignupSection connections={restaurantConnections} onConnected={result =>
+                update(current => {
+                  const connection: Connection = { _id: result.id, phoneNumberId: result.phoneNumberId,
+                    phoneNumberDisplay: result.phoneNumberDisplay, status: result.status };
+                  const existing = current ?? [];
+                  return existing.some(row => row._id === connection._id)
+                    ? existing.map(row => row._id === connection._id ? { ...row, ...connection } : row)
+                    : [...existing, connection];
+                })} />
+            </div>
+          </details>}
+        </>
+      )}
       <SectionCard title="New message alerts"
-        description="Get notified when customers message your restaurant, even if this tab is closed.">
+        description="Get notified when customers message you, even if this tab is closed.">
         <WhatsAppPushControls />
         <p className="mt-2 text-xs text-muted">
-          This browser setting also controls alerts for new orders and table calls. Turn it on or off here. Each staff member enables alerts on their own browser; permissions and branch access still apply.
+          This browser setting also controls alerts for new orders and table calls. Turn it on or off here.
         </p>
       </SectionCard>
     </div>
