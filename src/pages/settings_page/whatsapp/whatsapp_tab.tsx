@@ -192,7 +192,7 @@ function MetaSignupButton({ appId, configId, branchId, hasConnection, onConnecte
 
   return (
     <div className="flex flex-col gap-2">
-      <div><Button onClick={connect} disabled={!status.ready || status.busy}>
+      <div className="hidden"><Button onClick={connect} disabled={!status.ready || status.busy}>
         {!status.ready ? 'Loading Meta…' : status.busy ? 'Connecting to Meta…' : hasConnection ? 'Connect another number' : 'Connect WhatsApp Business'}
       </Button></div>
       {status.message && <p role="status" className="text-sm text-muted">{status.message}</p>}
