@@ -192,13 +192,13 @@ export default function WhatsAppSignupButton({ appId, configId, branchId, hasCon
         <p className="font-semibold">Couldn't connect your number</p>
         <p className="mt-2 text-sm">{status.message}</p>
       </div>
-      <div className="hidden"><Button onClick={() => {
+      <Button onClick={() => {
         if (status.ready) { connect(); return; }
         setStatus({ ready: false, busy: false, message: 'Loading Meta sign-in…' });
         loadMetaSdk(appId).then(() => setStatus({ ready: true, busy: false, message: '' }))
           .catch(() => setStatus({ ready: false, busy: false, failed: true,
             message: 'Meta sign-in could not be loaded. Check your connection and try again.' }));
-      }}>Try again</Button></div>
+      }>Try again</Button>
     </div>
   );
 
@@ -225,13 +225,13 @@ export default function WhatsAppSignupButton({ appId, configId, branchId, hasCon
             <p className="font-semibold text-ink">{status.submitting ? 'Finishing your connection…' : 'Waiting for Meta…'}</p>
             <p className="mt-1 text-sm text-body">{status.message}</p>
           </div>
-          {!status.submitting && <p className="hidden text-sm text-muted">
+          {!status.submitting && <p className="text-sm text-muted">
             Window didn't open? <Button variant="primaryLink" onClick={connect}>Try again</Button>
           </p>}
         </>
       ) : (
         <>
-          {status.ready ? <div className="hidden"><Button onClick={connect}>{hasConnection ? 'Connect another number' : 'Connect WhatsApp'}</Button></div>
+          {status.ready ? <Button onClick={connect}>{hasConnection ? 'Connect another number' : 'Connect WhatsApp'}</Button>
             : <SkeletonList rows={1} variant="lines" />}
           <p className="text-sm text-muted">
             Your Facebook password is never shared with Restora. Use a number that can receive a verification code.
