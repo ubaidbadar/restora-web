@@ -198,7 +198,7 @@ export default function WhatsAppSignupButton({ appId, configId, branchId, hasCon
         loadMetaSdk(appId).then(() => setStatus({ ready: true, busy: false, message: '' }))
           .catch(() => setStatus({ ready: false, busy: false, failed: true,
             message: 'Meta sign-in could not be loaded. Check your connection and try again.' }));
-      }>Try again</Button>
+      }}>Try again</Button>
     </div>
   );
 
