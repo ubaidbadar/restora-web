@@ -4,6 +4,7 @@ import type {
     FieldErrors,
     FieldValues,
     UseFormRegister,
+    UseFormGetFieldState,
     UseFormSetValue,
     UseFormWatch,
 } from 'react-hook-form';
@@ -13,6 +14,7 @@ export default interface FormComponentProps extends FormStatus {
   register: UseFormRegister<FieldValues>;
   errors: FieldErrors<FieldValues>;
   setValue: UseFormSetValue<FieldValues>;
+  getFieldState: UseFormGetFieldState<FieldValues>;
   watch: UseFormWatch<FieldValues>;
   control: Control<FieldValues>;
   onSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
