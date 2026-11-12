@@ -31,7 +31,7 @@ const national = (phone: string) => phone.replace(/\D/g, '').replace(/^(?:0092|9
  * Find the customer by number or name (ui/search_menu), or save a new number on the spot. The search text is local,
  * so typing re-renders this section only; the form gets the picked customer.
  */
-function Main({ setValue, dirtyFields, watch, picked }: FormComponentProps & { picked?: Order['customer'] }) {
+function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order['customer'] }) {
   const [search, setSearch] = useState('');
   // Editing an order starts with its customer picked: the full record when the customer list is already loaded.
   const [customer, setCustomer] = useState<Customer | null>(() =>
@@ -75,12 +75,21 @@ function Main({ setValue, dirtyFields, watch, picked }: FormComponentProps & { p
   const typed = fullNumber ? formatPhone(fullNumber) : term;
   const newCustomer = byName ? { name: term, phone: '' } : { name: '', phone: typed };
 
+  // On a customer change, reset only blank or previously auto-filled delivery details.
+  // A custom address typed for this order must survive changing the customer.
+  const clearPreviousDelivery = () => {
+    if (watch('type') !== 'delivery') return;
+    const previousId = watch('customerId');
+    const previous = previousId
+      ? getCache.get(getCache.keyOf(`/customers/${previousId}`)) as Customer | undefined
+      : undefined;
+    const savedAddress = previous?.addresses?.find(address => address.trim());
+    if (!watch('address') || (savedAddress && watch('address') === savedAddress)) setValue('address', '');
+    if (!watch('area') || (previous?.area && watch('area') === previous.area)) setValue('area', '');
+  };
+
   const pick = (chosen: Customer) => {
-    // A new customer gets their own saved delivery address, unless staff already typed a different one.
-    if (watch('type') === 'delivery' && watch('customerId') !== chosen._id) {
-      if (!dirtyFields.address) setValue('address', '');
-      if (!dirtyFields.area) setValue('area', '');
-    }
+    if (watch('customerId') !== chosen._id) clearPreviousDelivery();
     setValue('customerId', chosen._id, { shouldDirty: true });
     setValue('newName', undefined);
     setValue('newPhone', undefined);
@@ -89,10 +98,7 @@ function Main({ setValue, dirtyFields, watch, picked }: FormComponentProps & { p
   };
 
   const clear = () => {
-    if (watch('type') === 'delivery') {
-      if (!dirtyFields.address) setValue('address', '');
-      if (!dirtyFields.area) setValue('area', '');
-    }
+    clearPreviousDelivery();
     setValue('customerId', undefined, { shouldDirty: true });
     setValue('newName', undefined);
     setValue('newPhone', undefined);
