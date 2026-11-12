@@ -6,7 +6,7 @@ import useAuthStore from '../store/auth_store';
 export default function useNavLinks() {
   const me = useAuthStore((state) => state.me);
   const links = NAV_LINKS.filter(
-    (link) => (!link.permission || can(me?.workplace, link.permission)) && (!link.webOnly || me?.mode === 'web')
+    (link) => link.to !== '/whatsapp' && (!link.permission || can(me?.workplace, link.permission)) && (!link.webOnly || me?.mode === 'web')
   );
   return { main: links.slice(0, 3), more: links.slice(3) };
 }

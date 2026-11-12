@@ -19,7 +19,7 @@ export default function SettingsNav({ sections, list = false }: SettingsNavProps
           <h2 className="px-3 text-xs font-semibold tracking-wide text-muted uppercase">{group}</h2>
           <ul className={list ? 'divide-y divide-border overflow-hidden rounded-card bg-surface shadow-card' : 'flex flex-col gap-0.5'}>
             {sections
-              .filter((section) => section.group === group)
+              .filter((section) => section.group === group && section.value !== 'whatsapp')
               .map((section) =>
                 list ? (
                   <ListRow key={section.value} to={`/settings/${section.value}`} leading={<section.icon aria-hidden className="size-5" />} title={section.label} />
