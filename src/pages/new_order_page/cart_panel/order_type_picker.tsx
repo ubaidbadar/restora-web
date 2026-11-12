@@ -16,7 +16,8 @@ export default function OrderTypePicker(props: FormComponentProps) {
   // From the Tables page, "New order for this table" opens with ?table=<id>: start as dine-in at that table.
   const table = useSearchParams()[0].get('table') ?? '';
   const start = table ? 'dine_in' : 'takeaway';
-  const [type, customerId] = useWatch({ control: props.control, name: ['type', 'customerId'], defaultValue: [start, undefined] });
+  const [selectedType, customerId] = useWatch({ control: props.control, name: ['type', 'customerId'] });
+  const type = selectedType ?? start;
 
   return (
     <section aria-label="Order type" className="flex flex-col gap-3">
