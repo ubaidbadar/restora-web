@@ -31,7 +31,7 @@ const national = (phone: string) => phone.replace(/\D/g, '').replace(/^(?:0092|9
  * Find the customer by number or name (ui/search_menu), or save a new number on the spot. The search text is local,
  * so typing re-renders this section only; the form gets the picked customer.
  */
-function Main({ setValue, picked }: FormComponentProps & { picked?: Order['customer'] }) {
+function Main({ setValue, getFieldState, watch, picked }: FormComponentProps & { picked?: Order['customer'] }) {
   const [search, setSearch] = useState('');
   // Editing an order starts with its customer picked: the full record when the customer list is already loaded.
   const [customer, setCustomer] = useState<Customer | null>(() =>
@@ -76,6 +76,11 @@ function Main({ setValue, picked }: FormComponentProps & { picked?: Order['custo
   const newCustomer = byName ? { name: term, phone: '' } : { name: '', phone: typed };
 
   const pick = (chosen: Customer) => {
+    // A new customer gets their own saved delivery address, unless staff already typed a different one.
+    if (watch('type') === 'delivery' && watch('customerId') !== chosen._id) {
+      if (!getFieldState('address').isDirty) setValue('address', '');
+      if (!getFieldState('area').isDirty) setValue('area', '');
+    }
     setValue('customerId', chosen._id, { shouldDirty: true });
     setValue('newName', undefined);
     setValue('newPhone', undefined);
@@ -84,6 +89,10 @@ function Main({ setValue, picked }: FormComponentProps & { picked?: Order['custo
   };
 
   const clear = () => {
+    if (watch('type') === 'delivery') {
+      if (!getFieldState('address').isDirty) setValue('address', '');
+      if (!getFieldState('area').isDirty) setValue('area', '');
+    }
     setValue('customerId', undefined, { shouldDirty: true });
     setValue('newName', undefined);
     setValue('newPhone', undefined);
