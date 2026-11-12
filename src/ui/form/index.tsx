@@ -7,7 +7,7 @@ import getAxiosMessage from '../../utils/get_axios_message';
 
 
 export default function Form({ component, onSubmit, defaultValues, schema, ...props }: FormProps) {
-  const { register, handleSubmit, formState, reset, setError, setValue, getFieldState, watch, control } = useForm<FieldValues>({
+  const { register, handleSubmit, formState, reset, setError, setValue, watch, control } = useForm<FieldValues>({
     defaultValues,
     resolver: schema ? (zodResolver(schema) as Resolver<FieldValues>) : undefined,
   });
@@ -56,7 +56,7 @@ export default function Form({ component, onSubmit, defaultValues, schema, ...pr
         errors: formState.errors,
         ...status,
         setValue,
-        getFieldState,
+        dirtyFields: formState.dirtyFields,
         watch,
         control,
         onSubmit: handleFormSubmit,
