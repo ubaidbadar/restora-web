@@ -6,7 +6,7 @@ import Input from '../../../ui/input';
 import fieldError from '../../../utils/field_error';
 
 /** Delivery uses a customer's saved address as a starting point; the order address stays editable. */
-export default function DeliveryFields({ customerId, register, errors, getFieldState, setValue, watch }:
+export default function DeliveryFields({ customerId, register, errors, dirtyFields, setValue, watch }:
   FormComponentProps & { customerId?: string }) {
   // Customer search deliberately omits addresses. Read the full record only for a delivery.
   const { data: customer } = useGet<Customer>(`/customers/${customerId ?? ''}`, { active: !customerId });
@@ -14,13 +14,13 @@ export default function DeliveryFields({ customerId, register, errors, getFieldS
   useEffect(() => {
     if (!customerId || customer?._id !== customerId) return;
     const savedAddress = customer.addresses?.find(address => address.trim());
-    if (savedAddress && !getFieldState('address').isDirty && !watch('address')) {
+    if (savedAddress && !dirtyFields.address && !watch('address')) {
       setValue('address', savedAddress);
     }
-    if (customer.area && !getFieldState('area').isDirty && !watch('area')) {
+    if (customer.area && !dirtyFields.area && !watch('area')) {
       setValue('area', customer.area);
     }
-  }, [customer, customerId, getFieldState, setValue, watch]);
+  }, [customer, customerId, dirtyFields, setValue, watch]);
 
   return (
     <div className="grid grid-cols-2 gap-3">
