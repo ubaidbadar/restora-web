@@ -13,7 +13,7 @@ export default function DeliveryFields({ control, register, errors, dirtyFields,
   const { data: customer } = useGet<Customer>(`/customers/${customerId ?? ''}`, { active: !customerId });
 
   useEffect(() => {
-    if (!customerId || customer?._id !== customerId) return;
+    if (!customerId || !customer || customer._id !== customerId) return;
     const savedAddress = customer.addresses?.find(address => address.trim());
     if (savedAddress && !dirtyFields.address && !watch('address')) {
       setValue('address', savedAddress);
