@@ -242,7 +242,7 @@ describe('New order (desktop)', () => {
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
     fireEvent.click(dishTile('Chicken Karahi'));
     pick(/Delivery/);
-    const address = screen.getByLabelText('Address') as HTMLInputElement;
+    const address = screen.getByLabelText(/Address/) as HTMLInputElement;
     await waitFor(() => expect(address.value).toBe('House 17, Street 4'));
     expect((screen.getByLabelText('Area') as HTMLInputElement).value).toBe('Gulberg');
     fireEvent.change(address, { target: { value: 'Different entrance, House 20' } });
@@ -261,7 +261,7 @@ describe('New order (desktop)', () => {
     pick(/Delivery/);
     fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
-    await waitFor(() => expect((screen.getByLabelText('Address') as HTMLInputElement).value).toBe('House 17, Street 4'));
+    await waitFor(() => expect((screen.getByLabelText(/Address/) as HTMLInputElement).value).toBe('House 17, Street 4'));
   });
 
   it('keeps a manually entered delivery address when a customer is picked', async () => {
@@ -269,12 +269,12 @@ describe('New order (desktop)', () => {
     await screen.findByText('Chicken Karahi');
     fireEvent.click(dishTile('Chicken Karahi'));
     pick(/Delivery/);
-    fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Temporary venue, Main Gate' } });
+    fireEvent.change(screen.getByLabelText(/Address/), { target: { value: 'Temporary venue, Main Gate' } });
     fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
     await screen.findByText('Ali Raza');
     await waitFor(() => expect((screen.getByLabelText('Area') as HTMLInputElement).value).toBe('Gulberg'));
-    expect((screen.getByLabelText('Address') as HTMLInputElement).value).toBe('Temporary venue, Main Gate');
+    expect((screen.getByLabelText(/Address/) as HTMLInputElement).value).toBe('Temporary venue, Main Gate');
   });
 
   it('replaces an automatically filled address when switching to a different customer', async () => {
@@ -284,11 +284,11 @@ describe('New order (desktop)', () => {
     pick(/Delivery/);
     fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
-    await waitFor(() => expect((screen.getByLabelText('Address') as HTMLInputElement).value).toBe('House 17, Street 4'));
+    await waitFor(() => expect((screen.getByLabelText(/Address/) as HTMLInputElement).value).toBe('House 17, Street 4'));
     fireEvent.click(screen.getByRole('button', { name: 'Remove Ali Raza' }));
     fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'sara' } });
     fireEvent.click(await screen.findByRole('option', { name: /Sara Khan/ }));
-    await waitFor(() => expect((screen.getByLabelText('Address') as HTMLInputElement).value).toBe('Shop 8, Main Road'));
+    await waitFor(() => expect((screen.getByLabelText(/Address/) as HTMLInputElement).value).toBe('Shop 8, Main Road'));
     expect((screen.getByLabelText('Area') as HTMLInputElement).value).toBe('Model Town');
   });
 
