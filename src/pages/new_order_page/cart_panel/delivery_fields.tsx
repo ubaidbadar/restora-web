@@ -6,14 +6,13 @@ import useGet from '../../../hooks/useGet';
 import Input from '../../../ui/input';
 import fieldError from '../../../utils/field_error';
 
-/** Delivery uses a customer's saved address as a starting point; the order address stays editable. */
-export default function DeliveryFields({ control, register, errors, dirtyFields, setValue, watch }: FormComponentProps) {
-  const customerId = useWatch({ control, name: 'customerId' });
-  // Customer search deliberately omits addresses. Read the full record only for a delivery.
-  const { data: customer } = useGet<Customer>(`/customers/${customerId ?? ''}`, { active: !customerId });
+/** Load the selected customer's saved delivery details only after a customer is picked. */
+function CustomerDeliveryDefaults({ customerId, dirtyFields, setValue, watch }:
+  Pick<FormComponentProps, 'dirtyFields' | 'setValue' | 'watch'> & { customerId: string }) {
+  const { data: customer } = useGet<Customer>(`/customers/${customerId}`);
 
   useEffect(() => {
-    if (!customerId || !customer || customer._id !== customerId) return;
+    if (!customer || customer._id !== customerId) return;
     const savedAddress = customer.addresses?.find(address => address.trim());
     if (savedAddress && !dirtyFields.address && !watch('address')) {
       setValue('address', savedAddress);
@@ -23,8 +22,17 @@ export default function DeliveryFields({ control, register, errors, dirtyFields,
     }
   }, [customer, customerId, dirtyFields, setValue, watch]);
 
+  return null;
+}
+
+/** Delivery uses a customer's saved address as a starting point; the order address stays editable. */
+export default function DeliveryFields({ control, register, errors, dirtyFields, setValue, watch }: FormComponentProps) {
+  const customerId = useWatch({ control, name: 'customerId' });
+
   return (
     <div className="grid grid-cols-2 gap-3">
+      {customerId && <CustomerDeliveryDefaults key={customerId} customerId={customerId}
+        dirtyFields={dirtyFields} setValue={setValue} watch={watch} />}
       <Input label="Area" dir="auto" {...register('area')} />
       <Input label="Rider" dir="auto" {...register('rider')} />
       <div className="col-span-2">
