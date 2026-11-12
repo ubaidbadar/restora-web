@@ -15,6 +15,7 @@ function CustomerDeliveryDefaults({ customerId, dirtyFields, setValue, watch }:
   useEffect(() => {
     if (!customer || customer._id !== customerId) return;
     const savedAddress = customer.addresses?.find(address => address.trim());
+    console.info('delivery-prefill-effect', customerId, savedAddress, customer.area, 'dirty', JSON.stringify(dirtyFields), 'values', watch('address'), watch('area'));
     if (savedAddress && !dirtyFields.address && !watch('address')) {
       setValue('address', savedAddress);
     }
