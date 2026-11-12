@@ -10,6 +10,7 @@ import toast from '../../../utils/toast';
 interface ThisPcProps {
   /** Load the authoritative printer list after the agent connects. */
   onPaired: () => void;
+  embedded?: boolean;
 }
 
 type Step = 'idle' | 'permission' | 'connecting' | 'blocked' | 'missing' | 'differentBranch' | 'failed';
@@ -28,7 +29,7 @@ async function permission(): Promise<PermissionState> {
  * permission, it connects without a click. On first use one clear button triggers
  * the browser permission prompt; the six-digit backend credential stays invisible.
  */
-export default function ThisPc({ onPaired }: ThisPcProps) {
+export default function ThisPc({ onPaired, embedded = false }: ThisPcProps) {
   const [state, setState] = useState<{ step: Step; message?: string }>({ step: 'idle' });
   const selectedBranchId = useWorkplace()?.branch?._id;
 
@@ -52,7 +53,7 @@ export default function ThisPc({ onPaired }: ThisPcProps) {
       await pairThisPc();
       if (left()) return;
       setState({ step: 'idle' });
-      toast.success('Restora Agent connected. Configure your printers below.');
+      toast.success(embedded ? 'Restora Desktop printing connected.' : 'Restora Agent connected. Configure your printers below.');
       onPaired();
     } catch (err) {
       if (!left()) setState({ step: 'failed', message: getAxiosMessage(err) });
@@ -61,6 +62,10 @@ export default function ThisPc({ onPaired }: ThisPcProps) {
 
   useEffect(() => {
     let left = false;
+    if (embedded) {
+      void connect(() => left);
+      return () => { left = true; };
+    }
     void permission().then(value => {
       if (left) return;
       if (value === 'granted') void connect(() => left);
@@ -74,7 +79,7 @@ export default function ThisPc({ onPaired }: ThisPcProps) {
   if (state.step === 'connecting') return (
     <p role="status" className="flex max-w-3xl items-center gap-2 rounded-card bg-primary-soft px-4 py-3 text-sm font-medium text-accent-text">
       <span className="size-2 shrink-0 animate-pulse rounded-full bg-primary" aria-hidden="true" />
-      Connecting Restora Agent to your restaurant…
+      {embedded ? 'Connecting built-in desktop printing…' : 'Connecting Restora Agent to your restaurant…'}
     </p>
   );
   const message = state.step === 'permission'
@@ -82,7 +87,8 @@ export default function ThisPc({ onPaired }: ThisPcProps) {
     : state.step === 'blocked'
       ? 'Allow access to apps on this device in the browser site settings, then try again.'
       : state.step === 'missing'
-        ? 'Restora Agent could not be reached. Open the installed Windows agent, then try again.'
+        ? embedded ? 'Restora Desktop could not reach its built-in printing service. Restart Restora Desktop, then try again.'
+          : 'Restora Agent could not be reached. Open the installed Windows agent, then try again.'
         : state.step === 'differentBranch'
           ? 'This PC is connected to a different Restora branch. Remove it from the original branch before connecting it here.'
         : `Restora Agent could not connect: ${state.message}`;
@@ -90,7 +96,7 @@ export default function ThisPc({ onPaired }: ThisPcProps) {
     <div role="status" className="flex max-w-3xl flex-wrap items-center gap-3 rounded-card bg-primary-soft px-4 py-3">
       <p className="min-w-0 flex-1 basis-60 text-sm text-body">{message}</p>
       <Button size="sm" icon={RefreshCw} onClick={() => void connect()}>
-        {state.step === 'permission' ? 'Connect this PC' : 'Try again'}
+        {state.step === 'permission' ? (embedded ? 'Connect printing' : 'Connect this PC') : 'Try again'}
       </Button>
     </div>
   );

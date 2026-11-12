@@ -25,6 +25,9 @@ export default function AgentsCard({
 }: {
   categories: MenuCategory[];
 }) {
+  // Desktop packages the Windows printing engine: no second installer is needed.
+  // User-agent marking is only for the setup copy, never for server authorization.
+  const embedded = navigator.userAgent.includes("RestoraDesktop/1");
   const {
     data: agents = [],
     loading,
@@ -40,7 +43,7 @@ export default function AgentsCard({
 
   // Once the list is known: the agent on this PC, if it has not paired yet, pairs by itself.
   const thisPc = !loading && (
-    <ThisPc onPaired={() => get()} />
+    <ThisPc embedded={embedded} onPaired={() => get()} />
   );
 
   if (!loading && !agents.some((agent) => agent.lastSeenAt)) {
@@ -48,6 +51,7 @@ export default function AgentsCard({
       <div className="flex flex-col gap-4">
         {thisPc}
         <SetupCard
+          embedded={embedded}
           agent={agents[0]}
           onAdded={add}
           onSaved={replace}
@@ -66,16 +70,18 @@ export default function AgentsCard({
         flush
         action={
           <div className="flex gap-2">
-            <Button
-              as="a"
-              href={AGENT_DOWNLOAD_URL}
-              target="_blank"
-              rel="noreferrer"
-              variant="ghost"
-              icon={Download}
-            >
-              Get the agent
-            </Button>
+            {!embedded && (
+              <Button
+                as="a"
+                href={AGENT_DOWNLOAD_URL}
+                target="_blank"
+                rel="noreferrer"
+                variant="ghost"
+                icon={Download}
+              >
+                Get the agent
+              </Button>
+            )}
             <FormDrawer
               title="Add a PC"
               schema={agentSchema}
