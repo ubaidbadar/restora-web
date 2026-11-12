@@ -12,61 +12,63 @@ import PairingCode from './pairing_code';
 import SetupStep from './setup_step';
 
 interface SetupCardProps {
-  /** The PC added but not paired yet, if any. */
   agent?: PrintAgent;
   onAdded: (agent: PrintAgent) => void;
   onSaved: (agent: PrintAgent) => void;
   onRefresh: () => void;
 }
 
-/**
- * Printing before any PC is paired: three steps, each with the one thing to do in it. Download the agent, name the PC
- * (which gives the code), type the code. When the agent pairs, the page shows its printers instead.
- */
+/** The normal path uses authenticated Restora + a one-time browser permission, not a code. */
 export default function SetupCard({ agent, onAdded, onSaved, onRefresh }: SetupCardProps) {
   return (
-    <SectionCard title="Set up printing" description="Kitchen slips and receipts print by themselves from a Windows PC, even when Restora is closed.">
+    <SectionCard title="Set up printing"
+      description="Install the Windows agent once. Then Restora sends kitchen slips and receipts to your printers automatically.">
       <ol>
-        <SetupStep
-          number={1}
-          title="Install the print agent on the PC with the printers"
-          done={!!agent}
-          summary={
-            <a href={AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
-              Download again
-            </a>
-          }
-        >
-          <Button as="a" href={AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer" variant="outline" icon={Download}>
-            Download for Windows
-          </Button>
-          <p className="mt-2 text-sm text-muted">Windows 10 or 11. Install the agent from Microsoft Store, then open it.</p>
+        <SetupStep number={1} title="Install Restora Agent" done={!!agent?.lastSeenAt}
+          summary={<a href={AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer"
+            className="font-medium text-primary hover:underline">Open Microsoft Store</a>}>
+          <Button as="a" href={AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer"
+            variant="outline" icon={Download}>Get Restora Agent for Windows</Button>
+          <p className="mt-2 text-sm text-muted">Windows 10 or 11. Open Restora Agent after installing it.</p>
         </SetupStep>
-
-        <SetupStep number={2} title="Name this PC" done={!!agent} summary={agent?.name}>
-          <Form
-            schema={agentSchema}
-            defaultValues={{ name: 'Counter PC' }}
-            noValidate
-            className="flex flex-wrap items-start gap-3"
-            onSubmit={({ data }) => api.post('/print-agents', data).then((res) => onAdded(res.data))}
-            component={({ register, errors, loading, error }) => (
-              <>
-                <div className="min-w-0 flex-1 basis-48">
-                  <Input aria-label="PC name" dir="auto" placeholder="e.g. Counter PC" {...register('name')} error={fieldError(errors, 'name') ?? error} />
-                </div>
-                <Button type="submit" disabled={loading}>
-                  Get pairing code
-                </Button>
-              </>
-            )}
-          />
-        </SetupStep>
-
-        <SetupStep number={3} title="Type this code into the agent" ahead={!agent?.pairing}>
-          {agent?.pairing && <PairingCode agent={{ ...agent, pairing: agent.pairing }} onSaved={onSaved} onRefresh={onRefresh} />}
+        <SetupStep number={2} title="Open Restora and connect this PC" done={!!agent?.lastSeenAt}>
+          <p className="text-sm text-body">
+            Restora Agent opens this website. Sign in, choose your restaurant branch, then allow your browser
+            to access the agent when asked. Restora connects the PC without a code.
+          </p>
+          <p className="mt-2 text-sm text-muted">
+            Then choose which printers should receive kitchen slips and customer receipts.
+          </p>
         </SetupStep>
       </ol>
+      <details className="border-t border-border px-5 py-4 sm:px-7">
+        <summary className="cursor-pointer text-sm font-medium text-muted">
+          Advanced: connect another PC using a code
+        </summary>
+        <p className="mt-3 text-sm text-muted">
+          Only use this when the browser cannot reach the Windows agent, or when setting up a different PC.
+        </p>
+        <Form
+          schema={agentSchema}
+          defaultValues={{ name: 'Counter PC' }}
+          noValidate
+          className="mt-3 flex flex-wrap items-start gap-3"
+          onSubmit={({ data }) => api.post('/print-agents', data).then(res => onAdded(res.data))}
+          component={({ register, errors, loading, error }) => (
+            <>
+              <div className="min-w-0 flex-1 basis-48">
+                <Input aria-label="PC name" dir="auto" placeholder="e.g. Counter PC"
+                  {...register('name')} error={fieldError(errors, 'name') ?? error} />
+              </div>
+              <Button type="submit" disabled={loading}>Get connection code</Button>
+            </>
+          )}
+        />
+        {agent?.pairing && <div className="mt-3">
+          <PairingCode agent={{ ...agent, pairing: agent.pairing }}
+            onSaved={onSaved} onRefresh={onRefresh} />
+        </div>}
+      </details>
     </SectionCard>
   );
 }
