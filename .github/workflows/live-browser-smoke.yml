@@ -1,0 +1,41 @@
+name: Live browser and PWA smoke (read-only)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/browser-smoke/**'
+      - '.github/workflows/live-browser-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: .github/browser-smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install isolated Playwright test harness
+        run: npm init -y && npm install --no-save @playwright/test
+      - name: Install headless Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Exercise signed-out live app on desktop and phone
+        run: npx playwright test
+      - name: Upload browser traces and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-browser-pwa-smoke
+          path: |
+            .github/browser-smoke/test-results
+            .github/browser-smoke/playwright-report
+          retention-days: 7
+          if-no-files-found: warn
