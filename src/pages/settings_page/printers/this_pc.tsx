@@ -1,6 +1,7 @@
 import { RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Button from '../../../ui/button';
+import useWorkplace from '../../../hooks/useWorkplace';
 import agentFetch from '../../../utils/agent_fetch';
 import getAxiosMessage from '../../../utils/get_axios_message';
 import pairThisPc from '../../../utils/pair_this_pc';
@@ -11,7 +12,7 @@ interface ThisPcProps {
   onPaired: () => void;
 }
 
-type Step = 'idle' | 'permission' | 'connecting' | 'blocked' | 'missing' | 'failed';
+type Step = 'idle' | 'permission' | 'connecting' | 'blocked' | 'missing' | 'differentBranch' | 'failed';
 
 /** Browsers must ask permission before the first localhost request. */
 async function permission(): Promise<PermissionState> {
@@ -29,11 +30,12 @@ async function permission(): Promise<PermissionState> {
  */
 export default function ThisPc({ onPaired }: ThisPcProps) {
   const [state, setState] = useState<{ step: Step; message?: string }>({ step: 'idle' });
+  const selectedBranchId = useWorkplace()?.branch?._id;
 
   const connect = async (left = () => false) => {
     setState({ step: 'connecting' });
     const status = await agentFetch('/status')
-      .then(async res => res.ok ? res.json() as Promise<{ paired: boolean }> : undefined)
+      .then(async res => res.ok ? res.json() as Promise<{ paired: boolean; branchId?: string }> : undefined)
       .catch(() => undefined);
     if (left()) return;
     if (!status) {
@@ -41,7 +43,8 @@ export default function ThisPc({ onPaired }: ThisPcProps) {
       return;
     }
     if (status.paired) {
-      setState({ step: 'idle' });
+      setState({ step: status.branchId && selectedBranchId && status.branchId !== selectedBranchId
+        ? 'differentBranch' : 'idle' });
       return;
     }
     try {
@@ -80,6 +83,8 @@ export default function ThisPc({ onPaired }: ThisPcProps) {
       ? 'Allow access to apps on this device in the browser site settings, then try again.'
       : state.step === 'missing'
         ? 'Restora Agent could not be reached. Open the installed Windows agent, then try again.'
+        : state.step === 'differentBranch'
+          ? 'This PC is connected to a different Restora branch. Remove it from the original branch before connecting it here.'
         : `Restora Agent could not connect: ${state.message}`;
   return (
     <div role="status" className="flex max-w-3xl flex-wrap items-center gap-3 rounded-card bg-primary-soft px-4 py-3">
