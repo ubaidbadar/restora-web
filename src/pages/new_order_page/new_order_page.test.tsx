@@ -35,10 +35,17 @@ const MENU: Menu = {
 };
 const CUSTOMERS: Customer[] = [
   { _id: 'cu1', name: 'Ali Raza', phone: '+923001234567', tags: [], khataBalance: 500, orderCount: 3, totalSpent: 3000, createdAt: '2026-01-01' },
+  { _id: 'cu2', name: 'Sara Khan', phone: '+923009876543', tags: [], khataBalance: 0, orderCount: 2, totalSpent: 1800, createdAt: '2026-01-02' },
 ];
 
 /** Answers the GETs the page makes (menu, customers, tables). */
-const answers: Record<string, unknown> = { '/menu': MENU, '/customers': CUSTOMERS, '/tables': [] };
+const answers: Record<string, unknown> = {
+  '/menu': MENU,
+  '/customers': CUSTOMERS,
+  '/customers/cu1': { ...CUSTOMERS[0], addresses: ['House 17, Street 4', 'Old address'], area: 'Gulberg' },
+  '/customers/cu2': { ...CUSTOMERS[1], addresses: ['Shop 8, Main Road'], area: 'Model Town' },
+  '/tables': [],
+};
 
 let wide = true;
 function setWidth(isWide: boolean) {
@@ -225,6 +232,64 @@ describe('New order (desktop)', () => {
     placeOrder();
     await screen.findByText('Orders board');
     expect(mocked.post.mock.calls[0]![1]).toMatchObject({ type: 'delivery', address: 'House 5, Block C', deliveryFee: 150, discount: 100 });
+  });
+
+  it('prefills a selected customer delivery address and area but lets staff edit them', async () => {
+    mocked.post.mockResolvedValue({ data: { _id: 'srv6', dailyToken: 12 } });
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'ali' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
+    fireEvent.click(dishTile('Chicken Karahi'));
+    pick(/Delivery/);
+    const address = screen.getByLabelText(/Address/) as HTMLInputElement;
+    await waitFor(() => expect(address.value).toBe('House 17, Street 4'));
+    expect((screen.getByLabelText('Area') as HTMLInputElement).value).toBe('Gulberg');
+    fireEvent.change(address, { target: { value: 'Different entrance, House 20' } });
+    fireEvent.change(screen.getByLabelText('Area'), { target: { value: 'DHA' } });
+    placeOrder();
+    await screen.findByText('Orders board');
+    expect(mocked.post.mock.calls[0]![1]).toMatchObject({
+      customerId: 'cu1', type: 'delivery', address: 'Different entrance, House 20', area: 'DHA',
+    });
+  });
+
+  it('fills the address when the delivery customer is picked afterward', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+    pick(/Delivery/);
+    fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'ali' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
+    await waitFor(() => expect((screen.getByLabelText(/Address/) as HTMLInputElement).value).toBe('House 17, Street 4'));
+  });
+
+  it('keeps a manually entered delivery address when a customer is picked', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+    pick(/Delivery/);
+    fireEvent.change(screen.getByLabelText(/Address/), { target: { value: 'Temporary venue, Main Gate' } });
+    fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'ali' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
+    await screen.findByText('Ali Raza');
+    await waitFor(() => expect((screen.getByLabelText('Area') as HTMLInputElement).value).toBe('Gulberg'));
+    expect((screen.getByLabelText(/Address/) as HTMLInputElement).value).toBe('Temporary venue, Main Gate');
+  });
+
+  it('replaces an automatically filled address when switching to a different customer', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+    pick(/Delivery/);
+    fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'ali' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
+    await waitFor(() => expect((screen.getByLabelText(/Address/) as HTMLInputElement).value).toBe('House 17, Street 4'));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Ali Raza' }));
+    fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'sara' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Sara Khan/ }));
+    await waitFor(() => expect((screen.getByLabelText(/Address/) as HTMLInputElement).value).toBe('Shop 8, Main Road'));
+    expect((screen.getByLabelText('Area') as HTMLInputElement).value).toBe('Model Town');
   });
 
   it('an empty discount box folds back to the link', async () => {
