@@ -9,7 +9,8 @@ import fieldError from '../../../utils/field_error';
 /** Load the selected customer's saved delivery details only after a customer is picked. */
 function CustomerDeliveryDefaults({ customerId, dirtyFields, setValue, watch }:
   Pick<FormComponentProps, 'dirtyFields' | 'setValue' | 'watch'> & { customerId: string }) {
-  const { data: customer } = useGet<Customer>(`/customers/${customerId}`);
+  const { data: customer, loading } = useGet<Customer>(`/customers/${customerId}`);
+  console.info('delivery-prefill-profile', customerId, customer?._id, loading);
 
   useEffect(() => {
     if (!customer || customer._id !== customerId) return;
@@ -28,6 +29,7 @@ function CustomerDeliveryDefaults({ customerId, dirtyFields, setValue, watch }:
 /** Delivery uses a customer's saved address as a starting point; the order address stays editable. */
 export default function DeliveryFields({ control, register, errors, dirtyFields, setValue, watch }: FormComponentProps) {
   const customerId = useWatch({ control, name: 'customerId' });
+  console.info('delivery-prefill-selected', customerId);
 
   return (
     <div className="grid grid-cols-2 gap-3">
