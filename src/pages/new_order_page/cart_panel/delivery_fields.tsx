@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useWatch } from 'react-hook-form';
 import type FormComponentProps from '../../../types/form_component_props';
 import type Customer from '../../../types/customer';
 import useGet from '../../../hooks/useGet';
@@ -6,8 +7,8 @@ import Input from '../../../ui/input';
 import fieldError from '../../../utils/field_error';
 
 /** Delivery uses a customer's saved address as a starting point; the order address stays editable. */
-export default function DeliveryFields({ customerId, register, errors, dirtyFields, setValue, watch }:
-  FormComponentProps & { customerId?: string }) {
+export default function DeliveryFields({ control, register, errors, dirtyFields, setValue, watch }: FormComponentProps) {
+  const customerId = useWatch({ control, name: 'customerId' });
   // Customer search deliberately omits addresses. Read the full record only for a delivery.
   const { data: customer } = useGet<Customer>(`/customers/${customerId ?? ''}`, { active: !customerId });
 
