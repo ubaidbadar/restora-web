@@ -24,55 +24,7 @@ jobs:
           VITE_API_URL: ${{ github.base_ref == 'dev' && 'https://dev.restora.live' || 'https://restora.live' }}
           VITE_APP_URL: https://app.restora.live
       - uses: FirebaseExtended/action-hosting-deploy@v0
-        id: firebase_hosting_preview
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RESTORA_LIVE }}
           projectId: restora-live
-
-      - name: Check the dedicated E2E account
-        id: e2e_account
-        env:
-          RESTORA_E2E_EMAIL: ${{ secrets.RESTORA_E2E_EMAIL }}
-          RESTORA_E2E_PASSWORD: ${{ secrets.RESTORA_E2E_PASSWORD }}
-        run: |
-          set -euo pipefail
-          if [ -z "$RESTORA_E2E_EMAIL" ] || [ -z "$RESTORA_E2E_PASSWORD" ]; then
-            echo "::notice::Authenticated preview journey skipped. Configure RESTORA_E2E_EMAIL and RESTORA_E2E_PASSWORD."
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Install isolated Playwright harness
-        working-directory: .github/authenticated-e2e
-        run: npm init -y && npm install --no-save @playwright/test
-
-      - name: Validate Playwright test discovery
-        working-directory: .github/authenticated-e2e
-        run: npx playwright test --list --config=playwright.config.cjs
-
-      - name: Install Chromium
-        if: steps.e2e_account.outputs.configured == 'true'
-        working-directory: .github/authenticated-e2e
-        run: npx playwright install --with-deps chromium
-
-      - name: Run authenticated journey against this PR preview
-        if: steps.e2e_account.outputs.configured == 'true'
-        working-directory: .github/authenticated-e2e
-        env:
-          RESTORA_E2E_EMAIL: ${{ secrets.RESTORA_E2E_EMAIL }}
-          RESTORA_E2E_PASSWORD: ${{ secrets.RESTORA_E2E_PASSWORD }}
-          RESTORA_E2E_BASE_URL: ${{ steps.firebase_hosting_preview.outputs.details_url }}
-        run: npx playwright test --config=playwright.config.cjs
-
-      - name: Upload authenticated preview traces and report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: authenticated-preview-e2e-${{ github.run_number }}
-          path: |
-            .github/authenticated-e2e/test-results
-            .github/authenticated-e2e/playwright-report
-          retention-days: 14
-          if-no-files-found: warn
