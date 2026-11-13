@@ -11,6 +11,7 @@ export default interface Settings {
   taxSet: boolean;
   /** Tax percentage charged for each payment method, e.g. { cash: 16, card: 5 }. */
   taxByPaymentMethod: Record<PaymentMethod, number>;
+  dineInServiceCharge: { enabled: boolean; type: 'percentage' | 'fixed'; value: number; taxable: boolean };
   whatsappTemplates: Record<TemplateKey, string>;
   /** Tax numbers and a closing line printed on customer receipts; each is left off while empty. */
   receipt?: { ntn?: string; strn?: string; footer?: string };
