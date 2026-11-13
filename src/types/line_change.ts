@@ -5,4 +5,6 @@ export default interface LineChange {
   detail?: string;
   was: number;
   now: number;
+  wasPrice?: number;
+  nowPrice?: number;
 }
