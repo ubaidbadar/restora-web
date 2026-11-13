@@ -1,54 +1,66 @@
-import { PanelsTopLeft } from 'lucide-react';
+import { LayoutGrid, PanelsTopLeft, PanelLeft, PanelRight, Rows3, RotateCcw } from 'lucide-react';
 import Button from '../../ui/button';
-import ModalOverlay from '../../ui/modal/modal';
-import Toggle from '../../ui/toggle';
+import DropdownMenu from '../../ui/dropdown_menu';
 import useOrdersWorkspaceStore from '../../store/orders_workspace_store';
 
 export default function OrdersViewSettings() {
   const { sidebarHidden, detailsPanel, density, setPreferences, reset } = useOrdersWorkspaceStore();
 
   return (
-    <ModalOverlay
-      title="Orders view options"
-      component={({ open }) => (
-        <Button type="button" variant="outline" icon={PanelsTopLeft} onClick={open}>
+    <DropdownMenu
+      align="right"
+      menuClassName="w-64"
+      trigger={(open) => (
+        <Button type="button" variant="outline" icon={PanelsTopLeft} aria-haspopup="menu" aria-expanded={open}>
           View options
         </Button>
       )}
-    >
-      <div className="flex flex-col gap-5">
-        <section className="flex flex-col gap-3">
-          <div>
-            <h3 className="font-semibold text-ink">Workspace</h3>
-            <p className="mt-1 text-sm text-muted">Choose how much room the Orders page uses on your desktop.</p>
-          </div>
-          <Toggle
-            checked={sidebarHidden}
-            label="Hide navigation sidebar"
-            onChange={(event) => setPreferences({ sidebarHidden: event.target.checked })}
-          />
-          <Toggle
-            checked={detailsPanel}
-            label="Show a separate order details panel"
-            onChange={(event) => setPreferences({ detailsPanel: event.target.checked })}
-          />
-        </section>
-        <section className="flex flex-col gap-3 border-t border-border pt-5">
-          <div>
-            <h3 className="font-semibold text-ink">Order cards</h3>
-            <p className="mt-1 text-sm text-muted">Compact cards show more orders at once. Comfortable keeps the current spacing.</p>
-          </div>
-          <Toggle
-            checked={density === 'compact'}
-            label="Use compact order cards"
-            onChange={(event) => setPreferences({ density: event.target.checked ? 'compact' : 'comfortable' })}
-          />
-        </section>
-        <p className="text-xs text-muted">These settings affect only the desktop Orders page and are saved in this browser. New Order, phones and tablets keep their existing layout.</p>
-        <div className="flex justify-end border-t border-border pt-3">
-          <Button type="button" variant="ghost" onClick={reset}>Reset to defaults</Button>
-        </div>
-      </div>
-    </ModalOverlay>
+      items={[
+        {
+          section: 'Workspace',
+          label: 'Show navigation sidebar',
+          icon: PanelLeft,
+          selected: !sidebarHidden,
+          onClick: () => setPreferences({ sidebarHidden: false }),
+        },
+        {
+          label: 'Hide navigation sidebar',
+          icon: PanelLeft,
+          selected: sidebarHidden,
+          onClick: () => setPreferences({ sidebarHidden: true }),
+        },
+        {
+          label: 'Show separate order details',
+          icon: PanelRight,
+          selected: detailsPanel,
+          onClick: () => setPreferences({ detailsPanel: true }),
+        },
+        {
+          label: 'Hide separate order details',
+          icon: PanelRight,
+          selected: !detailsPanel,
+          onClick: () => setPreferences({ detailsPanel: false }),
+        },
+        {
+          section: 'Order cards',
+          label: 'Comfortable spacing',
+          icon: Rows3,
+          selected: density === 'comfortable',
+          onClick: () => setPreferences({ density: 'comfortable' }),
+        },
+        {
+          label: 'Compact spacing',
+          icon: LayoutGrid,
+          selected: density === 'compact',
+          onClick: () => setPreferences({ density: 'compact' }),
+        },
+        {
+          section: 'Layout',
+          label: 'Reset to defaults',
+          icon: RotateCcw,
+          onClick: reset,
+        },
+      ]}
+    />
   );
 }

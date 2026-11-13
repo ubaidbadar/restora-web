@@ -21,7 +21,7 @@ export default function AppLayout() {
   const { lg } = useBreakpoint();
   const me = useAuthStore((state) => state.me);
   const { sidebarHidden } = useOrdersWorkspaceStore();
-  const onOrdersPage = location.pathname === '/orders';
+  const onOrdersPage = location.pathname === '/orders' || location.pathname.startsWith('/orders/');
   const hideSidebar = lg && onOrdersPage && sidebarHidden;
   // Pages start again (and load fresh data) when the restaurant or branch changes.
   const place = `${me?.workplace?.restaurant._id}:${me?.workplace?.branch?._id}`;

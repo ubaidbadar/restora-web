@@ -48,11 +48,11 @@ const answers: Record<string, unknown> = {
 };
 
 let wide = true;
-function setWidth(isWide: boolean) {
+function setWidth(isWide: boolean, isTablet = false) {
   wide = isWide;
   window.matchMedia = ((query: string) => ({
-    // Wide is a desktop: the order panel docks beside the menu from lg (64rem) up (ui/docked_sheet).
-    matches: query.includes('min-width: 48rem') || query.includes('min-width: 64rem') ? wide : false,
+    // The order panel docks only at xl (80rem); lg-sized tablets keep the order sheet.
+    matches: query.includes('min-width: 80rem') ? wide : query.includes('min-width: 48rem') || query.includes('min-width: 64rem') ? wide || isTablet : false,
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -90,6 +90,25 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe('New order (desktop)', () => {
+  it('keeps an empty desktop cart focused on adding dishes, then reveals checkout choices', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    expect(screen.queryByRole('radio', { name: /Dine-in/ })).toBeNull();
+    expect(screen.queryByRole('radio', { name: /^Paid now$/ })).toBeNull();
+
+    fireEvent.click(dishTile('Chicken Karahi'));
+
+    expect(screen.getByRole('radio', { name: /Dine-in/ })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Paid now$/ })).toBeTruthy();
+  });
+
+  it('shows an explicit quick-add action on product tiles', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    expect(screen.getAllByText('+ Add').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Options for Biryani' }).textContent).toContain('Options');
+  });
+
   it('adds dishes, counts them and totals the order', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
@@ -157,6 +176,7 @@ describe('New order (desktop)', () => {
   it('warns at once that khata needs a customer', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
     pick(/^Khata/);
     expect(screen.getByText('Khata needs a customer: pick one at the top.')).toBeTruthy();
   });
@@ -295,6 +315,7 @@ describe('New order (desktop)', () => {
   it('an empty discount box folds back to the link', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
     fireEvent.click(screen.getByRole('button', { name: 'Add discount' }));
     fireEvent.blur(screen.getByLabelText(/Discount/));
     expect(screen.getByRole('button', { name: 'Add discount' })).toBeTruthy();
@@ -329,6 +350,18 @@ describe('New order (desktop)', () => {
     expect(url).toBe('/orders/o5');
     expect(body).toMatchObject({ type: 'delivery', address: 'House 1', items: [{ itemId: 'd1', qty: 2 }] });
     expect(body.paymentStatus).toBeUndefined();
+  });
+});
+
+describe('New order (tablet)', () => {
+  it('keeps the cart in a sheet instead of squeezing the menu into a side column', async () => {
+    setWidth(false, true);
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+    fireEvent.click(screen.getByRole('button', { name: /View order/ }));
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(within(screen.getByRole('dialog')).getByRole('list', { name: 'Items in this order' })).toBeTruthy();
   });
 });
 
