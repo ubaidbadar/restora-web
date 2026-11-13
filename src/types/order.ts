@@ -1,6 +1,6 @@
 import type AuditEntry from './audit_entry';
 import type OrderCancellation from './order_cancellation';
-import type OrderCustomer from './order_customer';
+import type OrderCustomerSnapshot from './order_customer_snapshot';
 import type OrderItem from './order_item';
 import type OrderStatus from './order_status';
 import type OrderType from './order_type';
@@ -18,7 +18,7 @@ export default interface Order {
   whatsappPhone?: string;
   whatsappPhoneNumberId?: string;
   /** Name and phone of the customer, sent with list responses. */
-  customer?: OrderCustomer;
+  customer?: OrderCustomerSnapshot;
   type: OrderType;
   status: OrderStatus;
   items: OrderItem[];
