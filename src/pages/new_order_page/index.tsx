@@ -207,8 +207,13 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             // The customer list may not be loaded: an unchanged customer keeps the name the order already has.
             const local = {
               ...worked,
-              customer: data.customerId && data.customerId === order.customerId
-                ? { ...order.customer, ...worked.customer, phone: worked.customer?.phone ?? order.customer?.phone }
+              customer: data.customerId && data.customerId === order.customerId && order.customer
+                ? {
+                    ...order.customer,
+                    ...worked.customer,
+                    name: worked.customer?.name ?? order.customer.name,
+                    phone: worked.customer?.phone ?? order.customer.phone,
+                  }
                 : worked.customer,
             };
             const outbox = useOutboxStore.getState();
