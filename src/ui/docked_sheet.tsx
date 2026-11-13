@@ -17,11 +17,11 @@ interface DockedSheetProps {
 }
 
 /**
- * Below desktop width, order details open in the existing bottom sheet. On desktop they can stay in a right-hand column
- * or open in a drawer. The overlay's submit button sits outside the form, so it names the form with `form`.
+ * Phones and tablets keep the existing bottom sheet. Laptop-width screens use a drawer so the menu is not squeezed;
+ * wide screens can keep order details in a right-hand column or open them in a drawer.
  */
 export default function DockedSheet({ label, component, children, className = '', mode = 'column' }: DockedSheetProps) {
-  const { lg } = useBreakpoint();
+  const { lg, xl } = useBreakpoint();
 
   if (!lg) {
     return (
@@ -30,7 +30,7 @@ export default function DockedSheet({ label, component, children, className = ''
       </ModalOverlay>
     );
   }
-  if (mode === 'drawer') {
+  if (mode === 'drawer' || !xl) {
     return (
       <Drawer title={label} width="md" component={component}>
         {children}
@@ -38,7 +38,7 @@ export default function DockedSheet({ label, component, children, className = ''
     );
   }
   return (
-    <section aria-label={label} className={`fixed w-90 bottom-8 top-4 flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-card bg-surface shadow-card lg:top-8 ${className}`}>
+    <section aria-label={label} className={`fixed w-90 bottom-8 top-4 flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-card bg-surface shadow-card xl:top-8 ${className}`}>
       {children}
     </section>
   );
