@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 /** Tailwind's breakpoints (index.css sets none of its own), so JS and `sm:`/`md:`/`lg:`/`xl:` classes switch at the same width. */
-const QUERIES = { sm: '(min-width: 40rem)', md: '(min-width: 48rem)', lg: '(min-width: 64rem)', xl: '(min-width: 80rem)' } as const;
+const QUERIES = { sm: '(min-width: 40rem)', md: '(min-width: 48rem)', lg: '(min-width: 64rem)', xl: '(min-width: 80rem)', xxl: '(min-width: 96rem)' } as const;
 
 type Breakpoints = Record<keyof typeof QUERIES, boolean>;
 
@@ -11,9 +11,9 @@ const getLists = () => (lists ??= Object.values(QUERIES).map((query) => window.m
 // One object per combination, so the snapshot only changes when a breakpoint is crossed.
 const snapshots = new Map<string, Breakpoints>();
 function getSnapshot(): Breakpoints {
-  const [sm, md, lg, xl] = getLists().map((list) => list.matches) as [boolean, boolean, boolean, boolean];
-  const key = `${+sm}${+md}${+lg}${+xl}`;
-  if (!snapshots.has(key)) snapshots.set(key, { sm, md, lg, xl });
+  const [sm, md, lg, xl, xxl] = getLists().map((list) => list.matches) as [boolean, boolean, boolean, boolean, boolean];
+  const key = `${+sm}${+md}${+lg}${+xl}${+xxl}`;
+  if (!snapshots.has(key)) snapshots.set(key, { sm, md, lg, xl, xxl });
   return snapshots.get(key)!;
 }
 
