@@ -8,12 +8,11 @@ import OrderTypePicker from './order_type_picker';
 import PaymentPicker from './payment_picker';
 
 /**
- * The order: its lines, type, payment and discount. Every field is registered here or in a child. Type, payment, discount
- * and totals show once a dish is in the cart, so an empty order is one short hint.
+ * Checkout fields. The desktop order lines live in the adjacent column; smaller screens keep them above checkout here.
  */
 export default function CartPanel({ taxByPaymentMethod, editing, showHeading, showLines = true, heading = 'Order', ...props }: FormComponentProps & Pick<RestaurantSettings, 'taxByPaymentMethod'> & { editing?: boolean; showHeading: boolean; showLines?: boolean; heading?: string }) {
   return (
-    // Scrolls inside the order panel (a sheet on phones), so Place order below it stays in reach.
+    // Scrolls inside the panel so Place order below it stays in reach.
     <div id="order-details" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-1 pb-4 md:pt-5">
       {/* Below lg the modal's own title says "Order". */}
       {showHeading && <h2 className="text-heading text-ink">{heading}</h2>}
