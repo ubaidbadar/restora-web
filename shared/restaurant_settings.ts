@@ -8,6 +8,14 @@ export default interface RestaurantSettings {
   taxSet: boolean;
   /** Tax percentage charged for each payment method, e.g. { cash: 16, card: 5 }. */
   taxByPaymentMethod: Record<'cash' | 'card' | 'jazzcash' | 'easypaisa' | 'bank', number>;
+  /** Dine-in only: one percentage of the discounted food subtotal, or one fixed amount per order. */
+  dineInServiceCharge: {
+    enabled: boolean;
+    type: 'percentage' | 'fixed';
+    value: number;
+    /** Punjab's restaurant-services rules include service charges in the taxable amount. */
+    taxable: boolean;
+  };
   whatsappTemplates: Record<'winback' | 'reservation', string>;
   /** Tax numbers and a closing line printed on customer receipts; each is left off while empty (all of it in `/me`). */
   receipt?: { ntn?: string; strn?: string; footer?: string };
