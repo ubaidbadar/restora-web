@@ -29,6 +29,7 @@ import calcTotals from '../../utils/calc_totals';
 import dayKey from '../../utils/day_key';
 import syncOutbox from '../../utils/sync_outbox';
 import ownOrders from '../../utils/own_orders';
+import serviceChargeOf from '@shared/service_charge_of';
 import upsertById from '../../utils/upsert_by_id';
 
 /**
@@ -55,6 +56,11 @@ function offlineOrder(data: FieldValues, clientId: string, token: string): Order
   const rates: Record<string, number> = me.workplace!.settings.taxByPaymentMethod;
   const taxRate = method ? (rates[method] ?? 0) : 0;
   const deliveryFee = data.type === 'delivery' ? data.deliveryFee : 0;
+  const cartItems = data.items as CartItem[];
+  const items = cartItems.map(({ priceOverride, ...item }) => ({ ...item, menuPrice: item.menuPrice ?? item.price, price: priceOverride ?? item.price }));
+  const baseTotals = calcTotals(items, data.discount, 0, deliveryFee);
+  const serviceCharge = serviceChargeOf(data.type, baseTotals.subtotal, baseTotals.discount, me.workplace!.settings.dineInServiceCharge);
+  const totals = calcTotals(items, data.discount, taxRate, deliveryFee, serviceCharge.serviceCharge, serviceCharge.serviceChargeTaxable);
   const saved = (getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((customer) => customer._id === data.customerId);
   const name = saved?.name ?? data.newName;
   return {
@@ -65,8 +71,9 @@ function offlineOrder(data: FieldValues, clientId: string, token: string): Order
     customer: name ? { _id: data.customerId ?? '', name, phone: saved?.phone ?? data.newPhone ?? '' } : undefined,
     type: data.type,
     status: 'new',
-    items: data.items,
-    ...calcTotals(data.items, data.discount, taxRate, deliveryFee),
+    items,
+    ...totals,
+    ...serviceCharge,
     taxRate,
     deliveryFee,
     paymentMethod: method,
@@ -99,7 +106,7 @@ const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing })
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
   // Tax by payment method comes with /me: no request of its own.
-  const { taxByPaymentMethod } = useRestaurantSettings();
+  const { taxByPaymentMethod, dineInServiceCharge } = useRestaurantSettings();
 
   return (
     <>
@@ -121,10 +128,10 @@ const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing })
       {/* Beside the menu from tablet width; on phones a bottom sheet, opened from the cart bar. */}
       <DockedSheet
         label="Order"
-        component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} onOpen={open} />}
+        component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} dineInServiceCharge={dineInServiceCharge} onOpen={open} />}
       >
-        <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} />
-        <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
+        <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} dineInServiceCharge={dineInServiceCharge} editing={Boolean(order)} />
+        <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} dineInServiceCharge={dineInServiceCharge} submitLabel={order ? 'Save changes' : 'Place order'} />
       </DockedSheet>
     </>
   );
