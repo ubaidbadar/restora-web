@@ -19,7 +19,7 @@ interface MenuItemTileProps {
   onQty?: (key: string, qty: number) => void;
 }
 
-const tileButton = 'flex min-h-28 flex-1 cursor-pointer flex-col items-start rounded-card p-3 text-start -outline-offset-2';
+const tileButton = 'flex min-h-28 w-full flex-1 cursor-pointer flex-col items-start rounded-card p-3 text-start -outline-offset-2';
 
 /**
  * Tap a dish to add one with default options immediately; a dish with sizes or add-ons also provides an Options button.
@@ -36,7 +36,7 @@ export default function MenuItemTile({ dish, groups, contents, lines, onAdd }: M
   return (
     <li className={`relative flex min-h-28 flex-col rounded-card bg-surface shadow-card transition-shadow ${qty ? 'ring-2 ring-primary' : 'hover:shadow-lg'}`}>
       <button type="button" onClick={handleAddDefault} title={contents || undefined} className={tileButton}>
-        <span className={`line-clamp-2 text-sm leading-5 font-medium text-ink ${plain ? '' : 'pe-7'}`}>{dish.name}</span>
+        <span className={`break-words text-sm leading-5 font-medium text-ink ${plain ? '' : 'pe-7'}`}>{dish.name}</span>
         <span className="mt-auto flex w-full items-end justify-between gap-2 pt-2">
           <span className="min-w-0 break-words text-sm font-semibold tabular-nums text-ink">{priceRange(dish.sizes)}</span>
           {qty > 0 && (
