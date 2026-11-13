@@ -32,6 +32,31 @@ if (launchRequest) {
   }
 }
 
+// Existing PWA windows are focused, not navigated blindly: a dirty order or other form must never be discarded.
+type RestoraLaunchQueue = {
+  setConsumer: (consumer: (params: { targetURL: string }) => void) => void;
+};
+(window as Window & { launchQueue?: RestoraLaunchQueue }).launchQueue?.setConsumer(({ targetURL }) => {
+  try {
+    const handlerUrl = new URL(targetURL);
+    const request = handlerUrl.searchParams.get('restoraLaunch');
+    if (!request) return;
+    const launchUrl = new URL(request);
+    if (launchUrl.protocol !== 'web+restora:') return;
+    const route = launchUrl.hostname === 'settings' ? '/settings/printers' : '/orders';
+    if (document.querySelector('form[data-dirty="true"]')) {
+      if (route === '/settings/printers') toast.info('Your current work is still open. Visit Settings → Printers when you are ready to reconnect this PC.');
+      return;
+    }
+    if (window.location.pathname !== route) {
+      window.history.pushState(window.history.state, '', route);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  } catch {
+    // Ignore malformed launch requests from outside the app.
+  }
+});
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Root element not found');
