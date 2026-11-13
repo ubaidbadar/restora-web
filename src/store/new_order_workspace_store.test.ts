@@ -2,47 +2,52 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import useNewOrderWorkspaceStore from './new_order_workspace_store';
 
-const KEY = 'restora-new-order-workspace-v1';
-const DEFAULTS = { sidebarHidden: false, orderPanel: 'column', menuDensity: 'comfortable' };
+const KEY = 'restora-new-order-workspace-v2';
+const DEFAULTS = { sidebarHidden: false, orderPanel: 'split', menuColumns: 'auto' };
 
 describe('new order workspace store', () => {
-  beforeEach(() => {
-    useNewOrderWorkspaceStore.getState().reset();
-  });
-
+  beforeEach(() => useNewOrderWorkspaceStore.getState().reset());
   afterEach(() => vi.restoreAllMocks());
 
-  it('keeps layout choices independent and saves them in this browser', () => {
-    useNewOrderWorkspaceStore.getState().setPreferences({ sidebarHidden: true, orderPanel: 'drawer' });
-    useNewOrderWorkspaceStore.getState().setPreferences({ menuDensity: 'compact' });
+  it('saves independent navigation, order panel and menu column preferences', () => {
+    useNewOrderWorkspaceStore.getState().setPreferences({ sidebarHidden: true });
+    useNewOrderWorkspaceStore.getState().setPreferences({ orderPanel: 'drawer' });
+    useNewOrderWorkspaceStore.getState().setPreferences({ menuColumns: '4' });
 
     expect(useNewOrderWorkspaceStore.getState()).toMatchObject({
       sidebarHidden: true,
       orderPanel: 'drawer',
-      menuDensity: 'compact',
+      menuColumns: '4',
     });
     expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual({
       sidebarHidden: true,
       orderPanel: 'drawer',
-      menuDensity: 'compact',
+      menuColumns: '4',
     });
   });
 
-  it('restores the default layout and removes the saved value', () => {
-    useNewOrderWorkspaceStore.getState().setPreferences({ sidebarHidden: true, orderPanel: 'drawer', menuDensity: 'compact' });
-    useNewOrderWorkspaceStore.getState().reset();
+  it('selects the split workspace without changing dish layout or navigation', () => {
+    useNewOrderWorkspaceStore.getState().setPreferences({ sidebarHidden: true, menuColumns: '3', orderPanel: 'column' });
+    useNewOrderWorkspaceStore.getState().setPreferences({ orderPanel: 'split' });
+    expect(useNewOrderWorkspaceStore.getState()).toMatchObject({
+      sidebarHidden: true,
+      menuColumns: '3',
+      orderPanel: 'split',
+    });
+  });
 
+  it('resets every option to the new three-panel default', () => {
+    useNewOrderWorkspaceStore.getState().setPreferences({ sidebarHidden: true, orderPanel: 'drawer', menuColumns: 'list' });
+    useNewOrderWorkspaceStore.getState().reset();
     expect(useNewOrderWorkspaceStore.getState()).toMatchObject(DEFAULTS);
     expect(localStorage.getItem(KEY)).toBeNull();
   });
 
-  it('keeps working in memory when browser storage is blocked', () => {
+  it('keeps the current layout usable when browser storage is blocked', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('Storage is unavailable', 'SecurityError');
     });
-
-    useNewOrderWorkspaceStore.getState().setPreferences({ sidebarHidden: true });
-
-    expect(useNewOrderWorkspaceStore.getState().sidebarHidden).toBe(true);
+    useNewOrderWorkspaceStore.getState().setPreferences({ menuColumns: '2' });
+    expect(useNewOrderWorkspaceStore.getState().menuColumns).toBe('2');
   });
 });
