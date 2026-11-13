@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
 import api from '../../config/api';
 import useWorkplace from '../../hooks/useWorkplace';
@@ -18,11 +19,15 @@ export default function WorkspaceControls() {
   const workplace = useWorkplace();
   if (!workplace) return null;
   const preferences = workplace.preferences ?? DEFAULT_WORKSPACE_PREFERENCES;
+  const [saving, setSaving] = useState(false);
 
   const save = (orders: Partial<OrderPreferences>) => {
+    if (saving) return;
+    setSaving(true);
     api.patch('/me/preferences', { orders })
       .then((res) => useAuthStore.getState().setWorkplace({ preferences: res.data.preferences }))
-      .catch((err) => toast.error(getAxiosMessage(err)));
+      .catch((err) => toast.error(getAxiosMessage(err)))
+      .finally(() => setSaving(false));
   };
 
   return (
@@ -38,6 +43,7 @@ export default function WorkspaceControls() {
           </div>
           <Toggle
             checked={preferences.orders.sidebarHidden}
+            disabled={saving}
             label="Hide sidebar on the Orders page"
             onChange={(event) => save({ sidebarHidden: event.target.checked })}
           />
@@ -49,18 +55,20 @@ export default function WorkspaceControls() {
           </div>
           <Toggle
             checked={preferences.orders.detailsPanel}
+            disabled={saving}
             label="Show a separate order details panel"
             onChange={(event) => save({ detailsPanel: event.target.checked })}
           />
           <Toggle
             checked={preferences.orders.density === 'compact'}
+            disabled={saving}
             label="Use compact order cards"
             onChange={(event) => save({ density: event.target.checked ? 'compact' : 'comfortable' })}
           />
         </section>
-        <p className="text-xs text-muted">These personal preferences sync with your account and are kept when you use Restora on mobile. The desktop-only layout controls stay off the phone screen.</p>
+        <p className="text-xs text-muted">{saving ? 'Saving your layout…' : 'These personal preferences sync with your account and are kept when you use Restora on mobile. The desktop-only layout controls stay off the phone screen.'}</p>
         <div className="flex justify-end border-t border-border pt-3">
-          <Button variant="ghost" onClick={() => save(DEFAULT_WORKSPACE_PREFERENCES.orders)}>Reset layout</Button>
+          <Button variant="ghost" disabled={saving} onClick={() => save(DEFAULT_WORKSPACE_PREFERENCES.orders)}>Reset layout</Button>
         </div>
       </div>
     </ModalOverlay>
