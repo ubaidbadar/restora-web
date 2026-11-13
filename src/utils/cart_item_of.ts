@@ -17,6 +17,7 @@ export default function cartItemOf(dish: MenuItem, size: MenuSize, addons: Addon
     ...(addons.length && { addons: addons.map(({ name, price }) => ({ name, price })) }),
     ...(trimmed && { note: trimmed }),
     price: size.price + addons.reduce((sum, addon) => sum + addon.price, 0),
+    menuPrice: size.price + addons.reduce((sum, addon) => sum + addon.price, 0),
     qty: 1,
   };
 }
