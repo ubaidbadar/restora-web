@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ReactNode } from 'react';
 import type { RouteObject } from 'react-router';
 import replaceRouteElement from './replace_route_element';
 
@@ -14,7 +15,7 @@ describe('replaceRouteElement', () => {
     const fallback = <p>Not allowed</p>;
 
     const updated = replaceRouteElement(routes, denied, fallback);
-    const updatedParent = updated[0] as RouteObject & { children: RouteObject[]; element: React.ReactNode };
+    const updatedParent = updated[0] as RouteObject & { children: RouteObject[]; element: ReactNode };
 
     expect(updated).not.toBe(routes);
     expect(updatedParent.element).toBe(parent.element);
