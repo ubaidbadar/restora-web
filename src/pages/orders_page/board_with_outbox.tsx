@@ -2,8 +2,7 @@ import { ClipboardList } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import EmptyState from '../../components/empty_state';
 import useBreakpoint from '../../hooks/useBreakpoint';
-import useWorkplace from '../../hooks/useWorkplace';
-import DEFAULT_WORKSPACE_PREFERENCES from '../../constants/default_workspace_preferences';
+import useOrdersWorkspaceStore from '../../store/orders_workspace_store';
 import useOutboxStore from '../../store/outbox_store';
 import type Order from '../../types/order';
 import orderMatches from '../../utils/order_matches';
@@ -26,8 +25,7 @@ interface BoardWithOutboxProps {
 export default function BoardWithOutbox({ orders, onOrderUpdated }: BoardWithOutboxProps) {
   const [params, setParams] = useSearchParams();
   const { lg } = useBreakpoint();
-  const workplace = useWorkplace();
-  const preferences = workplace?.preferences ?? DEFAULT_WORKSPACE_PREFERENCES;
+  const preferences = useOrdersWorkspaceStore();
   const items = useOutboxStore((state) => state.items);
   // `items` is read so the board updates as the outbox changes; withOutbox reads the outbox itself.
   const all = items.length ? withOutbox(orders) : orders;
@@ -35,12 +33,13 @@ export default function BoardWithOutbox({ orders, onOrderUpdated }: BoardWithOut
   const type = params.get('type') ?? 'all';
   const view = params.get('view') ?? 'board';
   const shown = all.filter((order) => (type === 'all' || order.type === type) && orderMatches(order, q));
-  const detailsPanel = lg && preferences.orders.detailsPanel;
+  const detailsPanel = lg && preferences.detailsPanel;
+  const density = lg ? preferences.density : 'comfortable';
   const status = params.get('status') ?? (view === 'list' ? 'all' : 'new');
   const currentStatusOrders = status === 'all'
     ? shown
     : shown.filter((order) => order.status === status || (status === 'new' && order.status === 'pending'));
-  const selectedOrder = shown.find((order) => order._id === params.get('selected')) ?? currentStatusOrders[0] ?? null;
+  const selectedOrder = currentStatusOrders.find((order) => order._id === params.get('selected')) ?? currentStatusOrders[0] ?? null;
   const selectOrder = (order: Order) => setParams((prev) => withParam(prev, 'selected', order._id), { replace: true });
 
   if (!shown.length) {
@@ -64,7 +63,7 @@ export default function BoardWithOutbox({ orders, onOrderUpdated }: BoardWithOut
         detailsPanel={detailsPanel}
         selectedOrderId={detailsPanel ? selectedOrder?._id : undefined}
         onSelectOrder={detailsPanel ? selectOrder : undefined}
-        density={preferences.orders.density}
+        density={density}
       />;
 
   if (!detailsPanel || !selectedOrder) return content;
