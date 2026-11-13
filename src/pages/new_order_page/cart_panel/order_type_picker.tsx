@@ -22,7 +22,7 @@ export default function OrderTypePicker(props: FormComponentProps) {
       {/* Starts from the form's value, not a fixed default: the phone sheet mounts these again each time it opens, and an
           edited order starts with its own type. */}
       <Tabs register={props.register} name="type" label="Order type" options={TYPES} value={type} fill showLabel />
-      {type === 'takeaway' && <Input label="Name (optional)" dir="auto" {...props.register('newName')} />
+      {type === 'takeaway' && <Input label="Name (optional)" dir="auto" {...props.register('newName')} />}
       {type === 'dine_in' && <TableSelect register={props.register} errors={props.errors} required allowTyped defaultTableId={table} />}
       {type === 'delivery' && <DeliveryFields {...props} />}
     </section>
