@@ -30,8 +30,8 @@ const addItem = (items: CartItem[], item: CartItem): CartItem[] =>
 const columnClasses = {
   auto: 'grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))]',
   '2': 'grid-cols-2',
-  '3': 'grid-cols-2 @xl:grid-cols-3',
-  '4': 'grid-cols-2 @xl:grid-cols-3 @3xl:grid-cols-4',
+  '3': 'grid-cols-2 @sm:grid-cols-3',
+  '4': 'grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-4',
   list: '',
 };
 
