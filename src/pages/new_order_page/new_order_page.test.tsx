@@ -195,7 +195,7 @@ describe('New order (desktop)', () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
     pick(/^Khata/);
-    expect(screen.getByText('Khata needs a customer: pick one at the top.')).toBeTruthy();
+    expect(screen.getByText('Khata needs a saved customer: pick one at the top.')).toBeTruthy();
   });
 
   it('finds a customer by name, shows what they owe, and sends them with the order', async () => {
@@ -298,7 +298,7 @@ describe('New order (desktop)', () => {
     pick(/Delivery/);
     fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
-    await waitFor(() => expect((screen.getByLabelText(/Address/) as HTMLInputElement).value).toBe('House 17, Street 4'));
+    await waitFor(() => expect((screen.getByLabelText(/Complete address/) as HTMLTextAreaElement).value).toBe('Gulberg, House 17, Street 4'));
   });
 
   it('keeps a manually entered delivery address when a customer is picked', async () => {
