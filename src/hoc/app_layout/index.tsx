@@ -53,7 +53,6 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const { lg } = useBreakpoint();
   const me = useAuthStore((state) => state.me);
-  const orderEditor = location.pathname === '/orders/new' || /^\/orders\/[^/]+\/edit$/.test(location.pathname);
   // Pages start again (and load fresh data) when the restaurant or branch changes.
   const place = `${me?.workplace?.restaurant._id}:${me?.workplace?.branch?._id}`;
   const TYPING = 'input, textarea, select, [contenteditable="true"]';
