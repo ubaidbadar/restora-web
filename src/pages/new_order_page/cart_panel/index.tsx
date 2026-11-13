@@ -17,7 +17,7 @@ export default function CartPanel({ taxByPaymentMethod, editing, showHeading, sh
     <div id="order-details" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-1 pb-4 md:pt-5">
       {/* Below lg the modal's own title says "Order". */}
       {showHeading && <h2 className="text-heading text-ink">{heading}</h2>}
-      {showLines && <CartLines {...props} />
+      {showLines && <CartLines {...props} />}
       <OrderTypePicker {...props} />
       {/* A placed order is paid from the board, so editing leaves payment out. Without the right to take payments or
           give discounts (a waiter), the order goes in as Pay later, at full price. */}
