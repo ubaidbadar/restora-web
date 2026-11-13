@@ -315,6 +315,7 @@ describe('New order (desktop)', () => {
   it('an empty discount box folds back to the link', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
     fireEvent.click(screen.getByRole('button', { name: 'Add discount' }));
     fireEvent.blur(screen.getByLabelText(/Discount/));
     expect(screen.getByRole('button', { name: 'Add discount' })).toBeTruthy();
