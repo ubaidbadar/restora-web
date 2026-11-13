@@ -51,13 +51,9 @@ function AppLayoutFrame({ lg, me, place }: { lg: boolean; me: ReturnType<typeof 
 
 export default function AppLayout() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { lg } = useBreakpoint();
   const me = useAuthStore((state) => state.me);
-  const sidebarHidden = useNewOrderWorkspaceStore((state) => state.sidebarHidden);
   const orderEditor = location.pathname === '/orders/new' || /^\/orders\/[^/]+\/edit$/.test(location.pathname);
-  const showSidebar = lg && !(orderEditor && sidebarHidden);
-  const expandMain = lg && orderEditor && sidebarHidden;
   // Pages start again (and load fresh data) when the restaurant or branch changes.
   const place = `${me?.workplace?.restaurant._id}:${me?.workplace?.branch?._id}`;
   const TYPING = 'input, textarea, select, [contenteditable="true"]';
