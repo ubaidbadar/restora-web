@@ -97,7 +97,9 @@ describe('New order (desktop)', () => {
 
     const order = screen.getByRole('region', { name: 'Order' });
     const checkout = screen.getByRole('complementary', { name: 'Checkout' });
-    expect(within(order).getByRole('list', { name: 'Items in this order' })).toBeTruthy();
+    const lines = within(order).getByRole('list', { name: 'Items in this order' });
+    expect(lines.parentElement).toBe(order);
+    expect(checkout.className).toContain('fixed inset-y-0 end-0');
     expect(within(checkout).getByRole('heading', { name: 'Checkout' })).toBeTruthy();
     expect(within(checkout).queryByRole('list', { name: 'Items in this order' })).toBeNull();
     expect(within(checkout).getByRole('button', { name: 'Place order' })).toBeTruthy();
