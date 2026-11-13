@@ -1,9 +1,9 @@
 import { Lock } from 'lucide-react';
 import { matchRoutes, Navigate, useLocation, useRoutes } from 'react-router';
-import type { ReactNode } from 'react';
 import type { RouteObject } from 'react-router';
 import type RouteAccess from './types/route_access';
 import resolveRouteAccess from './utils/resolve_route_access';
+import replaceRouteElement from './utils/replace_route_element';
 import AppLayout from './hoc/app_layout';
 import AccountsPage from './pages/accounts_page';
 import CustomerPage from './pages/customer_page';
@@ -158,30 +158,6 @@ const routes: RouteObject[] = [
     ],
   },
 ];
-
-/** Replace only the denied route's element so its existing parent layout remains mounted. */
-function replaceRouteElement(routeList: RouteObject[], target: RouteObject, element: ReactNode): RouteObject[] {
-  let changed = false;
-
-  const next = routeList.map((route) => {
-    if (route === target) {
-      changed = true;
-      return { ...route, element } as RouteObject;
-    }
-
-    if ('children' in route && route.children) {
-      const children = replaceRouteElement(route.children, target, element);
-      if (children !== route.children) {
-        changed = true;
-        return { ...route, children } as RouteObject;
-      }
-    }
-
-    return route;
-  });
-
-  return changed ? next : routeList;
-}
 
 /** Resolves route access from one auth snapshot; the server remains the security boundary. */
 export default function App() {
