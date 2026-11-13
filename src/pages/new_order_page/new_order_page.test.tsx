@@ -7,6 +7,7 @@ import { resetBreakpoints } from '../../hooks/useBreakpoint';
 import getCache from '../../store/get_cache';
 import useAuthStore from '../../store/auth_store';
 import useOutboxStore from '../../store/outbox_store';
+import useNewOrderWorkspaceStore from '../../store/new_order_workspace_store';
 import sampleMe from '../../test/sample_me';
 import type Customer from '../../types/customer';
 import type Menu from '../../types/menu';
@@ -52,7 +53,7 @@ function setWidth(isWide: boolean) {
   wide = isWide;
   window.matchMedia = ((query: string) => ({
     // Wide is a desktop: the order panel docks beside the menu from xl (80rem) up (ui/docked_sheet).
-    matches: query.includes('min-width: 48rem') || query.includes('min-width: 64rem') || query.includes('min-width: 80rem') ? wide : false,
+    matches: query.includes('min-width: 48rem') || query.includes('min-width: 64rem') || query.includes('min-width: 80rem') || query.includes('min-width: 96rem') ? wide : false,
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -77,6 +78,7 @@ const pick = (label: RegExp) => fireEvent.click(screen.getByRole('radio', { name
 
 beforeEach(() => {
   setWidth(true);
+  useNewOrderWorkspaceStore.getState().reset();
   mocked.mockReset();
   mocked.mockImplementation(async (config: { url: string }) => ({ data: answers[config.url] }));
   mocked.post.mockReset();
