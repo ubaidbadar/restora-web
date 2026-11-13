@@ -60,7 +60,7 @@ export default function BoardColumns({ orders, onOrderUpdated, detailsPanel = fa
   return (
     <>
       {!showAllColumns && <Chips name="status" label="Order status" options={tabs} value={status} onChange={setStatus} className="mb-3" />}
-      {xl && (status === 'cancelled' || cancelled.length > 0) && (
+      {showAllColumns && (status === 'cancelled' || cancelled.length > 0) && (
         <div className="-mt-2 mb-3 flex justify-end">
           {status === 'cancelled' ? (
             <Button variant="ghost" icon={ArrowLeft} onClick={() => setStatus('new')}>
