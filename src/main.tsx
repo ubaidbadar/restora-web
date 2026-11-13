@@ -18,6 +18,20 @@ import offlineDb from './utils/offline_db';
 import syncOutbox from './utils/sync_outbox';
 import applyAppearance from './utils/apply_appearance';
 
+// The native PC Agent opens this route through the PWA's registered web+restora protocol.
+const launchRequest = new URLSearchParams(window.location.search).get('restoraLaunch');
+if (launchRequest) {
+  try {
+    const launchUrl = new URL(launchRequest);
+    if (launchUrl.protocol === 'web+restora:') {
+      const route = launchUrl.hostname === 'settings' ? '/settings/printers' : '/orders';
+      window.history.replaceState(window.history.state, '', route);
+    }
+  } catch {
+    // Ignore malformed external launch requests and keep the normal start route.
+  }
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Root element not found');
