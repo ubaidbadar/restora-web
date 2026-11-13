@@ -5,4 +5,6 @@ export default interface CartItem extends OrderItem {
   key: string;
   sizeId?: string;
   addonIds: string[];
+  /** A price for this order line only; the server validates the staff permission and never changes the menu. */
+  priceOverride?: number;
 }
