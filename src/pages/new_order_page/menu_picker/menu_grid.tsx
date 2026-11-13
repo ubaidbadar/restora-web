@@ -31,8 +31,8 @@ const addItem = (items: CartItem[], item: CartItem): CartItem[] =>
  */
 export default function MenuGrid({ menu, search, category, allItems, control, setValue }: MenuGridProps) {
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
-  // Tablet width and up has room for tiles, and the order panel beside them.
-  const { lg: wide } = useBreakpoint();
+  // Wide desktops have room for larger product tiles beside the docked order panel.
+  const { xl: wide } = useBreakpoint();
   const shown = filterMenu(menu, search, category);
   const save = (next: CartItem[]) => setValue('items', next, { shouldDirty: true, shouldValidate: next.length > 0 });
 
@@ -55,7 +55,7 @@ export default function MenuGrid({ menu, search, category, allItems, control, se
     );
   }
   return (
-    <ul aria-label="Dishes" className="grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2.5">
+    <ul aria-label="Dishes" className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-3">
       {shown.map((dish) => <MenuItemTile key={dish._id} {...props(dish)} />)}
     </ul>
   );
