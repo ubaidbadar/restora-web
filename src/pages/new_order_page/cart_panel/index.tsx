@@ -1,4 +1,6 @@
+import { useWatch } from 'react-hook-form';
 import type RestaurantSettings from '@shared/restaurant_settings';
+import useBreakpoint from '../../../hooks/useBreakpoint';
 import Can from '../../../components/can';
 import type FormComponentProps from '../../../types/form_component_props';
 import CartLines from './cart_lines';
@@ -12,24 +14,32 @@ import PaymentPicker from './payment_picker';
  * and totals show once a dish is in the cart, so an empty order is one short hint.
  */
 export default function CartPanel({ taxByPaymentMethod, editing, ...props }: FormComponentProps & Pick<RestaurantSettings, 'taxByPaymentMethod'> & { editing?: boolean }) {
+  const items = useWatch({ control: props.control, name: 'items' }) ?? [];
+  const { xl } = useBreakpoint();
+  const showOrderOptions = !xl || items.length > 0;
+
   return (
     // Scrolls inside the order panel (a sheet on phones), so Place order below it stays in reach.
     <div id="order-details" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-1 pb-4 md:pt-5">
       {/* Below lg the modal's own title says "Order". */}
       <h2 className="text-heading text-ink max-lg:hidden">Order</h2>
       <CartLines {...props} />
-      <OrderTypePicker {...props} />
-      {/* A placed order is paid from the board, so editing leaves payment out. Without the right to take payments or
-          give discounts (a waiter), the order goes in as Pay later, at full price. */}
-      {!editing && (
-        <Can permission="orders:payment">
-          <PaymentPicker {...props} />
-        </Can>
+      {showOrderOptions && (
+        <>
+          <OrderTypePicker {...props} />
+          {/* A placed order is paid from the board, so editing leaves payment out. Without the right to take payments or
+              give discounts (a waiter), the order goes in as Pay later, at full price. */}
+          {!editing && (
+            <Can permission="orders:payment">
+              <PaymentPicker {...props} />
+            </Can>
+          )}
+          <Can permission="orders:discount">
+            <DiscountField {...props} />
+          </Can>
+          <OrderTotals {...props} taxByPaymentMethod={taxByPaymentMethod} />
+        </>
       )}
-      <Can permission="orders:discount">
-        <DiscountField {...props} />
-      </Can>
-      <OrderTotals {...props} taxByPaymentMethod={taxByPaymentMethod} />
     </div>
   );
 }
