@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router';
+import { Outlet, useLocation, useNavigate } from 'react-router';
 import BottomNav from './bottom_nav';
 import SideNav from './side_nav';
 import TableCallsBanner from './table_calls_banner';
@@ -12,12 +12,18 @@ import SyncStatus from './sync_status';
 import AgentReconnect from './agent_reconnect';
 import useBreakpoint from '../../hooks/useBreakpoint';
 import api from '../../config/api';
+import useNewOrderWorkspaceStore from '../../store/new_order_workspace_store';
 
 /** Sidebar on desktop, bottom bar on phones and tablets: only the one in use is rendered. */
 export default function AppLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { lg } = useBreakpoint();
   const me = useAuthStore((state) => state.me);
+  const sidebarHidden = useNewOrderWorkspaceStore((state) => state.sidebarHidden);
+  const orderEditor = location.pathname === '/orders/new' || /^\/orders\/[^/]+\/edit$/.test(location.pathname);
+  const showSidebar = lg && !(orderEditor && sidebarHidden);
+  const expandMain = lg && orderEditor && sidebarHidden;
   // Pages start again (and load fresh data) when the restaurant or branch changes.
   const place = `${me?.workplace?.restaurant._id}:${me?.workplace?.branch?._id}`;
   const TYPING = 'input, textarea, select, [contenteditable="true"]';
@@ -52,12 +58,12 @@ export default function AppLayout() {
     return () => window.removeEventListener('keydown', listener);
   }, []);
   return (
-    <div className="bg-canvas font-body text-ink lg:ps-64">
+    <div className={`bg-canvas font-body text-ink ${showSidebar ? "lg:ps-64" : ""}`}>
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:inset-s-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-primary focus:px-4 focus:py-2 focus:text-on-primary">
         Skip to content
       </a>
-      {lg && <SideNav />}
-      <main id="main" className="mx-auto min-h-dvh w-full max-w-7xl flex flex-col px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
+      {showSidebar && <SideNav />}
+      <main id="main" className={`mx-auto min-h-dvh w-full flex flex-col px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 ${expandMain ? "max-w-none" : "max-w-7xl"}`}>
         <SyncStatus />
         <Can permission="tables:view">
           <TableCallsBanner key={place} />
