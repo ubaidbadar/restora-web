@@ -1,54 +1,37 @@
 import { PanelsTopLeft } from 'lucide-react';
 import Button from '../../ui/button';
-import ModalOverlay from '../../ui/modal/modal';
-import Toggle from '../../ui/toggle';
+import DropdownMenu from '../../ui/dropdown_menu';
 import useOrdersWorkspaceStore from '../../store/orders_workspace_store';
 
-export default function OrdersViewSettings() {
-  const { sidebarHidden, detailsPanel, density, setPreferences, reset } = useOrdersWorkspaceStore();
+interface OrdersViewSettingsProps {
+  page?: 'orders' | 'new-order';
+}
+
+/** A small, anchored menu for desktop-only workspace preferences; order filters stay in their own control. */
+export default function OrdersViewSettings({ page = 'orders' }: OrdersViewSettingsProps) {
+  const { sidebarHidden, detailsPanel, density, menuDensity, setPreferences, reset } = useOrdersWorkspaceStore();
+  const items = page === 'orders'
+    ? [
+        { label: 'Hide navigation sidebar', selected: sidebarHidden, onClick: () => setPreferences({ sidebarHidden: !sidebarHidden }) },
+        { label: 'Separate order details panel', selected: detailsPanel, onClick: () => setPreferences({ detailsPanel: !detailsPanel }) },
+        { label: 'Compact order cards', selected: density === 'compact', onClick: () => setPreferences({ density: density === 'compact' ? 'comfortable' : 'compact' }) },
+        { label: 'Reset layout', section: 'Reset', onClick: reset },
+      ]
+    : [
+        { label: 'Hide navigation sidebar', selected: sidebarHidden, onClick: () => setPreferences({ sidebarHidden: !sidebarHidden }) },
+        { label: 'Compact dish tiles', selected: menuDensity === 'compact', onClick: () => setPreferences({ menuDensity: menuDensity === 'compact' ? 'comfortable' : 'compact' }) },
+        { label: 'Reset layout', section: 'Reset', onClick: reset },
+      ];
 
   return (
-    <ModalOverlay
-      title="Orders view options"
-      component={({ open }) => (
-        <Button type="button" variant="outline" icon={PanelsTopLeft} onClick={open}>
+    <DropdownMenu
+      trigger={(open) => (
+        <Button type="button" variant="outline" icon={PanelsTopLeft} aria-haspopup="menu" aria-expanded={open}>
           View options
         </Button>
       )}
-    >
-      <div className="flex flex-col gap-5">
-        <section className="flex flex-col gap-3">
-          <div>
-            <h3 className="font-semibold text-ink">Workspace</h3>
-            <p className="mt-1 text-sm text-muted">Choose how much room the Orders page uses on your desktop.</p>
-          </div>
-          <Toggle
-            checked={sidebarHidden}
-            label="Hide navigation sidebar"
-            onChange={(event) => setPreferences({ sidebarHidden: event.target.checked })}
-          />
-          <Toggle
-            checked={detailsPanel}
-            label="Show a separate order details panel"
-            onChange={(event) => setPreferences({ detailsPanel: event.target.checked })}
-          />
-        </section>
-        <section className="flex flex-col gap-3 border-t border-border pt-5">
-          <div>
-            <h3 className="font-semibold text-ink">Order cards</h3>
-            <p className="mt-1 text-sm text-muted">Compact cards show more orders at once. Comfortable keeps the current spacing.</p>
-          </div>
-          <Toggle
-            checked={density === 'compact'}
-            label="Use compact order cards"
-            onChange={(event) => setPreferences({ density: event.target.checked ? 'compact' : 'comfortable' })}
-          />
-        </section>
-        <p className="text-xs text-muted">These settings affect only the desktop Orders page and are saved in this browser. New Order, phones and tablets keep their existing layout.</p>
-        <div className="flex justify-end border-t border-border pt-3">
-          <Button type="button" variant="ghost" onClick={reset}>Reset to defaults</Button>
-        </div>
-      </div>
-    </ModalOverlay>
+      items={items}
+      menuClassName="w-64"
+    />
   );
 }
