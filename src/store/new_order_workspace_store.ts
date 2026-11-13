@@ -2,10 +2,9 @@ import type NewOrderWorkspaceState from '../types/new_order_workspace_state';
 import createStore from './create_store';
 
 const KEY = 'restora-new-order-workspace-v1';
-type Preferences = Pick<NewOrderWorkspaceState, 'sidebarHidden' | 'orderPanel' | 'menuDensity'>;
-const DEFAULTS: Preferences = { sidebarHidden: false, orderPanel: 'column', menuDensity: 'comfortable' };
+const DEFAULTS: Pick<NewOrderWorkspaceState, 'sidebarHidden' | 'orderPanel' | 'menuDensity'> = { sidebarHidden: false, orderPanel: 'column', menuDensity: 'comfortable' };
 
-function readPreferences(): Preferences {
+function readPreferences(): Pick<NewOrderWorkspaceState, 'sidebarHidden' | 'orderPanel' | 'menuDensity'> {
   try {
     const saved = JSON.parse(window.localStorage.getItem(KEY) ?? 'null');
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return DEFAULTS;
@@ -22,7 +21,7 @@ function readPreferences(): Preferences {
 const useNewOrderWorkspaceStore = createStore<NewOrderWorkspaceState>((set, get) => ({
   ...readPreferences(),
   setPreferences: (patch) => {
-    const preferences: Preferences = {
+    const preferences: Pick<NewOrderWorkspaceState, 'sidebarHidden' | 'orderPanel' | 'menuDensity'> = {
       sidebarHidden: patch.sidebarHidden ?? get().sidebarHidden,
       orderPanel: patch.orderPanel ?? get().orderPanel,
       menuDensity: patch.menuDensity ?? get().menuDensity,
