@@ -35,9 +35,9 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
   const [search, setSearch] = useState('');
   // Editing an order starts with its customer picked: the full record when the customer list is already loaded.
   const [customer, setCustomer] = useState<Customer | null>(() =>
-    picked
+    picked?._id
       ? ((getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((saved) => saved._id === picked._id) ??
-        { _id: picked._id, name: picked.name, phone: picked.phone, tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: '' })
+        { _id: picked._id, name: picked.name, phone: picked.phone ?? '', tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: '' })
       : null,
   );
 
@@ -84,14 +84,16 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
       ? getCache.get(getCache.keyOf(`/customers/${previousId}`)) as Customer | undefined
       : undefined;
     const savedAddress = previous?.addresses?.find(address => address.trim());
-    if (!watch('address') || (savedAddress && watch('address') === savedAddress)) setValue('address', '');
-    if (!watch('area') || (previous?.area && watch('area') === previous.area)) setValue('area', '');
+    const completeAddress = savedAddress && previous?.area && !savedAddress.toLowerCase().includes(previous.area.toLowerCase())
+      ? `${previous.area}, ${savedAddress}`
+      : savedAddress || previous?.area;
+    if (!watch('address') || (completeAddress && watch('address') === completeAddress)) setValue('address', '');
   };
 
   const pick = (chosen: Customer) => {
     if (watch('customerId') !== chosen._id) clearPreviousDelivery();
     setValue('customerId', chosen._id, { shouldDirty: true });
-    setValue('newName', undefined);
+    setValue('newName', chosen.name);
     setValue('newPhone', undefined);
     setCustomer(chosen);
     setSearch('');
@@ -100,7 +102,7 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
   const clear = () => {
     clearPreviousDelivery();
     setValue('customerId', undefined, { shouldDirty: true });
-    setValue('newName', undefined);
+    if (customer && watch('newName') === customer.name) setValue('newName', undefined);
     setValue('newPhone', undefined);
     setCustomer(null);
   };
