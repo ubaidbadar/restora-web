@@ -11,7 +11,7 @@ import PaymentPicker from './payment_picker';
  * The order: its lines, type, payment and discount. Every field is registered here or in a child. Type, payment, discount
  * and totals show once a dish is in the cart, so an empty order is one short hint.
  */
-export default function CartPanel({ taxByPaymentMethod, editing, ...props }: FormComponentProps & Pick<RestaurantSettings, 'taxByPaymentMethod'> & { editing?: boolean }) {
+export default function CartPanel({ taxByPaymentMethod, editing, ...props }: FormComponentProps & Pick<RestaurantSettings, 'taxByPaymentMethod' | 'dineInServiceCharge'> & { editing?: boolean }) {
   return (
     // Scrolls inside the order panel (a sheet on phones), so Place order below it stays in reach.
     <div id="order-details" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-1 pb-4 md:pt-5">
@@ -29,7 +29,7 @@ export default function CartPanel({ taxByPaymentMethod, editing, ...props }: For
       <Can permission="orders:discount">
         <DiscountField {...props} />
       </Can>
-      <OrderTotals {...props} taxByPaymentMethod={taxByPaymentMethod} />
+      <OrderTotals {...props} taxByPaymentMethod={taxByPaymentMethod} dineInServiceCharge={dineInServiceCharge} />
     </div>
   );
 }
