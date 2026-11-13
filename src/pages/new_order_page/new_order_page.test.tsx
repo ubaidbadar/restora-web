@@ -90,6 +90,18 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe('New order (desktop)', () => {
+  it('keeps an empty desktop cart focused on adding dishes, then reveals checkout choices', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    expect(screen.queryByRole('radio', { name: /Dine-in/ })).toBeNull();
+    expect(screen.queryByRole('radio', { name: /^Paid now$/ })).toBeNull();
+
+    fireEvent.click(dishTile('Chicken Karahi'));
+
+    expect(screen.getByRole('radio', { name: /Dine-in/ })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Paid now$/ })).toBeTruthy();
+  });
+
   it('shows an explicit quick-add action on product tiles', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
@@ -164,6 +176,7 @@ describe('New order (desktop)', () => {
   it('warns at once that khata needs a customer', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
     pick(/^Khata/);
     expect(screen.getByText('Khata needs a customer: pick one at the top.')).toBeTruthy();
   });
