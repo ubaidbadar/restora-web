@@ -9,7 +9,6 @@ import useBreakpoint from '../../../hooks/useBreakpoint';
 import useWorkplace from '../../../hooks/useWorkplace';
 import useGet from '../../../hooks/useGet';
 import type OrderHistory from '../../../types/order_history';
-import type Order from '../../../types/order';
 import type OrderStatus from '../../../types/order_status';
 import Chips from '../../../ui/chips';
 import formatRs from '../../../utils/format_rs';
