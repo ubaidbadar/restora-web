@@ -13,9 +13,9 @@ export default function CartLine({ line, onQty }: CartLineProps) {
   return (
     <li className="flex items-center justify-between gap-2 py-1.5 overflow-hidden">
       <span className="min-w-0">
-        <span className="block truncate text-sm font-medium text-ink"><bdi>{line.name}</bdi></span>
-        {details && <span className="block truncate text-sm text-body">{details}</span>}
-        {line.note && <span dir="auto" className="block truncate text-sm text-muted italic">“{line.note}”</span>}
+        <span className="block truncate text-sm font-medium text-ink lg:overflow-visible lg:whitespace-normal lg:break-words"><bdi>{line.name}</bdi></span>
+        {details && <span className="block truncate text-sm text-body lg:overflow-visible lg:whitespace-normal lg:break-words">{details}</span>}
+        {line.note && <span dir="auto" className="block truncate text-sm text-muted italic lg:overflow-visible lg:whitespace-normal lg:break-words">“{line.note}”</span>}
         <span className="text-sm tabular-nums text-muted">{formatRs(line.price * line.qty)}</span>
       </span>
       <QtyStepper itemId={line.key} name={line.name} qty={line.qty} onChange={onQty} />
