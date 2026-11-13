@@ -34,7 +34,7 @@ const densityClasses = {
 };
 
 /**
- * The dishes: a compact list on phones, tiles from tablet width. Reads `items` only to show each dish's quantity;
+ * The dishes: a compact list on phones and tablets, tiles on desktop. Reads `items` only to show each dish's quantity;
  * tapping writes `items` with setValue.
  */
 export default function MenuGrid({ menu, menuDensity, search, category, allItems, control, setValue }: MenuGridProps) {
