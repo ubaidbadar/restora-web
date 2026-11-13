@@ -25,6 +25,7 @@ import type FormComponentProps from '../../types/form_component_props';
 import orderSchema from './schema';
 import type { FieldValues } from 'react-hook-form';
 import getCache from '../../store/get_cache';
+import completeAddress from '../../utils/complete_address';
 import useOutboxStore from '../../store/outbox_store';
 import type Customer from '../../types/customer';
 import type Order from '../../types/order';
@@ -180,7 +181,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             tableId: order.tableId,
             tableName: order.tableName,
             area: undefined,
-            address: order.type === 'delivery' ? [order.area, order.address].filter(Boolean).join(', ') : order.address,
+            address: order.type === 'delivery' ? completeAddress(order.address, order.area) : order.address,
             newName: order.customer?.name,
             rider: order.rider,
             deliveryFee: order.deliveryFee,
