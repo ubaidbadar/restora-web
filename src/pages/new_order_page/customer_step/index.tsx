@@ -7,6 +7,7 @@ import FormDrawer from '../../../components/form_drawer';
 import customerSchema from '../../../constants/customer_schema';
 import useGet from '../../../hooks/useGet';
 import getCache from '../../../store/get_cache';
+import completeAddress from '../../../utils/complete_address';
 import useAuthStore from '../../../store/auth_store';
 import useOutboxStore from '../../../store/outbox_store';
 import type Customer from '../../../types/customer';
@@ -83,11 +84,8 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
     const previous = previousId
       ? getCache.get(getCache.keyOf(`/customers/${previousId}`)) as Customer | undefined
       : undefined;
-    const savedAddress = previous?.addresses?.find(address => address.trim());
-    const completeAddress = savedAddress && previous?.area && !savedAddress.toLowerCase().includes(previous.area.toLowerCase())
-      ? `${previous.area}, ${savedAddress}`
-      : savedAddress || previous?.area;
-    if (!watch('address') || (completeAddress && watch('address') === completeAddress)) setValue('address', '');
+    const address = completeAddress(previous?.addresses?.find((saved) => saved.trim()), previous?.area);
+    if (!watch('address') || (address && watch('address') === address)) setValue('address', '');
   };
 
   const pick = (chosen: Customer) => {
