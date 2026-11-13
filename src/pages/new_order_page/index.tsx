@@ -100,31 +100,36 @@ const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.key
 const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing }) => {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
-  const { lg } = useBreakpoint();
+  const { xl } = useBreakpoint();
   // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
 
   return (
     <>
-      <div className="min-w-0 w-full">
-        {order ? (
-          <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board.">
-            {lg && <OrdersViewSettings page="new-order" />}
-          </PageHeader>
-        ) : (
-          <PageHeader backTo='/orders' title="New order" subtitle="Find the customer, tap dishes, place the order">
-            {lg && <OrdersViewSettings page="new-order" />}
-          </PageHeader>
-        )}
-        <div className="flex min-w-0 flex-col gap-5">
+      <div className="min-w-0 w-full xl:flex xl:h-[calc(100dvh-8rem)] xl:min-h-[34rem] xl:flex-col xl:overflow-hidden xl:pe-[26rem]">
+        <div className="flex gap-1 xl:shrink-0">
+          {order ? (
+            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board.">
+              {xl && <OrdersViewSettings page="new-order" />}
+            </PageHeader>
+          ) : (
+            <PageHeader backTo='/orders' title="New order" subtitle="Choose a customer, add dishes and review the order">
+              {xl && <OrdersViewSettings page="new-order" />}
+            </PageHeader>
+          )}
+        </div>
+        <div className="flex min-w-0 flex-col gap-5 xl:min-h-0 xl:flex-1 xl:gap-4">
           <CustomerStep {...props} picked={order?.customer ?? (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })} />
-          <MenuPicker {...props} />
+          <div className="min-h-0 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain xl:pe-1">
+            <MenuPicker {...props} />
+          </div>
         </div>
       </div>
 
-      {/* Beside the menu from tablet width; on phones a bottom sheet, opened from the cart bar. */}
+      {/* A full-height order workspace on wide desktops; tablets and phones keep the familiar order sheet. */}
       <DockedSheet
         label="Order"
+        className="xl:w-[24rem]"
         component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} onOpen={open} />}
       >
         <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} />
@@ -142,7 +147,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
   return (
     <>
       <Form
-        className="grid min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]"
+        className="flex items-end md:justify-end"
         id={ORDER_FORM}
         component={(props) => <Main {...props} editing={editing} />}
         schema={orderSchema}

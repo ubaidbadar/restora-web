@@ -2,6 +2,7 @@ import { UtensilsCrossed } from 'lucide-react';
 import { useWatch } from 'react-hook-form';
 import EmptyState from '../../../components/empty_state';
 import useBreakpoint from '../../../hooks/useBreakpoint';
+import useOrdersWorkspaceStore from '../../../store/orders_workspace_store';
 import type CartItem from '../../../types/cart_item';
 import type FormComponentProps from '../../../types/form_component_props';
 import type Menu from '../../../types/menu';
@@ -11,7 +12,6 @@ import filterMenu from '../../../utils/filter_menu';
 import setQty from '../../../utils/set_qty';
 import MenuDishRow from './menu_dish_row';
 import MenuItemTile from './menu_item_tile';
-import useOrdersWorkspaceStore from '../../../store/orders_workspace_store';
 
 interface MenuGridProps extends FormComponentProps {
   menu: Menu;
@@ -32,8 +32,8 @@ const addItem = (items: CartItem[], item: CartItem): CartItem[] =>
  */
 export default function MenuGrid({ menu, search, category, allItems, control, setValue }: MenuGridProps) {
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
-  // Tablet width and up has room for tiles, and the order panel beside them.
-  const { lg: wide } = useBreakpoint();
+  // Wide desktops have room for larger product tiles beside the docked order panel.
+  const { xl: wide } = useBreakpoint();
   const { menuDensity } = useOrdersWorkspaceStore();
   const density = wide ? menuDensity : 'comfortable';
   const shown = filterMenu(menu, search, category);

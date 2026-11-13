@@ -44,7 +44,7 @@ export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'rec
       const items = kind === 'kitchen' && printer.categoryIds.length ? order.items.filter((item) => printer.categoryIds.includes(categoryOf(item.itemId) ?? '')) : order.items;
       if (!items.length) continue;
       const body = { branchId, printer: printer.systemName, kind, width: printer.width, copies: printer.copies, order: { ...order, items }, header };
-      const send = (orderKey: string) => agentFetch('/print', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, orderKey }) }, 30_000);
+      const send = (orderKey: string) => agentFetch('/print', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, orderKey }) }, 60_000);
       let res = await send(key ?? order._id);
       // Asked for again by a person: a reprint, with a key of its own.
       if (!key && res.ok && (await res.json()).duplicate) res = await send(`${order._id}~${Date.now().toString(36)}`);

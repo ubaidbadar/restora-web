@@ -6,22 +6,21 @@ import ModalOverlay from './modal/modal';
 interface DockedSheetProps {
   /** The sheet's title, e.g. "Order". */
   label: string;
-  /** What opens the sheet on phones (e.g. a bar with the total); not shown from tablet width. */
+  /** What opens the sheet below wide-desktop width (e.g. a bar with the total). */
   component: OverlayTrigger;
   children: ReactNode;
-  /** Extra classes for the docked column (tablet width and up). */
+  /** Extra classes for the docked column on wide desktops. */
   className?: string;
 }
 
 /**
- * A modal (a sheet from the bottom on a phone) below desktop width, opened by `component`; from desktop width (lg) up the same content is docked in place as a
- * sticky column instead. The sheet's content exists only while it is open: form fields inside keep their values in the
- * form, but a submit button there sits outside the <form> (the sheet is a portal), so it names the form with `form`.
+ * Below wide-desktop width the order opens in a sheet. At xl the same content docks beside the menu, where both columns
+ * can be used together without squeezing the menu on laptop and tablet-sized screens.
  */
 export default function DockedSheet({ label, component, children, className = '' }: DockedSheetProps) {
-  const { lg } = useBreakpoint();
+  const { xl } = useBreakpoint();
 
-  if (!lg) {
+  if (!xl) {
     return (
       <ModalOverlay title={label} flush component={component}>
         {children}
@@ -29,7 +28,7 @@ export default function DockedSheet({ label, component, children, className = ''
     );
   }
   return (
-    <section aria-label={label} className={`sticky top-8 flex h-[calc(100dvh-4rem)] min-w-0 w-full flex-col overflow-hidden rounded-card bg-surface shadow-card ${className}`}>
+    <section aria-label={label} className={`fixed w-90 bottom-8 top-4 flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-card bg-surface shadow-card xl:top-8 ${className}`}>
       {children}
     </section>
   );

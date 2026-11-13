@@ -2,27 +2,51 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import agentFetch from './agent_fetch';
 
-describe('agentFetch', () => {
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.unstubAllGlobals();
-  });
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
-  it('aborts a localhost request when its deadline expires', async () => {
-    vi.useFakeTimers();
-    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
-      const signal = init?.signal;
-      signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
-    }));
+describe('agentFetch', () => {
+  it('marks local calls as loopback and gives status checks a finite timeout', async () => {
+    const timeout = AbortSignal.abort();
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeout);
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal('fetch', fetchMock);
 
-    const request = agentFetch('/status', {}, 1_000);
-    await vi.advanceTimersByTimeAsync(1_000);
+    await agentFetch('/status');
 
-    await expect(request).rejects.toMatchObject({ name: 'TimeoutError' });
+    expect(timeoutSpy).toHaveBeenCalledWith(10_000);
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:17777/status',
-      expect.objectContaining({ targetAddressSpace: 'loopback' }),
+      expect.objectContaining({ targetAddressSpace: 'loopback', signal: timeout }),
+    );
+  });
+
+  it('allows longer print requests and respects a caller-provided abort signal', async () => {
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
+    const signal = AbortSignal.abort();
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await agentFetch('/print', { signal });
+
+    expect(timeoutSpy).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ targetAddressSpace: 'loopback', signal });
+  });
+
+  it('accepts a per-call timeout override for slower local operations', async () => {
+    const timeout = AbortSignal.abort();
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeout);
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await agentFetch('/status', {}, 4_000);
+
+    expect(timeoutSpy).toHaveBeenCalledWith(4_000);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:17777/status',
+      expect.objectContaining({ targetAddressSpace: 'loopback', signal: timeout }),
     );
   });
 });

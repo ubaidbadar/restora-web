@@ -1,27 +1,12 @@
 import AGENT_URL from '../constants/agent_url';
 
-/**
- * A call to the print agent on this PC. Chrome and Edge gate loopback requests behind Local Network Access permission;
- * every request has a deadline so a stopped or unresponsive local process cannot leave the UI waiting forever.
- */
-export default function agentFetch(path: string, init: RequestInit = {}, timeoutMs = 5_000): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(
-    () => controller.abort(new DOMException('The Restora Agent did not respond in time.', 'TimeoutError')),
-    timeoutMs,
-  );
-  const externalSignal = init.signal;
-  const abort = () => controller.abort(externalSignal?.reason);
-  if (externalSignal?.aborted) abort();
-  else externalSignal?.addEventListener('abort', abort, { once: true });
-
+/** A local-agent call. Status and pairing fail visibly instead of leaving setup waiting forever. */
+export default function agentFetch(path: string, init: RequestInit = {}, timeoutMs?: number): Promise<Response> {
+  const timeout = timeoutMs ?? (path === '/print' ? 60_000 : path === '/setup/pair' ? 30_000 : 10_000);
   const options: RequestInit & { targetAddressSpace: 'loopback' } = {
     ...init,
-    signal: controller.signal,
+    signal: init.signal ?? AbortSignal.timeout(timeout),
     targetAddressSpace: 'loopback',
   };
-  return fetch(`${AGENT_URL}${path}`, options).finally(() => {
-    window.clearTimeout(timeout);
-    externalSignal?.removeEventListener('abort', abort);
-  });
+  return fetch(`${AGENT_URL}${path}`, options);
 }

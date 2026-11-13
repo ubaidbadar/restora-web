@@ -1,4 +1,4 @@
-import { PanelsTopLeft } from 'lucide-react';
+import { LayoutGrid, PanelsTopLeft, PanelLeft, PanelRight, Rows3, RotateCcw } from 'lucide-react';
 import Button from '../../ui/button';
 import DropdownMenu from '../../ui/dropdown_menu';
 import useOrdersWorkspaceStore from '../../store/orders_workspace_store';
@@ -12,26 +12,32 @@ export default function OrdersViewSettings({ page = 'orders' }: OrdersViewSettin
   const { sidebarHidden, detailsPanel, density, menuDensity, setPreferences, reset } = useOrdersWorkspaceStore();
   const items = page === 'orders'
     ? [
-        { label: 'Hide navigation sidebar', selected: sidebarHidden, onClick: () => setPreferences({ sidebarHidden: !sidebarHidden }) },
-        { label: 'Separate order details panel', selected: detailsPanel, onClick: () => setPreferences({ detailsPanel: !detailsPanel }) },
-        { label: 'Compact order cards', selected: density === 'compact', onClick: () => setPreferences({ density: density === 'compact' ? 'comfortable' : 'compact' }) },
-        { label: 'Reset layout', section: 'Reset', onClick: reset },
+        { section: 'Workspace', label: 'Show navigation sidebar', icon: PanelLeft, selected: !sidebarHidden, onClick: () => setPreferences({ sidebarHidden: false }) },
+        { label: 'Hide navigation sidebar', icon: PanelLeft, selected: sidebarHidden, onClick: () => setPreferences({ sidebarHidden: true }) },
+        { label: 'Show separate order details', icon: PanelRight, selected: detailsPanel, onClick: () => setPreferences({ detailsPanel: true }) },
+        { label: 'Hide separate order details', icon: PanelRight, selected: !detailsPanel, onClick: () => setPreferences({ detailsPanel: false }) },
+        { section: 'Order cards', label: 'Comfortable spacing', icon: Rows3, selected: density === 'comfortable', onClick: () => setPreferences({ density: 'comfortable' }) },
+        { label: 'Compact spacing', icon: LayoutGrid, selected: density === 'compact', onClick: () => setPreferences({ density: 'compact' }) },
+        { section: 'Layout', label: 'Reset to defaults', icon: RotateCcw, onClick: reset },
       ]
     : [
-        { label: 'Hide navigation sidebar', selected: sidebarHidden, onClick: () => setPreferences({ sidebarHidden: !sidebarHidden }) },
-        { label: 'Compact dish tiles', selected: menuDensity === 'compact', onClick: () => setPreferences({ menuDensity: menuDensity === 'compact' ? 'comfortable' : 'compact' }) },
-        { label: 'Reset layout', section: 'Reset', onClick: reset },
+        { section: 'Workspace', label: 'Show navigation sidebar', icon: PanelLeft, selected: !sidebarHidden, onClick: () => setPreferences({ sidebarHidden: false }) },
+        { label: 'Hide navigation sidebar', icon: PanelLeft, selected: sidebarHidden, onClick: () => setPreferences({ sidebarHidden: true }) },
+        { section: 'Dish tiles', label: 'Comfortable tiles', icon: Rows3, selected: menuDensity === 'comfortable', onClick: () => setPreferences({ menuDensity: 'comfortable' }) },
+        { label: 'Compact dish tiles', icon: LayoutGrid, selected: menuDensity === 'compact', onClick: () => setPreferences({ menuDensity: 'compact' }) },
+        { section: 'Layout', label: 'Reset to defaults', icon: RotateCcw, onClick: reset },
       ];
 
   return (
     <DropdownMenu
+      align="right"
+      menuClassName="w-64"
       trigger={(open) => (
         <Button type="button" variant="outline" icon={PanelsTopLeft} aria-haspopup="menu" aria-expanded={open}>
           View options
         </Button>
       )}
       items={items}
-      menuClassName="w-64"
     />
   );
 }
