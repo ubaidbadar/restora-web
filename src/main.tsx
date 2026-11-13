@@ -37,6 +37,24 @@ const router = createBrowserRouter([
   },
 ]);
 
+// The PWA reuses its most recently active window. Keep deep links working, but
+// ignore a plain app launch so opening the PC Agent never resets an order in progress.
+const launchQueue = (window as Window & {
+  launchQueue?: { setConsumer: (consumer: (params: { targetURL: string }) => void) => void };
+}).launchQueue;
+launchQueue?.setConsumer(({ targetURL }) => {
+  try {
+    const target = new URL(targetURL);
+    if (target.origin !== window.location.origin || target.pathname === '/' && !target.search && !target.hash) return;
+    const path = `${target.pathname}${target.search}${target.hash}`;
+    if (path !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+      void router.navigate(path);
+    }
+  } catch {
+    // Ignore malformed or external launch targets.
+  }
+});
+
 // Start: what this device saved last time (the answers screens showed, the outbox), then who is signed in. Without
 // internet the last `/me` saved here keeps the person signed in, so the orders screen works offline.
 Promise.all([getCache.load(), offlineDb.get<Pick<OutboxState, 'items' | 'savedIds'>>('outbox').then((saved) => saved && useOutboxStore.setState(saved))])
