@@ -107,7 +107,7 @@ describe('New order (desktop)', () => {
   it('shows an explicit quick-add action on product tiles', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
-    expect(screen.getAllByText('+ Add').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Tap to add').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Choose options for Biryani' }).textContent).toContain('Choose options');
   });
 
