@@ -6,6 +6,7 @@ import type CartItem from '../../../types/cart_item';
 import type FormComponentProps from '../../../types/form_component_props';
 import type Menu from '../../../types/menu';
 import type MenuItem from '../../../types/menu_item';
+import type NewOrderWorkspaceState from '../../../types/new_order_workspace_state';
 import dealContents from '../../../utils/deal_contents';
 import filterMenu from '../../../utils/filter_menu';
 import setQty from '../../../utils/set_qty';
@@ -13,6 +14,7 @@ import MenuDishRow from './menu_dish_row';
 import MenuItemTile from './menu_item_tile';
 
 interface MenuGridProps extends FormComponentProps {
+  menuDensity: NewOrderWorkspaceState['menuDensity'];
   menu: Menu;
   search: string;
   category: string;
@@ -25,11 +27,17 @@ const addItem = (items: CartItem[], item: CartItem): CartItem[] =>
     ? items.map((line) => (line.key === item.key ? { ...line, qty: line.qty + item.qty } : line))
     : [...items, item];
 
+const densityClasses = {
+  comfortable: 'grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-3',
+  balanced: 'grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] gap-2.5',
+  compact: 'grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2',
+};
+
 /**
  * The dishes: a compact list on phones, tiles from tablet width. Reads `items` only to show each dish's quantity;
  * tapping writes `items` with setValue.
  */
-export default function MenuGrid({ menu, search, category, allItems, control, setValue }: MenuGridProps) {
+export default function MenuGrid({ menu, menuDensity, search, category, allItems, control, setValue }: MenuGridProps) {
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
   // Tablet width and up has room for tiles, and the order panel beside them.
   const { lg: wide } = useBreakpoint();
@@ -55,7 +63,7 @@ export default function MenuGrid({ menu, search, category, allItems, control, se
     );
   }
   return (
-    <ul aria-label="Dishes" className="grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2.5">
+    <ul aria-label="Dishes" className={`grid ${densityClasses[menuDensity]}`}>
       {shown.map((dish) => <MenuItemTile key={dish._id} {...props(dish)} />)}
     </ul>
   );
