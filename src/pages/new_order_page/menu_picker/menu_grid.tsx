@@ -59,13 +59,13 @@ export default function MenuGrid({ menu, menuColumns, search, category, allItems
 
   if (!wide || menuColumns === 'list') {
     return (
-      <ul aria-label="Dishes" className="divide-y divide-border overflow-hidden rounded-card bg-surface shadow-card">
+      <ul aria-label="Dishes" data-columns="list" className="divide-y divide-border overflow-hidden rounded-card bg-surface shadow-card">
         {shown.map((dish) => <MenuDishRow key={dish._id} {...props(dish)} />)}
       </ul>
     );
   }
   return (
-    <ul aria-label="Dishes" className={`grid min-w-0 gap-2.5 ${columnClasses[menuColumns]}`}>
+    <ul aria-label="Dishes" data-columns={menuColumns} className={`grid min-w-0 gap-2.5 ${columnClasses[menuColumns]}`}>
       {shown.map((dish) => <MenuItemTile key={dish._id} {...props(dish)} />)}
     </ul>
   );
