@@ -11,6 +11,7 @@ import filterMenu from '../../../utils/filter_menu';
 import setQty from '../../../utils/set_qty';
 import MenuDishRow from './menu_dish_row';
 import MenuItemTile from './menu_item_tile';
+import useOrdersWorkspaceStore from '../../../store/orders_workspace_store';
 
 interface MenuGridProps extends FormComponentProps {
   menu: Menu;
@@ -33,6 +34,8 @@ export default function MenuGrid({ menu, search, category, allItems, control, se
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
   // Tablet width and up has room for tiles, and the order panel beside them.
   const { lg: wide } = useBreakpoint();
+  const { menuDensity } = useOrdersWorkspaceStore();
+  const density = wide ? menuDensity : 'comfortable';
   const shown = filterMenu(menu, search, category);
   const save = (next: CartItem[]) => setValue('items', next, { shouldDirty: true, shouldValidate: next.length > 0 });
 
@@ -55,8 +58,11 @@ export default function MenuGrid({ menu, search, category, allItems, control, se
     );
   }
   return (
-    <ul aria-label="Dishes" className="grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2.5">
-      {shown.map((dish) => <MenuItemTile key={dish._id} {...props(dish)} />)}
+    <ul aria-label="Dishes" className={density === 'compact'
+      ? 'grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2'
+      : 'grid grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-3'
+    }>
+      {shown.map((dish) => <MenuItemTile key={dish._id} {...props(dish)} density={density} />)}
     </ul>
   );
 }
