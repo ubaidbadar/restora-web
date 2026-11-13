@@ -1,10 +1,7 @@
-type NewOrderWorkspacePreferences = {
+export default interface NewOrderWorkspaceState {
   sidebarHidden: boolean;
   orderPanel: 'column' | 'drawer';
   menuDensity: 'comfortable' | 'balanced' | 'compact';
-};
-
-export default interface NewOrderWorkspaceState extends NewOrderWorkspacePreferences {
-  setPreferences: (patch: Partial<NewOrderWorkspacePreferences>) => void;
+  setPreferences: (patch: Partial<Pick<NewOrderWorkspaceState, 'sidebarHidden' | 'orderPanel' | 'menuDensity'>>) => void;
   reset: () => void;
 }
