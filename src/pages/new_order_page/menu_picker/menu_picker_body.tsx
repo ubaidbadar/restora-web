@@ -9,7 +9,7 @@ import CategoryChips from '../../../components/category_chips';
 import MenuGrid from './menu_grid';
 
 interface MenuPickerBodyProps extends FormComponentProps {
-  menuColumns: NewOrderWorkspaceState['menuDensity'];
+  menuColumns: NewOrderWorkspaceState['menuColumns'];
   /** What can be ordered now (hidden and sold-out dishes are left out). */
   menu: Menu;
   /** Every dish, hidden ones too, to name what is in a deal. */
@@ -17,7 +17,7 @@ interface MenuPickerBodyProps extends FormComponentProps {
 }
 
 /** Search and category are not order fields: they stay local, so filtering re-renders this section only. */
-export default function MenuPickerBody({ menu, menuDensity, ...props }: MenuPickerBodyProps) {
+export default function MenuPickerBody({ menu, menuColumns, ...props }: MenuPickerBodyProps) {
   const [filter, setFilter] = useState({ search: '', category: ALL_CATEGORIES });
 
   return (
@@ -28,7 +28,7 @@ export default function MenuPickerBody({ menu, menuDensity, ...props }: MenuPick
         <SearchInput label="Search menu" initialValue="" delay={150} onSearch={(search) => setFilter((f) => ({ ...f, search }))} />
         <CategoryChips categories={menu.categories} value={filter.category} onChange={(category) => setFilter((f) => ({ ...f, category }))} />
       </div>
-      <MenuGrid menu={menu} menuDensity={menuDensity} {...filter} {...props} />
+      <MenuGrid menu={menu} menuColumns={menuColumns} {...filter} {...props} />
     </section>
   );
 }
