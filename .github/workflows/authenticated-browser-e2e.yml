@@ -1,11 +1,6 @@
 name: Authenticated browser E2E
 
 on:
-  pull_request:
-    branches: [main, dev]
-    paths:
-      - '.github/authenticated-e2e/**'
-      - '.github/workflows/authenticated-browser-e2e.yml'
   workflow_dispatch:
     inputs:
       base_url:
