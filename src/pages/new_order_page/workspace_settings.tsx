@@ -9,7 +9,7 @@ export default function WorkspaceSettings() {
   const items = [
     { section: 'Navigation', label: 'Show sidebar', icon: PanelLeft, selected: !sidebarHidden, onClick: () => setPreferences({ sidebarHidden: false }) },
     { label: 'Hide sidebar', icon: PanelLeft, selected: sidebarHidden, onClick: () => setPreferences({ sidebarHidden: true }) },
-    { section: 'Order details', label: 'Separate right column', icon: PanelRight, selected: orderPanel === 'column', onClick: () => setPreferences({ orderPanel: 'column' }) },
+    { section: 'Order details', label: 'Right column on wide screens', icon: PanelRight, selected: orderPanel === 'column', onClick: () => setPreferences({ orderPanel: 'column' }) },
     { label: 'Open in drawer', icon: PanelRight, selected: orderPanel === 'drawer', onClick: () => setPreferences({ orderPanel: 'drawer' }) },
     { section: 'Dish layout', label: 'Comfortable cards', icon: Rows3, selected: menuDensity === 'comfortable', onClick: () => setPreferences({ menuDensity: 'comfortable' }) },
     { label: 'Balanced cards', icon: LayoutGrid, selected: menuDensity === 'balanced', onClick: () => setPreferences({ menuDensity: 'balanced' }) },
