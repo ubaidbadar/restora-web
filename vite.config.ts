@@ -43,6 +43,8 @@ export default defineConfig(({ command, mode }) => {
           start_url: '/',
           scope: '/',
           display: 'standalone',
+          // A native PC Agent launch should focus an open Restora window without navigating away from an in-progress order.
+          launch_handler: { client_mode: 'focus-existing' },
           orientation: 'any',
           background_color: CANVAS,
           theme_color: CANVAS,
