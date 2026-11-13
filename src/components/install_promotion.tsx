@@ -16,13 +16,13 @@ interface InstallPromotionProps {
 export default function InstallPromotion({ active }: InstallPromotionProps) {
   const [state, setState] = useState({
     prompt: null as BeforeInstallPromptEvent | null,
-    installed: window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true,
+    installed: window.matchMedia?.('(display-mode: standalone)').matches === true || (navigator as Navigator & { standalone?: boolean }).standalone === true,
     dismissed: false,
   });
 
   useEffect(() => {
-    const media = window.matchMedia('(display-mode: standalone)');
-    const isStandalone = () => media.matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    const media = window.matchMedia?.('(display-mode: standalone)');
+    const isStandalone = () => media?.matches === true || (navigator as Navigator & { standalone?: boolean }).standalone === true;
     const beforeInstall = (event: Event) => {
       event.preventDefault();
       if (isStandalone()) return;
@@ -33,11 +33,11 @@ export default function InstallPromotion({ active }: InstallPromotionProps) {
 
     window.addEventListener('beforeinstallprompt', beforeInstall);
     window.addEventListener('appinstalled', installed);
-    media.addEventListener('change', displayModeChanged);
+    media?.addEventListener('change', displayModeChanged);
     return () => {
       window.removeEventListener('beforeinstallprompt', beforeInstall);
       window.removeEventListener('appinstalled', installed);
-      media.removeEventListener('change', displayModeChanged);
+      media?.removeEventListener('change', displayModeChanged);
     };
   }, []);
 
