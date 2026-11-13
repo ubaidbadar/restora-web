@@ -6,7 +6,7 @@ import setQty from '../../../utils/set_qty';
 import CartLine from './cart_line';
 
 /** The lines in the cart. Reads `items` from the form and writes quantity changes back with setValue. */
-export default function CartLines({ control, setValue, errors }: FormComponentProps) {
+export default function CartLines({ control, setValue, errors, register }: FormComponentProps) {
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
   const error = fieldError(errors, 'items');
 
@@ -22,7 +22,7 @@ export default function CartLines({ control, setValue, errors }: FormComponentPr
     <div className='lg:border-dashed lg:border lg:px-4 lg:py-2 lg:flex-1 md:overflow-auto border-border-strong rounded-control'>
       <ul aria-label="Items in this order" className="divide-y divide-border">
         {items.map((line, index) => (
-          <CartLine key={line.key} line={line} index={index} register={arguments[0].register} errors={errors} onQty={(key, qty) => setValue('items', setQty(items, key, qty), { shouldDirty: true })} />
+          <CartLine key={line.key} line={line} index={index} register={register} errors={errors} onQty={(key, qty) => setValue('items', setQty(items, key, qty), { shouldDirty: true })} />
         ))}
       </ul>
     </div>
