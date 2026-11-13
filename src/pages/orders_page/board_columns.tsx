@@ -26,17 +26,21 @@ const pendingFirst = (a: Order, b: Order) => Number(b.status === 'pending') - Nu
 interface BoardColumnsProps {
   orders: Order[];
   onOrderUpdated?: (order: Order) => void;
+  detailsPanel?: boolean;
+  selectedOrderId?: string;
+  onSelectOrder?: (order: Order) => void;
+  density?: 'comfortable' | 'compact';
 }
 
 /**
- * Five equal columns on wide screens (never a sideways scroll); below that, one column at a time picked by the status
- * tabs, and only that column's cards are rendered (a busy board has many). Cancelled orders have their own view: the
- * last tab, or a button above the columns on wide screens.
+ * Five equal columns on wide screens. With the separate details panel, keep one status column beside it so cards stay
+ * readable; status tabs remain available at every desktop width. Phones and tablets keep their existing one-column view.
  */
-export default function BoardColumns({ orders, onOrderUpdated }: BoardColumnsProps) {
+export default function BoardColumns({ orders, onOrderUpdated, detailsPanel = false, selectedOrderId, onSelectOrder, density = 'comfortable' }: BoardColumnsProps) {
   const [params, setParams] = useSearchParams();
   const fresh = useOrderAlertStore((state) => state.fresh);
   const { xl } = useBreakpoint();
+  const showAllColumns = xl && !detailsPanel;
   const status = (params.get('status') ?? 'new') as Shown;
   const setStatus = (value: string) => setParams((prev) => withParam(prev, 'status', value, 'new'), { replace: true });
   const shown = orders.filter((order) => order.status !== 'cancelled');
@@ -55,7 +59,7 @@ export default function BoardColumns({ orders, onOrderUpdated }: BoardColumnsPro
 
   return (
     <>
-      {!xl && <Chips name="status" label="Order status" options={tabs} value={status} onChange={setStatus} className="mb-3" />}
+      {!showAllColumns && <Chips name="status" label="Order status" options={tabs} value={status} onChange={setStatus} className="mb-3" />}
       {xl && (status === 'cancelled' || cancelled.length > 0) && (
         <div className="-mt-2 mb-3 flex justify-end">
           {status === 'cancelled' ? (
@@ -70,10 +74,17 @@ export default function BoardColumns({ orders, onOrderUpdated }: BoardColumnsPro
         </div>
       )}
       {status === 'cancelled' ? (
-        <CancelledOrders orders={cancelled} onOrderUpdated={onOrderUpdated} />
+        <CancelledOrders
+          orders={cancelled}
+          onOrderUpdated={onOrderUpdated}
+          detailsPanel={detailsPanel}
+          selectedOrderId={selectedOrderId}
+          onSelectOrder={onSelectOrder}
+          compact={density === 'compact'}
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-          {(xl ? columns : columns.filter((column) => column.status === status)).map((column) => (
+        <div className={`grid grid-cols-1 gap-4 ${showAllColumns ? 'xl:grid-cols-5' : ''}`}>
+          {(showAllColumns ? columns : columns.filter((column) => column.status === status)).map((column) => (
             <BoardColumn
               key={column.status}
               status={column.status}
@@ -87,7 +98,16 @@ export default function BoardColumns({ orders, onOrderUpdated }: BoardColumnsPro
                 )
               }
             >
-              {column.orders.map((order) => <OrderCard key={order._id} order={order} onOrderUpdated={onOrderUpdated} />)}
+              {column.orders.map((order) => (
+                <OrderCard
+                  key={order._id}
+                  order={order}
+                  onOrderUpdated={onOrderUpdated}
+                  compact={density === 'compact'}
+                  selected={selectedOrderId === order._id}
+                  onSelect={onSelectOrder ? () => onSelectOrder(order) : undefined}
+                />
+              ))}
             </BoardColumn>
           ))}
         </div>
