@@ -7,7 +7,7 @@ import Drawer from './drawer/modal';
 interface DockedSheetProps {
   /** The sheet's title, e.g. "Order". */
   label: string;
-  /** What opens the sheet on phones (e.g. a bar with the total); not shown from tablet width. */
+  /** What opens order details when they are not docked (e.g. a cart summary). */
   component: OverlayTrigger;
   children: ReactNode;
   /** Extra classes for the docked column (tablet width and up). */
@@ -17,9 +17,8 @@ interface DockedSheetProps {
 }
 
 /**
- * A modal (a sheet from the bottom on a phone) below desktop width, opened by `component`; from desktop width (lg) up the same content is docked in place as a
- * sticky column instead. The sheet's content exists only while it is open: form fields inside keep their values in the
- * form, but a submit button there sits outside the <form> (the sheet is a portal), so it names the form with `form`.
+ * Below desktop width, order details open in the existing bottom sheet. On desktop they can stay in a right-hand column
+ * or open in a drawer. The overlay's submit button sits outside the form, so it names the form with `form`.
  */
 export default function DockedSheet({ label, component, children, className = '', mode = 'column' }: DockedSheetProps) {
   const { lg } = useBreakpoint();
