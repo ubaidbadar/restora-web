@@ -11,7 +11,7 @@ export default function orderMatches(order: Order, search: string) {
   return (
     String(order.dailyToken) === q ||
     Boolean(order.customer?.name.toLowerCase().startsWith(q)) ||
-    (digits.length >= 4 && Boolean(order.customer?.phone.includes(digits))) ||
+    (digits.length >= 4 && Boolean(order.customer?.phone?.includes(digits))) ||
     order.tableName?.toLowerCase() === q
   );
 }
