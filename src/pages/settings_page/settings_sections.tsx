@@ -28,7 +28,7 @@ interface SettingsSectionItem {
 const SETTINGS_SECTIONS: SettingsSectionItem[] = [
   { value: 'restaurant', label: 'Restaurant', icon: Store, group: 'Restaurant', content: <RestaurantTab />, permission: 'settings:manage' },
   { value: 'appearance', label: 'Appearance', icon: Palette, group: 'Restaurant', content: <AppearanceTab />, permission: 'settings:manage' },
-  { value: 'tax', label: 'Tax', icon: Percent, group: 'Restaurant', content: <SettingsSection section="tax" />, permission: 'settings:manage' },
+  { value: 'tax', label: 'Tax & charges', icon: Percent, group: 'Restaurant', content: <SettingsSection section="tax" />, permission: 'settings:manage' },
   { value: 'branches', label: 'Branches', icon: Building2, group: 'Restaurant', content: <BranchesCard />, permission: 'branches:manage' },
   { value: 'staff', label: 'Staff', icon: Users, group: 'Team', content: <StaffTab />, permission: 'staff:view' },
   { value: 'roles', label: 'Roles', icon: ShieldCheck, group: 'Team', content: <RolesCard />, permission: 'roles:manage' },
