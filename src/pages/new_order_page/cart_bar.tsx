@@ -10,17 +10,18 @@ import orderTotalsOf from '../../utils/order_totals_of';
 interface CartBarProps extends Pick<FormComponentProps, 'control'>, Pick<RestaurantSettings, 'taxByPaymentMethod'> {
   /** Opens the order sheet. */
   onOpen: () => void;
+  showEmpty?: boolean;
 }
 
 /**
  * The order so far, kept in reach under the menu or beside it when the desktop panel is a drawer; tapping it opens the order to finish and place it. It sits
  * above the gesture bar or home indicator (safe-area inset), clear of the screen's rounded corners.
  */
-export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBarProps) {
+export default function CartBar({ control, taxByPaymentMethod, onOpen, showEmpty = false }: CartBarProps) {
   const watched = useWatch({ control, name: [...ORDER_TOTAL_FIELDS] });
   const { totals, itemCount, type } = orderTotalsOf(watched, taxByPaymentMethod);
 
-  return itemCount ? (
+  return itemCount || showEmpty ? (
     <button
       type="button"
       onClick={onOpen}
