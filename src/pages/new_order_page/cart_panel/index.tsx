@@ -10,8 +10,8 @@ import OrderTypePicker from './order_type_picker';
 import PaymentPicker from './payment_picker';
 
 /**
- * The order: its lines, type, payment and discount. Every field is registered here or in a child. Type, payment, discount
- * and totals show once a dish is in the cart, so an empty order is one short hint.
+ * The order: its lines, type, payment and discount. On wide desktops, checkout choices appear after the first dish;
+ * smaller screens keep their existing sheet controls.
  */
 export default function CartPanel({ taxByPaymentMethod, editing, ...props }: FormComponentProps & Pick<RestaurantSettings, 'taxByPaymentMethod'> & { editing?: boolean }) {
   const items = useWatch({ control: props.control, name: 'items' }) ?? [];
