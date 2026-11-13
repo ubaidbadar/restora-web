@@ -14,7 +14,7 @@ import MenuDishRow from './menu_dish_row';
 import MenuItemTile from './menu_item_tile';
 
 interface MenuGridProps extends FormComponentProps {
-  menuColumns: NewOrderWorkspaceState['menuColumns'];
+  menuDensity: NewOrderWorkspaceState['menuDensity'];
   menu: Menu;
   search: string;
   category: string;
@@ -27,19 +27,17 @@ const addItem = (items: CartItem[], item: CartItem): CartItem[] =>
     ? items.map((line) => (line.key === item.key ? { ...line, qty: line.qty + item.qty } : line))
     : [...items, item];
 
-const columnClasses = {
-  auto: 'grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))]',
-  '2': 'grid-cols-2',
-  '3': 'grid-cols-2 @sm:grid-cols-3',
-  '4': 'grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-4',
-  list: '',
+const densityClasses = {
+  comfortable: 'grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] gap-3',
+  balanced: 'grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2.5',
+  compact: 'grid-cols-[repeat(auto-fill,minmax(8.75rem,1fr))] gap-2',
 };
 
 /**
  * The dishes: a compact list on phones and tablets, tiles on desktop. Reads `items` only to show each dish's quantity;
  * tapping writes `items` with setValue.
  */
-export default function MenuGrid({ menu, menuColumns, search, category, allItems, control, setValue }: MenuGridProps) {
+export default function MenuGrid({ menu, menuDensity, search, category, allItems, control, setValue }: MenuGridProps) {
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
   // Tablet width and up has room for tiles, and the order panel beside them.
   const { lg: wide } = useBreakpoint();
@@ -57,15 +55,15 @@ export default function MenuGrid({ menu, menuColumns, search, category, allItems
     onQty: (key: string, qty: number) => save(setQty(items, key, qty)),
   });
 
-  if (!wide || menuColumns === 'list') {
+  if (!wide) {
     return (
-      <ul aria-label="Dishes" data-columns="list" className="divide-y divide-border overflow-hidden rounded-card bg-surface shadow-card">
+      <ul aria-label="Dishes" className="divide-y divide-border overflow-hidden rounded-card bg-surface shadow-card">
         {shown.map((dish) => <MenuDishRow key={dish._id} {...props(dish)} />)}
       </ul>
     );
   }
   return (
-    <ul aria-label="Dishes" data-columns={menuColumns} className={`grid min-w-0 gap-2.5 ${columnClasses[menuColumns]}`}>
+    <ul aria-label="Dishes" className={`grid ${densityClasses[menuDensity]}`}>
       {shown.map((dish) => <MenuItemTile key={dish._id} {...props(dish)} />)}
     </ul>
   );
