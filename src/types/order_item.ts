@@ -10,6 +10,8 @@ export default interface OrderItem {
   /** A deal: the dishes in one deal, as they were when ordered. */
   includes?: { name: string; sizeName?: string; qty: number }[];
   note?: string;
+  /** Menu-derived unit price when this line was first ordered. */
+  menuPrice?: number;
   price: number;
   qty: number;
 }
