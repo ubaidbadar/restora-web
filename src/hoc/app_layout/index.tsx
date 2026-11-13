@@ -12,15 +12,13 @@ import SyncStatus from './sync_status';
 import AgentReconnect from './agent_reconnect';
 import useBreakpoint from '../../hooks/useBreakpoint';
 import api from '../../config/api';
-import useNewOrderWorkspaceStore from '../../store/new_order_workspace_store';
 
 /** Sidebar on desktop, bottom bar on phones and tablets: only the one in use is rendered. */
 function AppLayoutFrame({ lg, me, place }: { lg: boolean; me: ReturnType<typeof useAuthStore.getState>['me']; place: string }) {
   const location = useLocation();
-  const sidebarHidden = useNewOrderWorkspaceStore((state) => state.sidebarHidden);
   const orderEditor = location.pathname === '/orders/new' || /^\/orders\/[^/]+\/edit$/.test(location.pathname);
-  const showSidebar = lg && !(orderEditor && sidebarHidden);
-  const expandMain = lg && orderEditor && sidebarHidden;
+  const showSidebar = lg && !orderEditor;
+  const expandMain = lg && orderEditor;
 
   return (
     <div className={`bg-canvas font-body text-ink ${showSidebar ? 'lg:ps-64' : ''}`}>
@@ -28,7 +26,13 @@ function AppLayoutFrame({ lg, me, place }: { lg: boolean; me: ReturnType<typeof 
         Skip to content
       </a>
       {showSidebar && <SideNav />}
-      <main id="main" className={`mx-auto min-h-dvh w-full flex flex-col px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 ${expandMain ? "max-w-none" : "max-w-7xl"}`}>
+      <main
+        id="main"
+        className={`mx-auto w-full flex flex-col ${expandMain
+          ? "h-dvh min-h-0 max-w-none overflow-hidden px-0 pt-0 pb-0"
+          : "min-h-dvh max-w-7xl px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12"
+        }`}
+      >
         <SyncStatus />
         <Can permission="tables:view">
           <TableCallsBanner key={place} />
