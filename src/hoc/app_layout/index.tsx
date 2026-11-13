@@ -12,9 +12,42 @@ import SyncStatus from './sync_status';
 import AgentReconnect from './agent_reconnect';
 import useBreakpoint from '../../hooks/useBreakpoint';
 import api from '../../config/api';
-import useNewOrderWorkspaceStore from '../../store/new_order_workspace_store';
 
 /** Sidebar on desktop, bottom bar on phones and tablets: only the one in use is rendered. */
+function AppLayoutFrame({ lg, me, place }: { lg: boolean; me: ReturnType<typeof useAuthStore.getState>['me']; place: string }) {
+  const location = useLocation();
+  const sidebarHidden = useNewOrderWorkspaceStore((state) => state.sidebarHidden);
+  const orderEditor = location.pathname === '/orders/new' || /^\\/orders\\/[^/]+\\/edit$/.test(location.pathname);
+  const showSidebar = lg && !(orderEditor && sidebarHidden);
+  const expandMain = lg && orderEditor && sidebarHidden;
+
+  return (
+    <div className={`bg-canvas font-body text-ink ${showSidebar ? 'lg:ps-64' : ''}`}>
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:inset-s-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-primary focus:px-4 focus:py-2 focus:text-on-primary">
+        Skip to content
+      </a>
+      {showSidebar && <SideNav />}
+      <main id="main" className={`mx-auto min-h-dvh w-full flex flex-col px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 ${expandMain ? "max-w-none" : "max-w-7xl"}`}>
+        <SyncStatus />
+        <Can permission="tables:view">
+          <TableCallsBanner key={place} />
+        </Can>
+        <div key={place} className="contents">
+          <Outlet />
+        </div>
+      </main>
+      <Can permission="orders:view">
+        <LiveUpdates key={place} />
+      </Can>
+      <Can permission="devices:manage">
+        <AgentReconnect key={place} />
+      </Can>
+      {me?.device && <PosIdleLock seconds={me.device.settings.idleLockSeconds} />}
+      {!lg && <BottomNav />}
+    </div>
+  );
+}
+
 export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -57,29 +90,5 @@ export default function AppLayout() {
     window.addEventListener('keydown', listener);
     return () => window.removeEventListener('keydown', listener);
   }, []);
-  return (
-    <div className={`bg-canvas font-body text-ink ${showSidebar ? "lg:ps-64" : ""}`}>
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:inset-s-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-primary focus:px-4 focus:py-2 focus:text-on-primary">
-        Skip to content
-      </a>
-      {showSidebar && <SideNav />}
-      <main id="main" className={`mx-auto min-h-dvh w-full flex flex-col px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 ${expandMain ? "max-w-none" : "max-w-7xl"}`}>
-        <SyncStatus />
-        <Can permission="tables:view">
-          <TableCallsBanner key={place} />
-        </Can>
-        <div key={place} className="contents">
-          <Outlet />
-        </div>
-      </main>
-      <Can permission="orders:view">
-        <LiveUpdates key={place} />
-      </Can>
-      <Can permission="devices:manage">
-        <AgentReconnect key={place} />
-      </Can>
-      {me?.device && <PosIdleLock seconds={me.device.settings.idleLockSeconds} />}
-      {!lg && <BottomNav />}
-    </div>
-  );
+  return <AppLayoutFrame lg={lg} me={me} place={place} />;
 }
