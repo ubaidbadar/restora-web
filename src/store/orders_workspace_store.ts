@@ -2,7 +2,7 @@ import type OrdersWorkspaceState from '../types/orders_workspace_state';
 import createStore from './create_store';
 
 const KEY = 'restora-orders-workspace-v1';
-const DEFAULTS = { sidebarHidden: false, detailsPanel: false, density: 'comfortable' } as const;
+const DEFAULTS = { sidebarHidden: false, detailsPanel: false, density: 'comfortable', menuDensity: 'comfortable' } as const;
 
 function readPreferences() {
   try {
@@ -12,6 +12,7 @@ function readPreferences() {
       sidebarHidden: typeof saved.sidebarHidden === 'boolean' ? saved.sidebarHidden : false,
       detailsPanel: typeof saved.detailsPanel === 'boolean' ? saved.detailsPanel : false,
       density: saved.density === 'compact' ? 'compact' as const : 'comfortable' as const,
+      menuDensity: saved.menuDensity === 'compact' ? 'compact' as const : 'comfortable' as const,
     };
   } catch {
     return DEFAULTS;
@@ -25,6 +26,7 @@ const useOrdersWorkspaceStore = createStore<OrdersWorkspaceState>((set, get) => 
       sidebarHidden: patch.sidebarHidden ?? get().sidebarHidden,
       detailsPanel: patch.detailsPanel ?? get().detailsPanel,
       density: patch.density ?? get().density,
+      menuDensity: patch.menuDensity ?? get().menuDensity,
     };
     try {
       window.localStorage.setItem(KEY, JSON.stringify(preferences));

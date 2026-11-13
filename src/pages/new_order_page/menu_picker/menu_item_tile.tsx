@@ -1,3 +1,4 @@
+import { Plus, SlidersHorizontal } from 'lucide-react';
 import type AddonGroup from '../../../types/addon_group';
 import type CartItem from '../../../types/cart_item';
 import type MenuItem from '../../../types/menu_item';
@@ -13,51 +14,54 @@ interface MenuItemTileProps {
   /** This dish's lines in the cart. */
   lines: CartItem[];
   onAdd: (item: CartItem) => void;
-  /** Unused on tiles (the order panel has the steppers); kept so rows and tiles take the same props. */
-  onQty?: (key: string, qty: number) => void;
+  density: 'comfortable' | 'compact';
 }
 
-const tileButton = 'flex min-h-0 flex-1 cursor-pointer flex-col items-start rounded-card p-3 text-start -outline-offset-2';
-
-/** The main tile is a clear quick-add action; dishes with sizes or add-ons have a separate, labelled Options action. */
-export default function MenuItemTile({ dish, groups, contents, lines, onAdd }: MenuItemTileProps) {
+/**
+ * Simple dishes add in one click. Dishes with sizes or modifiers open their choices first, so a cashier cannot
+ * accidentally add the first size or miss a required option. Quantities stay visible on the tile.
+ */
+export default function MenuItemTile({ dish, groups, contents, lines, onAdd, density }: MenuItemTileProps) {
   const plain = dish.sizes.length === 1 && groups.length === 0;
   const qty = lines.reduce((sum, line) => sum + line.qty, 0);
-
-  const defaultSize = dish.sizes[0]!;
-  const defaultAddons = groups.flatMap((group) => (group.min > 0 && group.options.length > 0 ? [group.options[0]!] : []));
-  const handleAddDefault = () => onAdd(cartItemOf(dish, defaultSize, defaultAddons));
+  const handleAddDefault = () => onAdd(cartItemOf(dish, dish.sizes[0]!, []));
 
   return (
-    <li className={`flex min-h-28 flex-col rounded-card bg-surface shadow-card transition-shadow ${qty ? 'ring-2 ring-primary' : 'hover:shadow-lg'}`}>
-      <button type="button" onClick={handleAddDefault} title={contents || undefined} className={tileButton}>
-        <span className="line-clamp-2 text-sm leading-5 font-medium text-ink">{dish.name}</span>
-        <span className="mt-auto flex w-full items-end justify-between gap-2 pt-2">
-          <span className="min-w-0 truncate text-sm font-semibold tabular-nums text-ink">{priceRange(dish.sizes)}</span>
-          <span className={`shrink-0 text-xs font-semibold ${qty ? 'text-primary' : 'text-muted'}`}>
-            {qty ? `${qty} in order` : '+ Add'}
-          </span>
-        </span>
-      </button>
-      {!plain && (
-        <DishPicker
-          dish={dish}
-          groups={groups}
-          contents={contents}
-          onAdd={onAdd}
-          component={({ open }) => (
-            <button
-              type="button"
-              aria-label={`Options for ${dish.name}`}
-              aria-haspopup="dialog"
-              className="mx-3 mb-2 self-start rounded-small px-2 py-1 text-xs font-semibold text-primary hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-              onClick={open}
-            >
-              Options
-            </button>
-          )}
-        />
+    <DishPicker
+      dish={dish}
+      groups={groups}
+      contents={contents}
+      onAdd={onAdd}
+      component={({ open }) => (
+        <li
+          data-density={density}
+          className={`relative flex ${density === 'compact' ? 'h-28' : 'h-32'} min-w-0 flex-col rounded-card bg-surface shadow-card transition-shadow ${qty ? 'ring-2 ring-primary' : 'hover:shadow-lg'}`}
+        >
+          <button
+            type="button"
+            onClick={plain ? handleAddDefault : open}
+            title={contents || undefined}
+            aria-haspopup={plain ? undefined : 'dialog'}
+            aria-label={plain ? `Add ${dish.name}` : `Choose options for ${dish.name}`}
+            className="flex min-h-0 w-full flex-1 cursor-pointer flex-col items-start rounded-card p-3 text-start -outline-offset-2"
+          >
+            <span className="line-clamp-2 text-sm leading-5 font-semibold text-ink">{dish.name}</span>
+            {contents && <span className="mt-1 line-clamp-1 text-xs text-muted">{contents}</span>}
+            <span className="mt-auto max-w-full truncate text-sm font-semibold tabular-nums text-ink">{priceRange(dish.sizes)}</span>
+            <span className="mt-1 flex w-full items-center justify-between gap-2 text-xs font-medium text-muted">
+              <span className="flex min-w-0 items-center gap-1.5">
+                {plain ? <Plus size={14} aria-hidden="true" /> : <SlidersHorizontal size={14} aria-hidden="true" />}
+                <span className="truncate">{plain ? 'Tap to add' : 'Choose options'}</span>
+              </span>
+              {qty > 0 && (
+                <span aria-label={`${qty} in order`} className="min-w-6 shrink-0 rounded-pill bg-primary px-1.5 text-center text-xs leading-6 font-semibold tabular-nums text-on-primary">
+                  {qty}
+                </span>
+              )}
+            </span>
+          </button>
+        </li>
       )}
-    </li>
+    />
   );
 }

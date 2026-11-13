@@ -18,6 +18,20 @@ import offlineDb from './utils/offline_db';
 import syncOutbox from './utils/sync_outbox';
 import applyAppearance from './utils/apply_appearance';
 
+// The PC Agent opens the installed PWA through the web+restora protocol.
+const routeFromAgentLaunch = (request: string | null): string | undefined => {
+  if (!request) return undefined;
+  try {
+    const launchUrl = new URL(request);
+    if (launchUrl.protocol !== 'web+restora:') return undefined;
+    return launchUrl.hostname === 'settings' ? '/settings/printers' : '/orders';
+  } catch {
+    return undefined;
+  }
+};
+const initialAgentRoute = routeFromAgentLaunch(new URLSearchParams(window.location.search).get('restoraLaunch'));
+if (initialAgentRoute) window.history.replaceState(window.history.state, '', initialAgentRoute);
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Root element not found');
@@ -37,8 +51,7 @@ const router = createBrowserRouter([
   },
 ]);
 
-// The PWA reuses its most recently active window. Keep deep links working, but
-// ignore a plain app launch so opening the PC Agent never resets an order in progress.
+// Focus the existing PWA window for native-agent launches, but preserve unsaved work and ordinary deep links.
 const launchQueue = (window as Window & {
   launchQueue?: { setConsumer: (consumer: (params: { targetURL: string }) => void) => void };
 }).launchQueue;
@@ -46,11 +59,19 @@ launchQueue?.setConsumer(({ targetURL }) => {
   if (!targetURL) return;
   try {
     const target = new URL(targetURL);
-    if (target.origin !== window.location.origin || (target.pathname === '/' && !target.search && !target.hash)) return;
-    const path = `${target.pathname}${target.search}${target.hash}`;
-    if (path !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
-      void router.navigate(path);
+    if (target.origin !== window.location.origin) return;
+    const request = target.searchParams.get('restoraLaunch');
+    const path = request
+      ? routeFromAgentLaunch(request)
+      : target.pathname === '/' && !target.search && !target.hash
+        ? undefined
+        : `${target.pathname}${target.search}${target.hash}`;
+    if (!path) return;
+    if (document.querySelector('form[data-dirty="true"]')) {
+      if (path === '/settings/printers') toast.info('Your current work is still open. Visit Settings → Printers when you are ready to reconnect this PC.');
+      return;
     }
+    if (path !== `${window.location.pathname}${window.location.search}${window.location.hash}`) void router.navigate(path);
   } catch {
     // Ignore malformed or external launch targets.
   }

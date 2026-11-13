@@ -12,6 +12,8 @@ import printSlip from '../../utils/print_slip';
 import printOnThisPc from '../../utils/print_on_this_pc';
 import kitchenChanges from '../../utils/kitchen_changes';
 import PageHeader from '../../components/page_header';
+import useBreakpoint from '../../hooks/useBreakpoint';
+import OrdersViewSettings from '../orders_page/orders_view_settings';
 import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
 import MenuPicker from './menu_picker';
@@ -98,6 +100,7 @@ const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.key
 const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing }) => {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
+  const { xl } = useBreakpoint();
   // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
 
@@ -106,9 +109,13 @@ const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing })
       <div className="min-w-0 w-full xl:flex xl:h-[calc(100dvh-8rem)] xl:min-h-[34rem] xl:flex-col xl:overflow-hidden xl:pe-[26rem]">
         <div className="flex gap-1 xl:shrink-0">
           {order ? (
-            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board." />
+            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board.">
+              {xl && <OrdersViewSettings page="new-order" />}
+            </PageHeader>
           ) : (
-            <PageHeader backTo='/orders' title="New order" subtitle="Choose a customer, add dishes and review the order" />
+            <PageHeader backTo='/orders' title="New order" subtitle="Choose a customer, add dishes and review the order">
+              {xl && <OrdersViewSettings page="new-order" />}
+            </PageHeader>
           )}
         </div>
         <div className="flex min-w-0 flex-col gap-5 xl:min-h-0 xl:flex-1 xl:gap-4">
