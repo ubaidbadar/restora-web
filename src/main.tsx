@@ -43,6 +43,7 @@ const launchQueue = (window as Window & {
   launchQueue?: { setConsumer: (consumer: (params: { targetURL: string }) => void) => void };
 }).launchQueue;
 launchQueue?.setConsumer(({ targetURL }) => {
+  if (!targetURL) return;
   try {
     const target = new URL(targetURL);
     if (target.origin !== window.location.origin || (target.pathname === '/' && !target.search && !target.hash)) return;
