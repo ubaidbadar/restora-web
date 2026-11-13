@@ -7,7 +7,7 @@ import type FormComponentProps from '../../types/form_component_props';
 import formatRs from '../../utils/format_rs';
 import orderTotalsOf from '../../utils/order_totals_of';
 
-interface CartBarProps extends Pick<FormComponentProps, 'control'>, Pick<RestaurantSettings, 'taxByPaymentMethod'> {
+interface CartBarProps extends Pick<FormComponentProps, 'control'>, Pick<RestaurantSettings, 'taxByPaymentMethod' | 'dineInServiceCharge'> {
   /** Opens the order sheet. */
   onOpen: () => void;
 }
@@ -16,9 +16,9 @@ interface CartBarProps extends Pick<FormComponentProps, 'control'>, Pick<Restaur
  * Phones only: the order so far, kept in reach under the menu; tapping it opens the order to finish and place it. It sits
  * above the gesture bar or home indicator (safe-area inset), clear of the screen's rounded corners.
  */
-export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBarProps) {
+export default function CartBar({ control, taxByPaymentMethod, dineInServiceCharge, onOpen }: CartBarProps) {
   const watched = useWatch({ control, name: [...ORDER_TOTAL_FIELDS] });
-  const { totals, itemCount, type } = orderTotalsOf(watched, taxByPaymentMethod);
+  const { totals, itemCount, type } = orderTotalsOf(watched, taxByPaymentMethod, dineInServiceCharge);
 
   return itemCount ? (
     <button
