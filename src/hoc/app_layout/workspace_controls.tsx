@@ -18,8 +18,10 @@ type OrderPreferences = NonNullable<Workplace['preferences']>['orders'];
 export default function WorkspaceControls() {
   const workplace = useWorkplace();
   const [saving, setSaving] = useState(false);
-  if (!workplace) return null;
-  const preferences = workplace.preferences ?? DEFAULT_WORKSPACE_PREFERENCES;
+  // The web bundle may deploy before the backend endpoint. Hide controls until
+  // /me exposes the preferences capability, so live users never save to a missing route.
+  if (!workplace?.preferences) return null;
+  const preferences = workplace.preferences;
 
   const save = (orders: Partial<OrderPreferences>) => {
     if (saving) return;
