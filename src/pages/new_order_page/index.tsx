@@ -20,6 +20,7 @@ import CustomerStep from './customer_step';
 import MenuPicker from './menu_picker';
 import PlaceOrderBar from './place_order_bar';
 import WorkspaceSettings from './workspace_settings';
+import SplitOrderPanel from './split_order_panel';
 import Form from '../../ui/form';
 import type FormComponentProps from '../../types/form_component_props';
 import orderSchema from './schema';
@@ -99,16 +100,21 @@ interface Editing {
 /** The customer whose profile the order was started from (`?customer=<id>`): already loaded by that page. */
 const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.keyOf(`/customers/${id}`)) as Customer | undefined) : undefined);
 
-const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?: Editing; workspace: Pick<NewOrderWorkspaceState, 'orderPanel' | 'menuDensity'> }) => {
+const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?: Editing; workspace: Pick<NewOrderWorkspaceState, 'orderPanel' | 'menuColumns'> }) => {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
   // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
-  const { xl } = useBreakpoint();
+  const { xl, xxl } = useBreakpoint();
+  const split = xxl && workspace.orderPanel === 'split';
 
   return (
     <>
-      <div className={`min-w-0 w-full ${workspace.orderPanel === 'column' ? 'xl:pe-96' : ''}`}>
+      <div className={split
+        ? 'grid w-full min-w-0 grid-cols-[minmax(0,1fr)_minmax(18rem,19rem)_minmax(20rem,21rem)] items-start gap-4'
+        : `min-w-0 w-full ${workspace.orderPanel === 'column' ? 'xl:pe-96' : ''}`
+      }>
+        <div className="min-w-0">
         {/* The bottom bar is hidden on this page below the sidebar width, so it gets its own way back. */}
         <div className="flex gap-1">
           {order ? (
@@ -123,19 +129,27 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
         </div>
         <div className="flex min-w-0 flex-col gap-5">
           <CustomerStep {...props} picked={order?.customer ?? (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })} />
-          <MenuPicker {...props} menuDensity={workspace.menuDensity} />
+          <MenuPicker {...props} menuColumns={workspace.menuColumns} />
         </div>
+        </div>
+        {split && (
+          <SplitOrderPanel
+            {...props}
+            taxByPaymentMethod={taxByPaymentMethod}
+            editing={Boolean(order)}
+            submitLabel={order ? 'Save changes' : 'Place order'}
+          />
+        )}
       </div>
 
-      {/* Keep the cart in a drawer at laptop widths; reserve a side column only when the menu has enough room. */}
-      <DockedSheet
+      {!split && <DockedSheet
         label="Order"
-        mode={workspace.orderPanel}
+        mode={workspace.orderPanel === 'split' ? 'drawer' : workspace.orderPanel}
         component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} showEmpty={Boolean(order)} onOpen={open} />}
       >
         <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} showHeading={xl && workspace.orderPanel === 'column'} />
         <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
-      </DockedSheet>
+      </DockedSheet>}
     </>
   );
 };
