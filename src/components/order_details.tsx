@@ -74,7 +74,7 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
         <span className="tabular-nums">{formatRs(order.total)}</span>
       </p>
       <p className="rounded-control bg-sunken px-3 py-2 text-sm text-body">{[PAYMENT_TEXT[order.paymentStatus], order.paymentMethod && PAYMENT_LABELS[order.paymentMethod]].filter(Boolean).join(' · ')}</p>
-      {customer && <WhatsAppLink phone={customer.phone} message={receiptText(order, restaurantName)}>Send receipt on WhatsApp</WhatsAppLink>}
+      {customer?.phone && <WhatsAppLink phone={customer.phone} message={receiptText(order, restaurantName)}>Send receipt on WhatsApp</WhatsAppLink>}
     </div>
   );
 }
