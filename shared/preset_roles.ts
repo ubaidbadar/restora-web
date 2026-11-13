@@ -12,6 +12,7 @@ const PRESET_ROLES: { key: string; name: string; permissions: Permission[] }[] =
       'orders:update',
       'orders:payment',
       'orders:discount',
+      'orders:price_override',
       'orders:cancel',
       'customers:view',
       'customers:manage',
