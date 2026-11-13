@@ -8,24 +8,25 @@ import formatRs from '../../utils/format_rs';
 import orderTotalsOf from '../../utils/order_totals_of';
 
 interface CartBarProps extends Pick<FormComponentProps, 'control'>, Pick<RestaurantSettings, 'taxByPaymentMethod'> {
-  /** Opens the order sheet. */
+  /** Opens order details. */
   onOpen: () => void;
+  showEmpty?: boolean;
 }
 
 /**
- * Phones only: the order so far, kept in reach under the menu; tapping it opens the order to finish and place it. It sits
- * above the gesture bar or home indicator (safe-area inset), clear of the screen's rounded corners.
+ * A compact cart trigger for the mobile sheet and optional desktop drawer. On phones it stays above the gesture bar
+ * or home indicator (safe-area inset), clear of the screen's rounded corners.
  */
-export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBarProps) {
+export default function CartBar({ control, taxByPaymentMethod, onOpen, showEmpty = false }: CartBarProps) {
   const watched = useWatch({ control, name: [...ORDER_TOTAL_FIELDS] });
   const { totals, itemCount, type } = orderTotalsOf(watched, taxByPaymentMethod);
 
-  return itemCount ? (
+  return itemCount || showEmpty ? (
     <button
       type="button"
       onClick={onOpen}
       aria-haspopup="dialog"
-      className="fixed inset-x-3 bottom-safe z-30 flex h-14 cursor-pointer items-center gap-3 rounded-panel bg-primary px-4 text-start text-on-primary shadow-lg transition-colors hover:bg-primary-hover md:inset-x-6"
+      className="fixed inset-x-3 bottom-safe z-30 flex h-14 cursor-pointer items-center gap-3 rounded-panel bg-primary px-4 text-start text-on-primary shadow-lg transition-colors hover:bg-primary-hover md:inset-x-6 lg:inset-x-auto lg:inset-e-8 lg:w-80"
     >
       <span aria-label={`${itemCount} items`} className="min-w-7 rounded-small bg-on-primary/15 px-1.5 py-0.5 text-center text-sm font-semibold tabular-nums">
         {itemCount}

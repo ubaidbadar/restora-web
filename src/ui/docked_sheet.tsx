@@ -2,24 +2,26 @@ import type { ReactNode } from 'react';
 import useBreakpoint from '../hooks/useBreakpoint';
 import type OverlayTrigger from '../types/overlay_trigger';
 import ModalOverlay from './modal/modal';
+import Drawer from './drawer/modal';
 
 interface DockedSheetProps {
   /** The sheet's title, e.g. "Order". */
   label: string;
-  /** What opens the sheet on phones (e.g. a bar with the total); not shown from tablet width. */
+  /** What opens order details when they are not docked (e.g. a cart summary). */
   component: OverlayTrigger;
   children: ReactNode;
   /** Extra classes for the docked column (tablet width and up). */
   className?: string;
+  /** Keep the order beside the menu, or open it only when the cart is selected. */
+  mode?: 'column' | 'drawer';
 }
 
 /**
- * A modal (a sheet from the bottom on a phone) below desktop width, opened by `component`; from desktop width (lg) up the same content is docked in place as a
- * sticky column instead. The sheet's content exists only while it is open: form fields inside keep their values in the
- * form, but a submit button there sits outside the <form> (the sheet is a portal), so it names the form with `form`.
+ * Phones and tablets keep the existing bottom sheet. Laptop-width screens use a drawer so the menu is not squeezed;
+ * wide screens can keep order details in a right-hand column or open them in a drawer.
  */
-export default function DockedSheet({ label, component, children, className = '' }: DockedSheetProps) {
-  const { lg } = useBreakpoint();
+export default function DockedSheet({ label, component, children, className = '', mode = 'column' }: DockedSheetProps) {
+  const { lg, xl } = useBreakpoint();
 
   if (!lg) {
     return (
@@ -28,8 +30,15 @@ export default function DockedSheet({ label, component, children, className = ''
       </ModalOverlay>
     );
   }
+  if (mode === 'drawer' || !xl) {
+    return (
+      <Drawer title={label} width="md" component={component}>
+        {children}
+      </Drawer>
+    );
+  }
   return (
-    <section aria-label={label} className={`fixed w-90 bottom-8 top-4 flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-card bg-surface shadow-card lg:top-8 ${className}`}>
+    <section aria-label={label} className={`fixed w-90 bottom-8 top-4 flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-card bg-surface shadow-card xl:top-8 ${className}`}>
       {children}
     </section>
   );

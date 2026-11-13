@@ -51,8 +51,8 @@ let wide = true;
 function setWidth(isWide: boolean) {
   wide = isWide;
   window.matchMedia = ((query: string) => ({
-    // Wide is a desktop: the order panel docks beside the menu from lg (64rem) up (ui/docked_sheet).
-    matches: query.includes('min-width: 48rem') || query.includes('min-width: 64rem') ? wide : false,
+    // Wide is a desktop: the order panel docks beside the menu from xl (80rem) up (ui/docked_sheet).
+    matches: query.includes('min-width: 48rem') || query.includes('min-width: 64rem') || query.includes('min-width: 80rem') ? wide : false,
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},

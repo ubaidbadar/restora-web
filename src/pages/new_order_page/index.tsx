@@ -5,6 +5,7 @@ import CartBar from './cart_bar';
 import { useNavigate, useSearchParams } from 'react-router';
 import useAuthStore from '../../store/auth_store';
 import useRestaurantSettings from '../../hooks/useRestaurantSettings';
+import useBreakpoint from '../../hooks/useBreakpoint';
 import lockTerminal from '../../utils/lock_terminal';
 import api from '../../config/api';
 import toast from '../../utils/toast';
@@ -12,10 +13,13 @@ import printSlip from '../../utils/print_slip';
 import printOnThisPc from '../../utils/print_on_this_pc';
 import kitchenChanges from '../../utils/kitchen_changes';
 import PageHeader from '../../components/page_header';
+import useNewOrderWorkspaceStore from '../../store/new_order_workspace_store';
+import type NewOrderWorkspaceState from '../../types/new_order_workspace_state';
 import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
 import MenuPicker from './menu_picker';
 import PlaceOrderBar from './place_order_bar';
+import WorkspaceSettings from './workspace_settings';
 import Form from '../../ui/form';
 import type FormComponentProps from '../../types/form_component_props';
 import orderSchema from './schema';
@@ -95,35 +99,41 @@ interface Editing {
 /** The customer whose profile the order was started from (`?customer=<id>`): already loaded by that page. */
 const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.keyOf(`/customers/${id}`)) as Customer | undefined) : undefined);
 
-const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing }) => {
+const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?: Editing; workspace: Pick<NewOrderWorkspaceState, 'orderPanel' | 'menuDensity'> }) => {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
   // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
+  const { xl } = useBreakpoint();
 
   return (
     <>
-      <div className="min-w-0 w-full lg:pr-96">
+      <div className={`min-w-0 w-full ${workspace.orderPanel === 'column' ? 'xl:pe-96' : ''}`}>
         {/* The bottom bar is hidden on this page below the sidebar width, so it gets its own way back. */}
         <div className="flex gap-1">
           {order ? (
-            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board." />
+            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board.">
+              <WorkspaceSettings />
+            </PageHeader>
           ) : (
-            <PageHeader backTo='/orders' title="New order" subtitle="Find the customer, tap dishes, place the order" />
+            <PageHeader backTo='/orders' title="New order" subtitle="Find the customer, tap dishes, place the order">
+              <WorkspaceSettings />
+            </PageHeader>
           )}
         </div>
         <div className="flex min-w-0 flex-col gap-5">
           <CustomerStep {...props} picked={order?.customer ?? (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })} />
-          <MenuPicker {...props} />
+          <MenuPicker {...props} menuDensity={workspace.menuDensity} />
         </div>
       </div>
 
-      {/* Beside the menu from tablet width; on phones a bottom sheet, opened from the cart bar. */}
+      {/* Keep the cart in a drawer at laptop widths; reserve a side column only when the menu has enough room. */}
       <DockedSheet
         label="Order"
-        component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} onOpen={open} />}
+        mode={workspace.orderPanel}
+        component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} showEmpty={Boolean(order)} onOpen={open} />}
       >
-        <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} />
+        <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} showHeading={xl && workspace.orderPanel === 'column'} />
         <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
       </DockedSheet>
     </>
@@ -134,13 +144,14 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
   const navigate = useNavigate();
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
+  const workspace = useNewOrderWorkspaceStore();
 
   return (
     <>
       <Form
         className="flex items-end md:justify-end"
         id={ORDER_FORM}
-        component={(props) => <Main {...props} editing={editing} />}
+        component={(props) => <Main {...props} editing={editing} workspace={workspace} />}
         schema={orderSchema}
         defaultValues={
           order && {
