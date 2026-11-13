@@ -164,13 +164,11 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
 
 export default function CustomerStep(props: FormComponentProps & { picked?: Order['customer'] }) {
   return (
-    <section className="flex min-w-0 flex-col gap-2 xl:flex-row xl:items-center xl:gap-4">
-      <h2 className="shrink-0 text-heading text-ink">
-        Customer <span className="text-sm font-normal text-muted">· optional</span>
+    <section className="flex flex-col gap-2">
+      <h2 className="text-heading text-ink">
+        Customer <span className="text-sm font-normal text-muted">· optional for walk-ins</span>
       </h2>
-      <div className="min-w-0 flex-1">
-        <Main {...props} />
-      </div>
+      <Main {...props} />
     </section>
   );
 }

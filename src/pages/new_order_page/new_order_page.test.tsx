@@ -7,7 +7,6 @@ import { resetBreakpoints } from '../../hooks/useBreakpoint';
 import getCache from '../../store/get_cache';
 import useAuthStore from '../../store/auth_store';
 import useOutboxStore from '../../store/outbox_store';
-import useOrdersWorkspaceStore from '../../store/orders_workspace_store';
 import sampleMe from '../../test/sample_me';
 import type Customer from '../../types/customer';
 import type Menu from '../../types/menu';
@@ -49,11 +48,11 @@ const answers: Record<string, unknown> = {
 };
 
 let wide = true;
-function setWidth(isWide: boolean, isTablet = false) {
+function setWidth(isWide: boolean) {
   wide = isWide;
   window.matchMedia = ((query: string) => ({
-    // The order panel docks only at xl (80rem); lg-sized tablets keep the order sheet.
-    matches: query.includes('min-width: 80rem') ? wide : query.includes('min-width: 48rem') || query.includes('min-width: 64rem') ? wide || isTablet : false,
+    // Wide is a desktop: the order panel docks beside the menu from lg (64rem) up (ui/docked_sheet).
+    matches: query.includes('min-width: 48rem') || query.includes('min-width: 64rem') ? wide : false,
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -84,7 +83,6 @@ beforeEach(() => {
   mocked.put.mockReset();
   useAuthStore.getState().setMe(sampleMe());
   useOutboxStore.setState({ items: [], savedIds: {}, online: true });
-  useOrdersWorkspaceStore.getState().reset();
   getCache.clear?.();
   window.scrollTo = vi.fn() as never;
   Element.prototype.scrollIntoView = vi.fn();
@@ -92,25 +90,6 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe('New order (desktop)', () => {
-  it('keeps an empty desktop cart focused on adding dishes, then reveals checkout choices', async () => {
-    renderPage();
-    await screen.findByText('Chicken Karahi');
-    expect(screen.queryByRole('radio', { name: /Dine-in/ })).toBeNull();
-    expect(screen.queryByRole('radio', { name: /^Paid now$/ })).toBeNull();
-
-    fireEvent.click(dishTile('Chicken Karahi'));
-
-    expect(screen.getByRole('radio', { name: /Dine-in/ })).toBeTruthy();
-    expect(screen.getByRole('radio', { name: /^Paid now$/ })).toBeTruthy();
-  });
-
-  it('shows an explicit quick-add action on product tiles', async () => {
-    renderPage();
-    await screen.findByText('Chicken Karahi');
-    expect(screen.getAllByText('Tap to add').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'Choose options for Biryani' }).textContent).toContain('Choose options');
-  });
-
   it('adds dishes, counts them and totals the order', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
@@ -125,36 +104,16 @@ describe('New order (desktop)', () => {
     expect(screen.queryByRole('list', { name: 'Items in this order' })).toBeNull();
   });
 
-  it('opens choices before adding a configurable dish', async () => {
+  it('a dish with sizes adds its first size, and Options picks another size and add-ons', async () => {
     renderPage();
     await screen.findByText('Biryani');
     fireEvent.click(dishTile('Biryani'));
-    expect(await screen.findByRole('radio', { name: /Full · Rs 550/ })).toBeTruthy();
-    expect(screen.queryByText('1 item')).toBeNull();
-    fireEvent.click(screen.getByRole('radio', { name: /Full · Rs 550/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Options for Biryani' }));
+    fireEvent.click(await screen.findByRole('radio', { name: /Full · Rs 550/ }));
     fireEvent.click(screen.getByRole('button', { name: /^Raita/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Add · Rs 600' }));
-    await waitFor(() => expect(screen.getByText('1 item')).toBeTruthy());
-    expect(screen.getAllByText('Rs 600').length).toBeGreaterThan(0);
-  });
-
-  it('offers compact dish tiles and saves desktop new-order layout locally', async () => {
-    renderPage();
-    await screen.findByText('Chicken Karahi');
-    expect(dishTile('Chicken Karahi').closest('li')?.getAttribute('data-density')).toBe('comfortable');
-
-    fireEvent.click(screen.getByRole('button', { name: 'View options' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Hide navigation sidebar' }));
-    expect(useOrdersWorkspaceStore.getState().sidebarHidden).toBe(true);
-
-    fireEvent.click(screen.getByRole('button', { name: 'View options' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Compact dish tiles' }));
-    expect(useOrdersWorkspaceStore.getState().menuDensity).toBe('compact');
-    expect(dishTile('Chicken Karahi').closest('li')?.getAttribute('data-density')).toBe('compact');
-    expect(JSON.parse(localStorage.getItem('restora-orders-workspace-v1')!)).toMatchObject({
-      sidebarHidden: true,
-      menuDensity: 'compact',
-    });
+    await waitFor(() => expect(screen.getByText('2 items')).toBeTruthy());
+    expect(screen.getAllByText('Rs 900').length).toBeGreaterThan(0);
   });
 
   it('places a takeaway order and goes to the board', async () => {
@@ -198,7 +157,6 @@ describe('New order (desktop)', () => {
   it('warns at once that khata needs a customer', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
-    fireEvent.click(dishTile('Chicken Karahi'));
     pick(/^Khata/);
     expect(screen.getByText('Khata needs a customer: pick one at the top.')).toBeTruthy();
   });
@@ -337,7 +295,6 @@ describe('New order (desktop)', () => {
   it('an empty discount box folds back to the link', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
-    fireEvent.click(dishTile('Chicken Karahi'));
     fireEvent.click(screen.getByRole('button', { name: 'Add discount' }));
     fireEvent.blur(screen.getByLabelText(/Discount/));
     expect(screen.getByRole('button', { name: 'Add discount' })).toBeTruthy();
@@ -372,18 +329,6 @@ describe('New order (desktop)', () => {
     expect(url).toBe('/orders/o5');
     expect(body).toMatchObject({ type: 'delivery', address: 'House 1', items: [{ itemId: 'd1', qty: 2 }] });
     expect(body.paymentStatus).toBeUndefined();
-  });
-});
-
-describe('New order (tablet)', () => {
-  it('keeps the cart in a sheet instead of squeezing the menu into a side column', async () => {
-    setWidth(false, true);
-    renderPage();
-    await screen.findByText('Chicken Karahi');
-    fireEvent.click(dishTile('Chicken Karahi'));
-    fireEvent.click(screen.getByRole('button', { name: /View order/ }));
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(within(screen.getByRole('dialog')).getByRole('list', { name: 'Items in this order' })).toBeTruthy();
   });
 });
 

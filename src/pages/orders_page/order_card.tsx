@@ -12,14 +12,11 @@ import OrderCardFooter from './order_card_footer';
 interface OrderCardProps {
   order: Order;
   onOrderUpdated?: (order: Order) => void;
-  compact?: boolean;
-  selected?: boolean;
-  onSelect?: () => void;
 }
 
 const paymentBadges = { paid: ['success', 'Paid'], unpaid: ['warning', 'Unpaid'], khata: ['warning', 'On khata'] } as const;
 
-export default function OrderCard({ order, onOrderUpdated, compact = false, selected = false, onSelect }: OrderCardProps) {
+export default function OrderCard({ order, onOrderUpdated }: OrderCardProps) {
   const [paymentVariant, paymentLabel] = paymentBadges[order.paymentStatus];
   const cancelled = order.status === 'cancelled';
   const isActive = order.status !== 'completed' && !cancelled;
@@ -29,19 +26,13 @@ export default function OrderCard({ order, onOrderUpdated, compact = false, sele
   return (
     <li
       onClick={isNew ? () => useOrderAlertStore.getState().seen(order._id) : undefined}
-      className={`flex flex-col rounded-card bg-surface shadow-card ${compact ? 'gap-2 p-2.5' : 'gap-3 p-3.5'} ${selected ? 'outline-2 outline-primary' : ''} ${isNew ? 'outline-2 outline-primary motion-safe:animate-new-order' : ''}`}
+      className={`flex flex-col gap-3 rounded-card bg-surface p-3.5 shadow-card ${isNew ? 'outline-2 outline-primary motion-safe:animate-new-order' : ''}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          {onSelect ? (
-            <button type="button" onClick={onSelect} aria-label={`Show details for order ${order.dailyToken}`} className="block text-start text-display leading-none tabular-nums text-ink hover:text-primary">
-              <span className="sr-only">Token </span>#{order.dailyToken}
-            </button>
-          ) : (
-            <p className="text-display leading-none tabular-nums text-ink">
-              <span className="sr-only">Token </span>#{order.dailyToken}
-            </p>
-          )}
+          <p className="text-display leading-none tabular-nums text-ink">
+            <span className="sr-only">Token </span>#{order.dailyToken}
+          </p>
           <p className="mt-1.5 text-xs font-medium text-muted">
             {ORDER_TYPE_LABELS[order.type]}
             {order.tableName && ` · Table ${order.tableName}`}
@@ -59,7 +50,7 @@ export default function OrderCard({ order, onOrderUpdated, compact = false, sele
       </div>
       {cancelled && order.cancellation && <p className="rounded-control bg-danger-50 px-2.5 py-1.5 text-sm text-danger-700">{cancellationText(order.cancellation)}</p>}
       {order.customer && <p className="-mb-1 truncate font-medium text-ink"><bdi>{order.customer.name}</bdi></p>}
-      <ul className={compact ? 'text-xs text-body' : 'text-sm text-body'}>
+      <ul className="text-sm text-body">
         {order.items.map((item, index) => (
           <li key={index} dir="auto">
             <span className="tabular-nums text-muted">{item.qty} ×</span> {item.name}
@@ -69,7 +60,7 @@ export default function OrderCard({ order, onOrderUpdated, compact = false, sele
         ))}
       </ul>
       {order.type === 'delivery' && <DeliveryInfo order={order} />}
-      <OrderCardFooter order={order} onOrderUpdated={onOrderUpdated} onSelect={onSelect} />
+      <OrderCardFooter order={order} onOrderUpdated={onOrderUpdated} />
     </li>
   );
 }

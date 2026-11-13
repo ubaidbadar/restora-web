@@ -10,8 +10,6 @@ import OrdersFilter from './orders_filter';
 import dayKey from '../../utils/day_key';
 import formatDayRange from '../../utils/format_day_range';
 import { AddLink } from '../../components/add_button';
-import useBreakpoint from '../../hooks/useBreakpoint';
-import OrdersViewSettings from './orders_view_settings';
 
 /**
  * The working branch's orders. Today's on the live board (or as a list); other days from the URL's `from` and `to` as
@@ -19,7 +17,6 @@ import OrdersViewSettings from './orders_view_settings';
  */
 export default function OrdersPage() {
   const [params] = useSearchParams();
-  const { lg } = useBreakpoint();
   const today = dayKey();
   const from = params.get('from') || today;
   const to = params.get('to') || today;
@@ -29,7 +26,6 @@ export default function OrdersPage() {
   return (
     <>
       <PageHeader title="Orders" subtitle={subtitle}>
-        {lg && <OrdersViewSettings />}
         <OrdersFilter />
         <Can permission="orders:create">
           <AddLink to="/orders/new">New order</AddLink>
