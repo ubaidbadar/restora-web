@@ -20,7 +20,7 @@ function AppLayoutFrame({ lg, me, place }: { lg: boolean; me: ReturnType<typeof 
   const sidebarHidden = useNewOrderWorkspaceStore((state) => state.sidebarHidden);
   const orderEditor = location.pathname === '/orders/new' || /^\/orders\/[^/]+\/edit$/.test(location.pathname);
   const showSidebar = lg && !(orderEditor && sidebarHidden);
-  const expandMain = lg && orderEditor;
+  const expandMain = lg && orderEditor && sidebarHidden;
 
   return (
     <div className={`bg-canvas font-body text-ink ${showSidebar ? 'lg:ps-64' : ''}`}>
