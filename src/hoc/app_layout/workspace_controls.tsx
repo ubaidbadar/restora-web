@@ -34,11 +34,11 @@ export default function WorkspaceControls() {
         <section className="flex flex-col gap-3">
           <div>
             <h3 className="font-semibold text-ink">Navigation</h3>
-            <p className="mt-1 text-sm text-muted">Give the orders workspace more room by hiding the desktop sidebar.</p>
+            <p className="mt-1 text-sm text-muted">Use the full desktop width for orders without changing navigation on other pages.</p>
           </div>
           <Toggle
             checked={preferences.orders.sidebarHidden}
-            label="Hide sidebar on desktop"
+            label="Hide sidebar on the Orders page"
             onChange={(event) => save({ sidebarHidden: event.target.checked })}
           />
         </section>
