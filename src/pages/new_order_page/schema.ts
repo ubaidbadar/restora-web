@@ -51,6 +51,10 @@ const orderSchema = z
     if (order.paymentStatus === 'khata' && !order.customerId) ctx.addIssue({ code: 'custom', path: ['paymentStatus'], message: 'Khata needs a customer. Pick one above first.' });
   })
   // "Pay later" keeps no method, even one picked before switching: it is chosen when the customer pays.
-  .transform((order) => (order.paymentStatus === 'unpaid' ? { ...order, paymentMethod: undefined } : order));
+  .transform((order) => ({
+    ...order,
+    newName: order.customerId || order.newPhone || order.type === 'takeaway' ? order.newName : undefined,
+    paymentMethod: order.paymentStatus === 'unpaid' ? undefined : order.paymentMethod,
+  }));
 
 export default orderSchema;
