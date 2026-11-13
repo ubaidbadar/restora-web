@@ -1,7 +1,7 @@
 export default interface NewOrderWorkspaceState {
   sidebarHidden: boolean;
-  orderPanel: 'column' | 'drawer';
-  menuDensity: 'comfortable' | 'balanced' | 'compact';
-  setPreferences: (patch: Partial<Pick<NewOrderWorkspaceState, 'sidebarHidden' | 'orderPanel' | 'menuDensity'>>) => void;
+  orderPanel: 'split' | 'column' | 'drawer';
+  menuColumns: 'auto' | 'list' | '2' | '3' | '4';
+  setPreferences: (patch: Partial<Pick<NewOrderWorkspaceState, 'sidebarHidden' | 'orderPanel' | 'menuColumns'>>) => void;
   reset: () => void;
 }
