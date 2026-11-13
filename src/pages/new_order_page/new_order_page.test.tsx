@@ -261,7 +261,7 @@ describe('New order (desktop)', () => {
     pick(/Delivery/);
     placeOrder();
     expect(await screen.findByText('Enter the delivery address')).toBeTruthy();
-    fireEvent.change(screen.getByLabelText(/Address/), { target: { value: 'House 5, Block C' } });
+    fireEvent.change(screen.getByLabelText(/Complete address/i), { target: { value: 'House 5, Block C' } });
     fireEvent.change(screen.getByLabelText(/Delivery fee/), { target: { value: '150' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add discount' }));
     fireEvent.change(screen.getByLabelText(/Discount/), { target: { value: '100' } });
@@ -306,7 +306,7 @@ describe('New order (desktop)', () => {
     await screen.findByText('Chicken Karahi');
     fireEvent.click(dishTile('Chicken Karahi'));
     pick(/Delivery/);
-    fireEvent.change(screen.getByLabelText(/Address/), { target: { value: 'Temporary venue, Main Gate' } });
+    fireEvent.change(screen.getByLabelText(/Complete address/i), { target: { value: 'Temporary venue, Main Gate' } });
     fireEvent.change(screen.getByRole('combobox', { name: /find customer/i }), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
     await screen.findByText('Ali Raza');
