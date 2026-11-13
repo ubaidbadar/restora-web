@@ -5,6 +5,7 @@ import CartBar from './cart_bar';
 import { useNavigate, useSearchParams } from 'react-router';
 import useAuthStore from '../../store/auth_store';
 import useRestaurantSettings from '../../hooks/useRestaurantSettings';
+import useBreakpoint from '../../hooks/useBreakpoint';
 import lockTerminal from '../../utils/lock_terminal';
 import api from '../../config/api';
 import toast from '../../utils/toast';
@@ -103,6 +104,7 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
   // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
+  const { xl } = useBreakpoint();
 
   return (
     <>
@@ -131,7 +133,7 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
         mode={workspace.orderPanel}
         component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} showEmpty={Boolean(order)} onOpen={open} />}
       >
-        <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} />
+        <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} showHeading={xl && workspace.orderPanel === 'column'} />
         <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
       </DockedSheet>
     </>
