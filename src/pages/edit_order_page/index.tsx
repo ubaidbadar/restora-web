@@ -36,7 +36,7 @@ function cartOf(order: Order, menu: Menu): CartItem[] {
     const cart = cartItemOf(dish, size, addons, line.note);
     // The same dish, size, add-ons and note twice is one line.
     const same = lines.get(cart.key);
-    lines.set(cart.key, { ...cart, qty: (same?.qty ?? 0) + line.qty });
+    lines.set(cart.key, { ...cart, price: line.price, menuPrice: line.menuPrice ?? line.price, qty: (same?.qty ?? 0) + line.qty });
   });
   return [...lines.values()];
 }
