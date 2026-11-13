@@ -59,7 +59,8 @@ function offlineOrder(data: FieldValues, clientId: string, token: string): Order
   const rates: Record<string, number> = me.workplace!.settings.taxByPaymentMethod;
   const taxRate = method ? (rates[method] ?? 0) : 0;
   const deliveryFee = data.type === 'delivery' ? data.deliveryFee : 0;
-  const saved = (getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((customer) => customer._id === data.customerId);
+  const saved = (getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((customer) => customer._id === data.customerId)
+    ?? (data.customerId ? getCache.get(getCache.keyOf(`/customers/${data.customerId}`)) as Customer | undefined : undefined);
   const name = data.newName?.trim() || saved?.name;
   const phone = saved?.phone ?? data.newPhone;
   const customer = name
@@ -204,7 +205,12 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             // The order as the board will show it, worked out here from the form and the menu prices.
             const worked = offlineOrder(data, order._id, String(token));
             // The customer list may not be loaded: an unchanged customer keeps the name the order already has.
-            const local = { ...worked, customer: worked.customer ?? (data.customerId && data.customerId === order.customerId ? order.customer : undefined) };
+            const local = {
+              ...worked,
+              customer: data.customerId && data.customerId === order.customerId
+                ? { ...order.customer, ...worked.customer, phone: worked.customer?.phone ?? order.customer?.phone }
+                : worked.customer,
+            };
             const outbox = useOutboxStore.getState();
             const waitingOrder = outbox.items.find((item) => item.id === order._id && item.url === '/orders');
             // Taken offline and not sent yet: change the waiting order itself, so the server only ever gets the final one.
