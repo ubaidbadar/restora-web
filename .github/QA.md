@@ -5,7 +5,7 @@
 - `yarn verify` runs TypeScript, ESLint, Vitest and the production Vite build.
 - `.github/workflows/verify.yml` runs on pull requests and pushes to `dev` / `main`.
 - `.github/workflows/firebase-hosting-merge.yml` repeats verification as a dependency of Firebase deployment. A failed check prevents the Hosting deployment.
-- `.github/workflows/authenticated-browser-e2e.yml` runs the signed-in Orders/Create Order journey against the configured dev app URL on desktop Chromium and Pixel 7 emulation. It runs on PRs to `main` / `dev`, manually, and nightly. This is a staging smoke test; it does not claim to exercise an unmerged PR preview.
+- `.github/workflows/authenticated-browser-e2e.yml` runs the signed-in Orders/Create Order journey against the configured dev app URL on desktop Chromium, Pixel 7 phone emulation and iPad Pro 11 tablet emulation. It runs on PRs to `main` / `dev`, manually, and nightly. This is a staging smoke test; it does not claim to exercise an unmerged PR preview.
 
 ## E2E account setup
 
