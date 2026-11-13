@@ -344,7 +344,7 @@ describe('New order (tablet)', () => {
     setWidth(false, true);
     renderPage();
     await screen.findByText('Chicken Karahi');
-    fireEvent.click(screen.getByRole('button', { name: 'Add Chicken Karahi' }));
+    fireEvent.click(dishTile('Chicken Karahi'));
     fireEvent.click(screen.getByRole('button', { name: /View order/ }));
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(within(screen.getByRole('dialog')).getByRole('list', { name: 'Items in this order' })).toBeTruthy();
