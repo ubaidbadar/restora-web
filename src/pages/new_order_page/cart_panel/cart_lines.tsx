@@ -21,8 +21,8 @@ export default function CartLines({ control, setValue, errors }: FormComponentPr
   return (
     <div className='lg:border-dashed lg:border lg:px-4 lg:py-2 lg:flex-1 md:overflow-auto border-border-strong rounded-control'>
       <ul aria-label="Items in this order" className="divide-y divide-border">
-        {items.map((line) => (
-          <CartLine key={line.key} line={line} onQty={(key, qty) => setValue('items', setQty(items, key, qty), { shouldDirty: true })} />
+        {items.map((line, index) => (
+          <CartLine key={line.key} line={line} index={index} register={arguments[0].register} errors={errors} onQty={(key, qty) => setValue('items', setQty(items, key, qty), { shouldDirty: true })} />
         ))}
       </ul>
     </div>
