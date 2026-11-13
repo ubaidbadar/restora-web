@@ -57,9 +57,12 @@ jobs:
           echo "configured=true" >> "$GITHUB_OUTPUT"
 
       - name: Install isolated Playwright harness
-        if: steps.e2e_account.outputs.configured == 'true'
         working-directory: .github/authenticated-e2e
         run: npm init -y && npm install --no-save @playwright/test
+
+      - name: Validate Playwright test discovery
+        working-directory: .github/authenticated-e2e
+        run: npx playwright test --list --config=playwright.config.cjs
 
       - name: Install Chromium
         if: steps.e2e_account.outputs.configured == 'true'
