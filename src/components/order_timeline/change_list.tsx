@@ -13,6 +13,7 @@ const FIELDS: { key: string; label: string; show: (value: unknown) => string }[]
   { key: 'address', label: 'Address', show: String },
   { key: 'rider', label: 'Rider', show: String },
   { key: 'discount', label: 'Discount', show: (value) => formatRs(Number(value)) },
+  { key: 'serviceCharge', label: 'Service charge', show: (value) => formatRs(Number(value)) },
   { key: 'deliveryFee', label: 'Delivery', show: (value) => formatRs(Number(value)) },
   { key: 'total', label: 'Total', show: (value) => formatRs(Number(value)) },
 ];
@@ -48,8 +49,9 @@ export default function ChangeList({ lines, before, after }: ChangeListProps) {
                 {line.name}
               </span>
               {line.detail && <span className="block text-xs text-muted">{line.detail}</span>}
+              {line.wasPrice !== undefined && line.nowPrice !== undefined && line.wasPrice !== line.nowPrice && <span className="block text-xs text-muted">Unit price: {formatRs(line.wasPrice)} → {formatRs(line.nowPrice)}</span>}
             </span>
-            {!added && !removed && (
+            {!added && !removed && line.was !== line.now && (
               <span className="shrink-0 text-ink tabular-nums">
                 <span className="text-muted">{line.was} →</span> {line.now}
               </span>
