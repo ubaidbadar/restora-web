@@ -11,9 +11,7 @@ import PosIdleLock from './pos_idle_lock';
 import SyncStatus from './sync_status';
 import AgentReconnect from './agent_reconnect';
 import useBreakpoint from '../../hooks/useBreakpoint';
-import useWorkplace from '../../hooks/useWorkplace';
-import DEFAULT_WORKSPACE_PREFERENCES from '../../constants/default_workspace_preferences';
-import WorkspaceControls from './workspace_controls';
+import useOrdersWorkspaceStore from '../../store/orders_workspace_store';
 import api from '../../config/api';
 
 /** Sidebar on desktop, bottom bar on phones and tablets: only the one in use is rendered. */
@@ -22,10 +20,9 @@ export default function AppLayout() {
   const location = useLocation();
   const { lg } = useBreakpoint();
   const me = useAuthStore((state) => state.me);
-  const workplace = useWorkplace();
-  const preferences = workplace?.preferences ?? DEFAULT_WORKSPACE_PREFERENCES;
+  const { sidebarHidden } = useOrdersWorkspaceStore();
   const onOrdersPage = location.pathname === '/orders';
-  const sidebarHidden = lg && onOrdersPage && preferences.orders.sidebarHidden;
+  const hideSidebar = lg && onOrdersPage && sidebarHidden;
   // Pages start again (and load fresh data) when the restaurant or branch changes.
   const place = `${me?.workplace?.restaurant._id}:${me?.workplace?.branch?._id}`;
   const TYPING = 'input, textarea, select, [contenteditable="true"]';
@@ -60,17 +57,12 @@ export default function AppLayout() {
     return () => window.removeEventListener('keydown', listener);
   }, []);
   return (
-    <div className={`bg-canvas font-body text-ink ${lg && !sidebarHidden ? 'lg:ps-64' : ''}`}>
+    <div className={`bg-canvas font-body text-ink ${lg && !hideSidebar ? 'lg:ps-64' : ''}`}>
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:inset-s-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-primary focus:px-4 focus:py-2 focus:text-on-primary">
         Skip to content
       </a>
-      {lg && !sidebarHidden && <SideNav />}
-      <main id="main" className={`mx-auto min-h-dvh w-full flex flex-col px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 ${sidebarHidden ? 'max-w-none' : 'max-w-7xl'}`}>
-        {lg && onOrdersPage && (
-          <div className="mb-4 flex justify-end">
-            <WorkspaceControls />
-          </div>
-        )}
+      {lg && !hideSidebar && <SideNav />}
+      <main id="main" className={`mx-auto min-h-dvh w-full flex flex-col px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 ${hideSidebar ? 'max-w-none' : 'max-w-7xl'}`}>
         <SyncStatus />
         <Can permission="tables:view">
           <TableCallsBanner key={place} />

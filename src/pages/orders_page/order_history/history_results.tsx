@@ -4,10 +4,9 @@ import EmptyState from '../../../components/empty_state';
 import LoadFailed from '../../../components/load_failed';
 import SkeletonList from '../../../components/skeleton_list';
 import STATUS_LABELS from '../../../constants/status_labels';
-import DEFAULT_WORKSPACE_PREFERENCES from '../../../constants/default_workspace_preferences';
 import useBreakpoint from '../../../hooks/useBreakpoint';
-import useWorkplace from '../../../hooks/useWorkplace';
 import useGet from '../../../hooks/useGet';
+import useOrdersWorkspaceStore from '../../../store/orders_workspace_store';
 import type OrderHistory from '../../../types/order_history';
 import type OrderStatus from '../../../types/order_status';
 import Chips from '../../../ui/chips';
@@ -34,9 +33,8 @@ interface HistoryResultsProps {
 export default function HistoryResults({ from, to, q, status, type }: HistoryResultsProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { lg } = useBreakpoint();
-  const workplace = useWorkplace();
-  const preferences = workplace?.preferences ?? DEFAULT_WORKSPACE_PREFERENCES;
-  const detailsPanel = lg && preferences.orders.detailsPanel;
+  const preferences = useOrdersWorkspaceStore();
+  const detailsPanel = lg && preferences.detailsPanel;
   const params = { from, to, q: q || undefined, status: status === 'all' ? undefined : status, type: type === 'all' ? undefined : type };
   const { data, loading, get, update } = useGet<OrderHistory>('/orders/history', { params });
 

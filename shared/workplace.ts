@@ -8,14 +8,6 @@ export default interface Workplace {
   isOwner: boolean;
   isPrimaryOwner: boolean;
   hasPin: boolean;
-  /** Personal workspace layout, synced across web and mobile for this restaurant membership. */
-  preferences?: {
-    orders: {
-      sidebarHidden: boolean;
-      detailsPanel: boolean;
-      density: 'comfortable' | 'compact';
-    };
-  };
   /** Every permission they have here; owners get the whole catalog. */
   permissions: Permission[];
   /** The branch they work at now; null when none of their branches is open. */
