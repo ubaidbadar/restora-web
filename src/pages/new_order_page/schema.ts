@@ -15,6 +15,8 @@ const orderItem = z.object({
   sizeName: z.string().optional(),
   addons: z.array(z.object({ name: z.string(), price: z.number() })).optional(),
   price: z.number(),
+  menuPrice: z.number().optional(),
+  priceOverride: z.preprocess((value) => value === '' || value === null || value === undefined ? undefined : Number(value), z.number().min(0, 'Price cannot be below 0').max(1_000_000, 'Price is too high').optional()),
   sizeId: z.string().optional(),
   addonIds: z.array(z.string()),
   note: z.string().optional(),
