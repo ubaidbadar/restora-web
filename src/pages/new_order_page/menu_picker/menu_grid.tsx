@@ -30,7 +30,7 @@ const addItem = (items: CartItem[], item: CartItem): CartItem[] =>
 const densityClasses = {
   comfortable: 'grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] gap-3',
   balanced: 'grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2.5',
-  compact: 'grid-cols-[repeat(auto-fill,minmax(8.75rem,1fr))] gap-2
+  compact: 'grid-cols-[repeat(auto-fill,minmax(8.75rem,1fr))] gap-2',
 };
 
 /**
