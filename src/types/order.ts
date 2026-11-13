@@ -24,6 +24,10 @@ export default interface Order {
   items: OrderItem[];
   subtotal: number;
   discount: number;
+  serviceCharge: number;
+  serviceChargeType?: 'percentage' | 'fixed';
+  serviceChargeValue?: number;
+  serviceChargeTaxable?: boolean;
   taxRate: number;
   tax: number;
   deliveryFee: number;
