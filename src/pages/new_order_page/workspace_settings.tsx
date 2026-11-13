@@ -11,9 +11,9 @@ export default function WorkspaceSettings() {
     { label: 'Hide sidebar', icon: PanelLeft, selected: sidebarHidden, onClick: () => setPreferences({ sidebarHidden: true }) },
     { section: 'Order details', label: 'Right column on wide screens', icon: PanelRight, selected: orderPanel === 'column', onClick: () => setPreferences({ orderPanel: 'column' }) },
     { label: 'Open in drawer', icon: PanelRight, selected: orderPanel === 'drawer', onClick: () => setPreferences({ orderPanel: 'drawer' }) },
-    { section: 'Dish layout', label: 'Comfortable cards', icon: Rows3, selected: menuDensity === 'comfortable', onClick: () => setPreferences({ menuDensity: 'comfortable' }) },
-    { label: 'Balanced cards', icon: LayoutGrid, selected: menuDensity === 'balanced', onClick: () => setPreferences({ menuDensity: 'balanced' }) },
-    { label: 'Compact cards', icon: LayoutGrid, selected: menuDensity === 'compact', onClick: () => setPreferences({ menuDensity: 'compact' }) },
+    { section: 'Dish layout', label: 'Fewer columns', icon: Rows3, selected: menuDensity === 'comfortable', onClick: () => setPreferences({ menuDensity: 'comfortable' }) },
+    { label: 'Balanced columns', icon: LayoutGrid, selected: menuDensity === 'balanced', onClick: () => setPreferences({ menuDensity: 'balanced' }) },
+    { label: 'More columns', icon: LayoutGrid, selected: menuDensity === 'compact', onClick: () => setPreferences({ menuDensity: 'compact' }) },
     { section: 'Layout', label: 'Reset to defaults', icon: RotateCcw, onClick: reset },
   ];
 
