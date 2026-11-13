@@ -17,9 +17,9 @@ type OrderPreferences = NonNullable<Workplace['preferences']>['orders'];
 /** Personal desktop layout controls; the saved preferences are returned by /me on mobile too. */
 export default function WorkspaceControls() {
   const workplace = useWorkplace();
+  const [saving, setSaving] = useState(false);
   if (!workplace) return null;
   const preferences = workplace.preferences ?? DEFAULT_WORKSPACE_PREFERENCES;
-  const [saving, setSaving] = useState(false);
 
   const save = (orders: Partial<OrderPreferences>) => {
     if (saving) return;
