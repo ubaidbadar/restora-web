@@ -13,7 +13,7 @@ interface CartBarProps extends Pick<FormComponentProps, 'control'>, Pick<Restaur
 }
 
 /**
- * Phones only: the order so far, kept in reach under the menu; tapping it opens the order to finish and place it. It sits
+ * The order so far, kept in reach under the menu or beside it when the desktop panel is a drawer; tapping it opens the order to finish and place it. It sits
  * above the gesture bar or home indicator (safe-area inset), clear of the screen's rounded corners.
  */
 export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBarProps) {
@@ -25,7 +25,7 @@ export default function CartBar({ control, taxByPaymentMethod, onOpen }: CartBar
       type="button"
       onClick={onOpen}
       aria-haspopup="dialog"
-      className="fixed inset-x-3 bottom-safe z-30 flex h-14 cursor-pointer items-center gap-3 rounded-panel bg-primary px-4 text-start text-on-primary shadow-lg transition-colors hover:bg-primary-hover md:inset-x-6"
+      className="fixed inset-x-3 bottom-safe z-30 flex h-14 cursor-pointer items-center gap-3 rounded-panel bg-primary px-4 text-start text-on-primary shadow-lg transition-colors hover:bg-primary-hover md:inset-x-6 lg:inset-x-auto lg:inset-e-8 lg:w-80"
     >
       <span aria-label={`${itemCount} items`} className="min-w-7 rounded-small bg-on-primary/15 px-1.5 py-0.5 text-center text-sm font-semibold tabular-nums">
         {itemCount}
