@@ -7,7 +7,7 @@ import formatRs from '../../../utils/format_rs';
 import orderTotalsOf from '../../../utils/order_totals_of';
 import ORDER_FORM from '../../../constants/order_form';
 
-interface PlaceOrderBarProps extends FormComponentProps, Pick<RestaurantSettings, 'taxByPaymentMethod'> {
+interface PlaceOrderBarProps extends FormComponentProps, Pick<RestaurantSettings, 'taxByPaymentMethod' | 'dineInServiceCharge'> {
   submitLabel: string;
 }
 
@@ -15,9 +15,9 @@ interface PlaceOrderBarProps extends FormComponentProps, Pick<RestaurantSettings
  * The foot of the order panel (the sheet on phones): the total and the button that submits the form. On phones it keeps
  * clear of the gesture bar or home indicator and the screen's rounded corners.
  */
-export default function PlaceOrderBar({ control, loading, error, taxByPaymentMethod, submitLabel }: PlaceOrderBarProps) {
+export default function PlaceOrderBar({ control, loading, error, taxByPaymentMethod, dineInServiceCharge, submitLabel }: PlaceOrderBarProps) {
   const watched = useWatch({ control, name: [...ORDER_TOTAL_FIELDS] });
-  const { totals, itemCount } = orderTotalsOf(watched, taxByPaymentMethod);
+  const { totals, itemCount } = orderTotalsOf(watched, taxByPaymentMethod, dineInServiceCharge);
 
   return (
     <div className="flex shrink-0 flex-col gap-2 border-t border-border bg-surface px-5 pt-3 pb-safe md:py-4">
