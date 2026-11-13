@@ -12,8 +12,6 @@ import printSlip from '../../utils/print_slip';
 import printOnThisPc from '../../utils/print_on_this_pc';
 import kitchenChanges from '../../utils/kitchen_changes';
 import PageHeader from '../../components/page_header';
-import useBreakpoint from '../../hooks/useBreakpoint';
-import OrdersViewSettings from '../orders_page/orders_view_settings';
 import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
 import MenuPicker from './menu_picker';
@@ -100,36 +98,29 @@ const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.key
 const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing }) => {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
-  const { xl } = useBreakpoint();
   // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
 
   return (
     <>
-      <div className="min-w-0 w-full xl:flex xl:h-[calc(100dvh-8rem)] xl:min-h-[34rem] xl:flex-col xl:overflow-hidden xl:pe-[26rem]">
-        <div className="flex gap-1 xl:shrink-0">
+      <div className="min-w-0 w-full lg:pr-96">
+        {/* The bottom bar is hidden on this page below the sidebar width, so it gets its own way back. */}
+        <div className="flex gap-1">
           {order ? (
-            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board.">
-              {xl && <OrdersViewSettings page="new-order" />}
-            </PageHeader>
+            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board." />
           ) : (
-            <PageHeader backTo='/orders' title="New order" subtitle="Choose a customer, add dishes and review the order">
-              {xl && <OrdersViewSettings page="new-order" />}
-            </PageHeader>
+            <PageHeader backTo='/orders' title="New order" subtitle="Find the customer, tap dishes, place the order" />
           )}
         </div>
-        <div className="flex min-w-0 flex-col gap-5 xl:min-h-0 xl:flex-1 xl:gap-4">
+        <div className="flex min-w-0 flex-col gap-5">
           <CustomerStep {...props} picked={order?.customer ?? (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })} />
-          <div className="min-h-0 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain xl:pe-1">
-            <MenuPicker {...props} />
-          </div>
+          <MenuPicker {...props} />
         </div>
       </div>
 
-      {/* A full-height order workspace on wide desktops; tablets and phones keep the familiar order sheet. */}
+      {/* Beside the menu from tablet width; on phones a bottom sheet, opened from the cart bar. */}
       <DockedSheet
         label="Order"
-        className="xl:w-[24rem]"
         component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} onOpen={open} />}
       >
         <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} />
