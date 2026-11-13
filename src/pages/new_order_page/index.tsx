@@ -19,7 +19,7 @@ import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
 import MenuPicker from './menu_picker';
 import PlaceOrderBar from './place_order_bar';
-import WorkspaceSettings from './workspace_settings';
+import OrderColumn from './order_column';
 import Form from '../../ui/form';
 import type FormComponentProps from '../../types/form_component_props';
 import orderSchema from './schema';
@@ -60,13 +60,17 @@ function offlineOrder(data: FieldValues, clientId: string, token: string): Order
   const taxRate = method ? (rates[method] ?? 0) : 0;
   const deliveryFee = data.type === 'delivery' ? data.deliveryFee : 0;
   const saved = (getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((customer) => customer._id === data.customerId);
-  const name = saved?.name ?? data.newName;
+  const name = data.newName?.trim() || saved?.name;
+  const phone = saved?.phone ?? data.newPhone;
+  const customer = name
+    ? { ...(data.customerId ? { _id: data.customerId } : {}), name, ...(phone ? { phone } : {}) }
+    : undefined;
   return {
     _id: clientId,
     dailyToken: token,
     branchId: me.workplace!.branch?._id ?? '',
     customerId: data.customerId,
-    customer: name ? { _id: data.customerId ?? '', name, phone: saved?.phone ?? data.newPhone ?? '' } : undefined,
+    customer,
     type: data.type,
     status: 'new',
     items: data.items,
@@ -102,41 +106,52 @@ const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.key
 const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?: Editing; workspace: Pick<NewOrderWorkspaceState, 'orderPanel' | 'menuDensity'> }) => {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
-  // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
   const { xl } = useBreakpoint();
 
   return (
-    <>
-      <div className={`min-w-0 w-full ${workspace.orderPanel === 'column' ? 'xl:pe-96' : ''}`}>
-        {/* The bottom bar is hidden on this page below the sidebar width, so it gets its own way back. */}
-        <div className="flex gap-1">
-          {order ? (
-            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board.">
-              <WorkspaceSettings />
-            </PageHeader>
-          ) : (
-            <PageHeader backTo='/orders' title="New order" subtitle="Find the customer, tap dishes, place the order">
-              <WorkspaceSettings />
-            </PageHeader>
-          )}
-        </div>
+    <div className="flex min-h-0 min-w-0 flex-1 xl:pe-90">
+      <div className={`flex min-w-0 flex-1 flex-col ${xl ? 'overflow-y-auto px-6 py-5' : 'lg:px-6 lg:py-5'}`}>
+        {order ? (
+          <PageHeader backTo="/orders" title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board." />
+        ) : (
+          <PageHeader backTo="/orders" title="New order" subtitle="Find the customer, tap dishes, place the order" />
+        )}
         <div className="flex min-w-0 flex-col gap-5">
-          <CustomerStep {...props} picked={order?.customer ?? (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })} />
+          <CustomerStep
+            {...props}
+            picked={order?.customer?._id ? order.customer : (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })}
+          />
           <MenuPicker {...props} menuDensity={workspace.menuDensity} />
         </div>
       </div>
 
-      {/* Keep the cart in a drawer at laptop widths; reserve a side column only when the menu has enough room. */}
-      <DockedSheet
-        label="Order"
-        mode={workspace.orderPanel}
-        component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} showEmpty={Boolean(order)} onOpen={open} />}
-      >
-        <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} showHeading={xl && workspace.orderPanel === 'column'} />
-        <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
-      </DockedSheet>
-    </>
+      {xl ? (
+        <>
+          <OrderColumn {...props} />
+          <aside aria-label="Checkout" className="fixed inset-y-0 end-0 z-30 flex w-90 flex-col bg-surface">
+            <CartPanel
+              {...props}
+              taxByPaymentMethod={taxByPaymentMethod}
+              editing={Boolean(order)}
+              showHeading
+              heading="Checkout"
+              showLines={false}
+            />
+            <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
+          </aside>
+        </>
+      ) : (
+        <DockedSheet
+          label="Order"
+          mode={workspace.orderPanel}
+          component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} showEmpty={Boolean(order)} onOpen={open} />}
+        >
+          <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} showHeading={false} />
+          <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
+        </DockedSheet>
+      )}
+    </div>
   );
 };
 
@@ -149,7 +164,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
   return (
     <>
       <Form
-        className="flex items-end md:justify-end"
+        className="flex min-h-0 flex-1"
         id={ORDER_FORM}
         component={(props) => <Main {...props} editing={editing} workspace={workspace} />}
         schema={orderSchema}
@@ -160,8 +175,9 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             type: order.type,
             tableId: order.tableId,
             tableName: order.tableName,
-            area: order.area,
-            address: order.address,
+            area: undefined,
+            address: order.type === 'delivery' ? [order.area, order.address].filter(Boolean).join(', ') : order.address,
+            newName: order.customer?.name,
             rider: order.rider,
             deliveryFee: order.deliveryFee,
             discount: order.discount,
@@ -170,6 +186,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             // Pay later until someone picks otherwise; people who can't take payments never see the choice.
             paymentStatus: 'unpaid',
             customerId: fromProfile?._id,
+            newName: fromProfile?.name,
           }
         }
         noValidate
