@@ -1,6 +1,6 @@
 ---
 name: app-structure-forms-ui
-description: Ubaid's React client conventions: folder layout (pages, components, ui, hoc, hooks, store, types, constants, utils), default exports, state updated on the client after saves (no API call to update it), no one-line wrappers or single-use helpers, useGet options/get/loading, no demo data, /me and permissions, Form and field patterns, button variants, design tokens.
+description: Restora Web client architecture and conventions: API/cache workflows, centralized route policy, auth and permissions, React state, forms, reusable UI, offline behavior, testing and design tokens.
 ---
 
 # Client structure, forms and UI
@@ -12,8 +12,13 @@ Follow the user's existing structure exactly. Do not refactor, restyle or touch 
 The user reviews every line. Code that is clever, defensive or "future-proof" is a mistake here.
 - Pick the plainest solution that works. If a hook or component needs a comment to explain its own machinery, it is
   too complicated: simplify it.
-- No `useRef`, `useEffectEvent`, request counters or derived "keys" just to manage flow. One `useState` holding an
-  object is the default shape for a hook's state.
+- Do not add state, refs, counters, memoization or effects to derive values that can be calculated during render.
+  `useRef` is appropriate for imperative values and DOM access; `useEffectEvent` is appropriate for effect callbacks
+  that need the latest props/state without resubscribing; request IDs or cancellation are appropriate when async work
+  needs stale-result protection. These APIs are allowed when the behavior requires them; use the smallest tool that
+  solves a real lifecycle or correctness problem.
+- React Compiler is enabled. Avoid manual `useMemo`, `useCallback` and `memo` as routine performance decoration.
+  Use them only when stable identity is part of an API contract or a measured issue remains.
 - Derive what to show from the data you have. Don't add a separate variable (state, URL param) for something the data
   already tells you, e.g. which setup step to show: `if (!settings.taxSet) return <StepTax />`.
 - When the user shows an example of how they want something, follow its shape and naming closely.
@@ -31,19 +36,19 @@ The user reviews every line. Code that is clever, defensive or "future-proof" is
   or more files call it? If not, don't create it.
 
 ## Update the state; don't call the API to update it
-Every request costs the user time on a slow restaurant connection. The API is called to save something or to read
-something the app does not have yet, never to bring the state up to date after a change. Before writing any `useGet`,
-`api.get`, or a server answer that sends more than the saved record, check: is it already in the store, already
-loaded by a parent, or can the client work it out from what it just sent and got back?
+Every request costs the user time on a slow restaurant connection. Do not make a follow-up read just to refresh data
+that a successful write already returned. Use the response to update the relevant store/cache. A read is appropriate
+when the client genuinely lacks the data, the user explicitly refreshes, or a documented background/live workflow
+must reconcile missed events. Before adding any request, check whether the data is already in the store, cache or parent.
 
-1. **`/me` is read once, when the app starts**, directly in `main.tsx`:
-   `api.get<Me>('/me').then((res) => useAuthStore.getState().setMe(res.data))`. It carries everything many
-   screens share: the account, `mode` (`web`/`pos`), the terminal (`device`), the restaurants to switch to, and the
-   `workplace`: restaurant, current branch, the branches they may switch to, permissions, role names, and the
-   restaurant's `settings` (name, logo, tax by payment method, WhatsApp templates, `taxSet`).
-   Screens read these from the store (`useWorkplace()`, `useRestaurantSettings()`, `useCan()`), never with their own request:
-   no `useGet('/settings')` for tax, no `useGet('/branches')` for a branch name or a branch picker, no
-   `useGet('/restaurants')` for the switcher.
+1. **Bootstrap loads `/me` in `main.tsx`** after hydrating the response cache and offline outbox from IndexedDB:
+   `api.get<Me>('/me').then((res) => useAuthStore.getState().setMe(res.data))`. If the network is unavailable, the
+   previously saved `/me` restores the signed-in context for an offline start. It carries the account, `mode` (`web`/`pos`),
+   terminal (`device`), restaurants, and the current `workplace` (restaurant, branch, available branches, permissions,
+   role names and restaurant settings). Screens read shared context from the store (`useWorkplace()`,
+   `useRestaurantSettings()`, `useCan()`) instead of making their own `/me`, settings, branch or restaurant-switcher reads.
+   `live_updates.tsx` has one deliberate exception: when the live event stream reconnects, it refreshes `/me` only to
+   reconcile workplace guest calls. Do not add page-level `/me` requests.
 2. **After a save, the client updates the state itself** from the saved record, with an action in `store/auth_store`:
    - settings saved → `setSettings(res.data)` (also renames the restaurant in the workplace and the switcher)
    - branch added, edited, archived or reopened → `setBranch(res.data)` (the switcher, and the current branch if it
@@ -54,7 +59,8 @@ loaded by a parent, or can the client work it out from what it just sent and got
 3. **Only when the client cannot work out the result does the write's answer carry `me`**: everything about the person
    changes (signing in, switching account, unlocking a terminal) or they move to another restaurant or branch, with
    other permissions (switching, onboarding, joining, transfer, delete, leave). Then `setMe(res.data.me)`.
-   A `403 context_lost` also carries `me`. Nothing reads `/me` again after the start.
+   A `403 context_lost` also carries `me`. The live-stream reconnect refresh described in step 1 is the only
+   documented background `/me` read; do not add routine refreshes after saves.
 4. **Each list is loaded once, by the top component of the screen that shows it**, and passed down as props. Rows,
    children and drawer fields never load a list themselves, and never load per row (`useGet` inside a row component
    that renders N times makes N requests). Example: the Staff tab loads `/roles` once and gives it to the member list
@@ -72,7 +78,8 @@ loaded by a parent, or can the client work it out from what it just sent and got
    its own data again exactly once. That is the only "reload".
 
 ## Exports
-- **Default exports only, one export per file.** No named exports and no barrels (`index.ts` that re-exports).
+- Default-export the primary runtime value/component from each file. Avoid named runtime exports and barrels
+  (`index.ts` files that only re-export). Named type-only exports are allowed when a consumer needs a public type.
 - A file is named after what it exports: `format_rs.ts` exports `formatRs`, `order_card.tsx` exports `OrderCard`.
 - Files and folders are lowercase `snake_case`. Hook files and `withOverlay` are camelCase (`useGet.ts`).
 - A type is `export default interface X {}`, or `type X = …; export default X;`.
@@ -83,11 +90,16 @@ loaded by a parent, or can the client work it out from what it just sent and got
   Page-only zod schemas go in `schema.ts` (or `<name>_schema.ts` when there are several).
 - `components/`: UI used by two or more components (including `can.tsx`, `load_failed.tsx`, `skeleton_list.tsx`, `skeleton_grid.tsx`, the switchers).
 - `ui/`: design-system primitives (button, input, select, textarea, checkbox, radio, toggle, modal, drawer, tabs, `form/`).
-- `hoc/`: every higher-order or wrapping component: `withOverlay`, `app_layout/`, `boot_gate` (logo until `/me` is
-  known) and the route guards `guest_only`, `require_auth`, `require_web`, `require_restaurant`, `require_setup`,
-  `require_permission`.
-- `hooks/`: hooks. `useGet` is the only way to read from the API. The named store hooks live here too (`useWorkplace`,
-  `useRestaurantSettings`, `useCan`, `useNavLinks`).
+- `hoc/`: genuine wrapping UI components such as `withOverlay` and `app_layout/`. The current tree also contains
+  legacy `Require*` route wrappers; do not add more. The current startup loading gate is in `app.tsx`; do not mount
+  a second `BootGate` around it. Consolidate startup gating only as part of a deliberate migration.
+- Route access is owned by `src/app.tsx`. Do not stack per-condition route wrappers or create a guard component for
+  each access condition. The existing `Require*` wrappers are migration debt until the route refactor is implemented;
+  preserve them in unrelated changes. During that refactor, resolve route requirements from one auth/workplace snapshot
+  in `App`, use pure `can(workplace, permission)` for route permissions, and preserve current redirects and guest/POS/setup behavior.
+- `hooks/`: reusable hooks, including `useGet` for screen-owned API reads and the named store hooks (`useWorkplace`,
+  `useRestaurantSettings`, `useCan`, `useNavLinks`). Direct API reads are reserved for the documented bootstrap,
+  live-update and explicit background/imperative workflows.
 - `store/`: every module-level store: `create_store` and each store made with it (`auth_store`, `toast_store`),
   holding the state and the actions that change it (`setMe`, `setWorkplace`, `setSettings`, `setBranch`).
   Never put a store in `utils/`.
@@ -97,29 +109,38 @@ loaded by a parent, or can the client work it out from what it just sent and got
 - `icons/`: SVG components, only when needed.
 - `config/`: the axios clients: `config/api.ts` (`/api/v1`) and `config/auth_api.ts` (Better Auth, `/api/auth`).
 - Never create `features/` or `src/shared/`. Code shared with the server (permission catalog, preset roles, `can()`,
-  the `Me`, `Workplace` and `RestaurantSettings` types) lives in the repo-root `../shared/`, imported as `@shared/...`.
+  and the `Me`, `Workplace` and `RestaurantSettings` types) lives in the repository-root `shared/` directory,
+  imported as `@shared/...`.
 
 ## State
-- At most one state per component: useState, useReducer, useGet, useWatch, or a store hook. Router hooks
-  (`useSearchParams`, `useNavigate`, `useParams`, `useLocation`) do not count. Split the component instead of adding a
-  second state; `useAuthStore.getState()` inside a handler is not a state.
-- The same goes for custom hooks: one `useState` (an object if several values belong together), no refs.
-- Local UI state stays in the section that uses it (for example whether a section is expanded).
-- A value the server reads (a date, a scope, a status, a page, search text, an id in the address) lives in the `useGet`
-  request's own `options`, not in a second state or the URL: show it from `options.params.x` (or `options.url`) and
-  change it with `get({ params: { x } })` (or `get({ url })`). Clear a filter with `undefined`
-  (`get({ params: { status: undefined } })`); params merge, so leaving it out keeps the old value.
-- **Search text the server uses is a filter like any other.** The input reads `options.params.search` and calls
-  `get({ params: { search: e.target.value || undefined } }, 400)`. The delay is the second argument of `get`. No
-  `useState` for the text, no debounce `useEffect`, no separate search component, no timers in screens.
-- Filters and tabs that only narrow what is already loaded (a client-side text filter, a tab) live in the URL:
-  `useSearchParams` with `utils/with_param`, and never call `get`. Steps of a flow are derived from the data, not kept
-  in the URL or in state.
-- No manual `useMemo`, `useCallback` or `memo`: the React Compiler handles it.
+- Keep one source of truth. Do not mirror values already owned by the server, `useGet` cache or a store into local state
+  unless the user is editing a draft or the UI genuinely needs a temporary independent value.
+- There is no blanket one-hook or one-state-per-component quota. A component may subscribe to multiple independent
+  sources (for example, a page's `useGet` result and `useWorkplace()`) when it renders both. Split components to
+  clarify responsibilities, isolate expensive updates or improve reuse, not just to reduce a hook count.
+- Local UI state stays near the section that uses it (for example, whether a section is expanded). Derive values from
+  existing data whenever possible instead of storing a second copy.
+- A value the server reads (date, scope, status, page, search text or an ID in the address) lives in the `useGet`
+  request's `options`, not in duplicate state or a second source of truth. Read it from `options.params.x` or
+  `options.url`, and change it with `get({ params: { x } })` or `get({ url })`. Clear a filter with `undefined`;
+  params merge, so leaving a key out keeps its previous value.
+- **Search text the server uses is a filter like any other.** Read it from `options.params.search` and call
+  `get({ params: { search: value || undefined } }, 400)`. Do not mirror the same server query in separate state or
+  add a screen-level debounce effect/timer.
+- Filters and tabs that only narrow data already loaded on the client may live in the URL, using
+  `useSearchParams` and `utils/with_param`; they do not call `get`. Flow steps should be derived from saved data when
+  that data already determines the current step.
+- Avoid effect chains that synchronize one piece of state into another. Use an effect only to synchronize with an
+  external system (network, browser API, subscription, timer, imperative widget) or for a real lifecycle requirement.
+- React Compiler is enabled. Avoid manual `useMemo`, `useCallback` and `memo` unless stable identity is required by
+  an external API or profiling demonstrates a remaining issue.
 
 ## Data
-- Read with `useGet<T>(url, { active, ...axiosConfig })` in the component that shows the data (see "Update the state"
-  for where that is). It returns `{ data, loading, error, options, get, update }`.
+- Read screen-owned API data with `useGet<T>(url, { active, ...axiosConfig })` in the component that owns the screen
+  data (see "Update the state" for where that is). It returns `{ data, loading, error, options, get, update }`.
+  The intentional direct-read exceptions are app bootstrap in `main.tsx` and background reconciliation in
+  `hoc/app_layout/live_updates.tsx` (SSE reconnect catch-up for orders/tables and the visible WhatsApp inbox refresh).
+  These infrastructure reads update the shared cache/store; they are not a pattern for ordinary page components.
   - It loads on mount, and again when `url` changes. `active: true` holds the request (e.g. a search under 3
     characters); it loads when `active` turns false.
   - It caches every answer per person, restaurant, branch, address and params. A screen opened again shows the cached
@@ -142,9 +163,10 @@ loaded by a parent, or can the client work it out from what it just sent and got
   a confirm's `onConfirm`. A confirm or menu action without a form ends with
   `.catch((err) => toast.error(getAxiosMessage(err)))` so the server's message shows; forms pass errors to `onError` or let `FormDrawer` show them.
 - Never send `restaurantId` or `branchId` to scope data: the server takes both from the sign-in session.
-- No demo or fallback data, ever: no `data = DEMO_X` defaults, no "if the list is empty show sample rows", no records
-  made on screen with fake ids. Every screen shows what the server has, and every write goes to the server and shows
-  its answer. If an endpoint is missing, add it to the server.
+- Production screens show real server data; never invent fallback records, fake IDs or sample rows to make a screen
+  look populated. `src/constants/sample_menu.ts` is an intentional first-run starter-menu template offered only when
+  the user explicitly chooses to add sample dishes. Fixtures in `src/test/` are test-only. A missing endpoint belongs
+  in the backend; a failed read must show its real error/retry state, not fabricated data.
 - While loading, show a skeleton shaped like what is coming, never a spinner and never an empty state:
   - a list: `const { data: items = [], loading } = …`, then `{loading && <SkeletonList rows={4} />}`
     (`components/skeleton_list`; `variant="lines"` inside a card) and the empty state only when `!loading && !items.length`.
@@ -165,10 +187,32 @@ loaded by a parent, or can the client work it out from what it just sent and got
   it updates.
 - A write that must work offline (new orders, order status, cancel) tries the server, and on a network error (no
   `err.response`) or while `useOutboxStore` says offline, goes into the outbox (`store/outbox_store`) instead.
-  `utils/sync_outbox` sends it, oldest first, when the internet is back; a change the server refuses is dropped and
-  the person told why. Screens lay waiting changes over the server's list (`orders_page/board_with_outbox`).
+  `utils/sync_outbox` sends it, oldest first, when the internet is back. A definitive server rejection stays in the
+  outbox with its sync issue for human review; never silently discard queued work. Screens lay waiting changes over the
+  server's list (`orders_page/board_with_outbox`).
 - A new record made offline carries a `clientId` (and `placedAt`); the server saves it once however often it is sent.
 - Payments and khata are online only: they change what customers owe.
+
+## Routing and route access
+- `src/app.tsx` is the single source of truth for route definitions and route-level access policy.
+- Do not stack nested `<Route element={<RequireAuth />}/>`, `<RequireWeb />`, `<RequireRestaurant />`,
+  `<RequireSetup />` or `<RequirePermission />` wrappers. Do not create a separate guard component for each access
+  condition.
+- The current route tree still uses legacy `Require*` wrappers. Do not add to that pattern or remove those wrappers
+  during unrelated work. Replace them only in a deliberate routing migration, with behavior tests and a review of every
+  existing route.
+- In the centralized implementation, read the auth/workplace snapshot once in `App` for route decisions. Do not let
+  individual route guards subscribe to `useWorkplace()` or `useCan()`. Derive the workplace from the `me` snapshot or
+  call the workplace hook once in `App`; use pure `can(workplace, permission)` from `@shared/can` for route permissions.
+- Keep access requirements declarative beside the route definitions and resolve them through one policy path. Do not
+  maintain a second path-to-permission table that can drift from the routes.
+- Preserve current behavior during the migration: safe `next` redirects, the guest `?add=1` exception, locked POS
+  terminal handling, web/POS mode restrictions, restaurant selection, onboarding/setup redirects, permission-denied
+  redirects and not-allowed states, public table/invitation/auth routes, and the not-found route.
+- Route checks are client navigation and UI gating only. The backend remains authoritative and must enforce every
+  permission and tenant boundary.
+- Page components may still use `useWorkplace()`, `useRestaurantSettings()` or `useCan()` when they need that data
+  for their own UI or business logic. The single-snapshot rule applies to route-level decisions, not page behavior.
 
 ## Auth and permissions
 - The session is an httpOnly cookie (Better Auth); a POS terminal's key is an httpOnly cookie too. Never store a token,
@@ -178,16 +222,18 @@ loaded by a parent, or can the client work it out from what it just sent and got
 - Read: `useAuthStore((state) => state.me)` for the account; `useWorkplace()` (restaurant, branch, branches,
   allBranches, permissions, roleNames, `isOwner`, `isPrimaryOwner`, `hasPin`, `settings`); inside a restaurant
   `useRestaurantSettings()`.
-- One permission: `useCan('orders:create')`, `can(workplace, …)` from `@shared/can` outside components, or
-  `<Can permission="orders:create">`. The server checks again. Gate UI and routes by permission (`resource:action`),
-  never by role name: roles are editable. Owner-only actions check `workplace.isPrimaryOwner`.
+- Component-level visibility uses `useCan('orders:create')` or `<Can permission="orders:create">`; outside components
+  use pure `can(workplace, permission)` from `@shared/can`. Route-level permissions belong in `src/app.tsx` and use
+  the single workplace snapshot there, not separate guard components calling `useCan()`/`useWorkplace()`. The server
+  checks again. Gate by permission (`resource:action`), never role name: roles are editable. Owner-only actions check
+  `workplace.isPrimaryOwner`.
 - Change where they work with `api.post('/me/workplace' | '/me/branch')`; the answer is the new `me`.
   `utils/sign_out` signs every account out; `utils/lock_terminal` locks a terminal.
 - Better Auth calls (sign in/up, passwords, email verification, accounts on this browser) go through
   `config/auth_api.ts`. Sign-in and switching account answer with `me`.
-- `config/api.ts` (`withCredentials`) reacts to `401` with `code: 'signed_out' | 'pos_locked'` (the store empties and the
-  guards redirect) and `403 context_lost` (sets the `me` it carries). `403 reauth_required` means "sign in again";
-  show its message.
+- `config/api.ts` (`withCredentials`) reacts to `401` with `code: 'signed_out' | 'pos_locked'` by updating auth state;
+  the centralized route policy resolves the resulting navigation. A `403 context_lost` sets the `me` it carries.
+  `403 reauth_required` means "sign in again"; show its message.
 
 ## Forms
 - Every form uses the `Form` component (`ui/form`), never `useForm` directly.
@@ -234,10 +280,13 @@ Every field follows the pattern of `ui/input.tsx` and `ui/select.tsx`:
   workspace, app pages use the app layout. Don't reuse a layout just because it's there.
 
 ## Checks
-- Client tests (Vitest) cover pure logic only: store actions (`store/auth_store.test.ts`) and hooks
-  (`hooks/useGet.test.tsx`, `// @vitest-environment jsdom`), next to the file they test; shared fixtures in `src/test/`
-  (`sample_me`). A new store action or a change to a hook gets a test. Screens are not tested. The server's `bun test`
-  covers permissions, tenant isolation and that writes answer with the saved record in its list's shape.
+- The Vitest suite includes utility/unit tests and component or page behavior tests (for example new order, orders board,
+  WhatsApp, load errors, inputs, hooks, stores and theme contrast). Add or update tests beside the relevant feature when
+  behavior changes; cover user-visible success, loading, empty and failure states where applicable. Shared fixtures live
+  in `src/test/`. When changing API contracts, auth or tenant boundaries, also run the corresponding backend tests:
+  client tests cannot prove server-side authorization or tenant isolation.
 - Before finishing: `yarn typecheck`, `yarn lint`, `yarn test` and `yarn build` pass, and a search finds none of: `get()` after a
   write, `useGet` inside rows, the same URL loaded twice on one screen, `me` in an answer the client could work out,
-  `useAuthStore((state) => state.me?.workplace…)` in a component, one-line wrapper functions, helper files that only one file uses, and `demo`/`DEMO`/fallback data.
+  `useAuthStore((state) => state.me?.workplace…)` in a component, route-level `useWorkplace()`/`useCan()` calls in
+  separate guard components, newly added nested per-condition `Require*` wrappers, one-line wrapper functions, helper
+  files that only one file uses, and fake production/demo fallback records.

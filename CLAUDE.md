@@ -1,55 +1,67 @@
-# Restora (restaurant CRM)
+# Restora Web
 
-React 19 + TypeScript + Vite + Tailwind v4, React Compiler on. A SaaS: one login can work in several restaurants, each
-with branches, a team, roles and permissions. **For now the app has no API:** every page shows hard-coded data from
-`constants/demo_*.ts` (one file per kind of record), there is no sign-in, and every route is open. Saving a form shows a
-toast; a few screens (menu, tables, one customer, settings forms) also update their own copy in `useState`, which resets on reload.
-`constants/sample_menu.ts` is the starter menu offered during first-run setup. Built for any country: no Urdu fields.
+Restora is a production React client for a restaurant CRM/POS SaaS. It is not a static demo: the client uses the Restora API, Better Auth sessions, restaurant/workplace context, role permissions, cached server data, offline order outbox, live updates and PWA support.
 
-## Commands (yarn)
-- `yarn dev` (port 3000) · `yarn typecheck` · `yarn lint` · `yarn build` · `yarn verify` (all three)
-- A change is done only when `yarn verify` passes. There are no tests.
+Stack: React 19, TypeScript, Vite, Tailwind CSS v4 and the React Compiler.
 
-## Layout (`src/`)
-- `pages/<name>_page/` one folder per route: `index.tsx` is the page; components only that page uses sit next to it,
-  bigger sections get their own folder with an `index.tsx` (see `pages/new_order_page/customer_step/`). Page-only schemas: `schema.ts`.
-- `components/` UI used by two or more components (page header, form drawer, empty state, fields shared by two forms…).
-- `ui/` design-system primitives (button, input, modal, drawer, tabs, `form/`…). No Card component: cards are
-  `rounded-card bg-surface shadow-card p-4 sm:p-5` classes.
-- `hoc/` every wrapping component: `withOverlay` and `app_layout/` (sidebar, bottom bar, guest-call pill). No route guards.
-- `hooks/` UI hooks only (overlay, dismiss, shortcuts, breakpoints…). No data hooks.
-- `types/` global types, one per file · `constants/` constant values and shared zod schemas, one per file ·
-  `utils/` plain helpers and contexts, one per file · `icons/` SVG components, when needed.
-- `store/` only `toast_store` (made with `create_store`); call it through `utils/toast`.
-- Logo: `icons/restora_symbol|restora_icon|restora_wordmark.tsx`, composed by `components/brand_mark.tsx`;
-  `index.html` has the boot screen. Masters and every icon file live in `../brand` (see its README); `public/` icons are made there, never by hand.
-- PWA: `vite-plugin-pwa` in `vite.config.ts` (manifest, service worker). `utils/register_service_worker.ts` asks before
-  updating.
-- No `features/`, no `src/shared/`, no barrels, no `@shared` imports: the permission list is `constants/permission_catalog.ts`.
+## Read before changing the client
 
-## Rules
-- **Default exports only, one export per file.**
-- **At most one state per component** (useState, useReducer, useWatch, a store read). Router hooks are not state. Split the component instead.
-- **Data:** import the `DEMO_*` constant in the component that shows it (records use `_id`). Writes go in a `Form`
-  `onSubmit` or a `FormDrawer` `onSave` and end with a `toast`; new records made on screen get ids from `utils/demo_id`.
-- **Keep it simple:** one `useState` per hook too, no refs or counters to steer flow; derive what to show from the data
-  (e.g. the setup step from `settings.taxSet`) instead of keeping a separate step in state or the URL. `Button` has no
-  `loading` prop: pass `disabled` while saving.
-- The restaurant's settings are `DEMO_SETTINGS`; the person is `DEMO_USER`; the working branch is `DEMO_BRANCH`. Everyone can do everything (no permission checks yet).
-- **Forms:** always the `Form` component (or `FormDrawer`, which wraps it), never `useForm` directly. Pass the form
-  props down (`{...props}`), `register` every input, `setValue` for values that are not inputs, `useWatch` narrowly.
-- Search text, filters, tabs and dates live in the URL: `useSearchParams` with `utils/with_param` to set one value. Local UI state stays in the section that uses it.
-- **Menu:** `DEMO_MENU` is `{ categories, addonGroups, items }`. A dish has `sizes` (one with an empty name = one price) and `addonGroupIds`. Cart lines are `types/cart_item` (same dish + size + add-ons + note = one line, `utils/cart_item_of`). Order totals: `utils/order_totals_of`.
-- **Tables and QR:** tables are per branch (Settings → Tables, `/print/tables` for A4 cards). A table's QR opens `/t/<code>`, the guest page outside the app. Staff see the floor and guest calls on `/tables`; `hoc/app_layout/table_calls_banner` shows waiting calls at the top of every page.
-- **POS terminals:** `/pos` is the lock screen; any PIN of the right shape opens New order.
-- Overlays (modal, drawer, sheet, confirm, alert) are built with `withOverlay`, never with local `isOpen` state.
-- No manual `useMemo`/`useCallback`/`memo`: the React Compiler does it.
-- Headings `h1`–`h6` / `.h1`–`.h6` get responsive clamp sizes from `index.css`; no `sm:/md:` text sizes on them.
-- Styling uses design tokens only (the `@theme` block in `src/index.css`). Never a raw palette color, hex or `rounded-xl`; lint rejects it.
-- **Themes and dark mode:** the restaurant picks a theme, light/dark/follow device and the sidebar in Settings → Appearance (`settings.appearance`, applied by `utils/apply_appearance`). Each theme and dark mode only redefine tokens in `src/index.css`, so a component that uses tokens works in all 12; `src/themes.test.ts` checks contrast. Shadows are built from color tokens, never fixed colors.
-- Logical CSS only (`ms-`, `pe-`, `text-start`) so RTL can be switched on later. Money, phone, date and WhatsApp
-  formatting come from `utils/`, never inline.
+- Follow the detailed client conventions in .claude/app-structure-forms-ui/SKILL.md for architecture, data fetching, state, routing, forms, UI, tests and naming.
+- This file is the short project map and records the high-level invariants. Keep it consistent with the skill; do not reintroduce prototype-era instructions.
+- Do not refactor, restyle or modify unrelated files just because they are nearby. Follow the scope of the task.
 
-## Naming
-- Files and folders: lowercase `snake_case`. Hook files and `withOverlay` are camelCase (`useShow.ts`).
-- A file is named after what it exports (`format_rs.ts` exports `formatRs`).
+## Project architecture
+
+- The app is a real multi-restaurant product. One account can access multiple restaurants, branches, teams, roles and permissions.
+- The browser session uses Better Auth httpOnly cookies. The POS terminal flow also uses an httpOnly cookie. Never put session tokens, restaurant IDs or branch IDs in localStorage.
+- The backend is a separate service. The client must treat the server as authoritative for authentication, permissions, tenant isolation and business rules.
+- Shared contracts and permission logic live in the repository-root shared/ directory and are imported through @shared/*.
+- src/main.tsx hydrates the local response cache and offline outbox, then loads /me. The saved /me can restore the signed-in context during an offline start. Do not add another app-wide /me request or a second startup gate.
+- src/app.tsx owns the route definitions and the app's initial loading state. The current route tree still uses nested Require* wrappers. Treat those wrappers as legacy: do not add more condition-specific guards or spread route-level useWorkplace/useCan subscriptions across them. When routing is refactored, consolidate route policy in App, read the auth/workplace snapshot once for route decisions, and use the pure can(workplace, permission) helper for route permissions. Preserve all existing redirects and POS/web/setup/guest behavior. Do not remove the existing guards as unrelated cleanup before the migration is implemented and verified.
+- Page components may use useWorkplace/useRestaurantSettings/useCan when they genuinely need that data for their own UI or behavior. The single-snapshot rule applies to route-level decisions, not legitimate page subscriptions.
+- src/hooks/useGet.ts is the normal way for screens to read API data. It shares identical in-flight requests and caches answers by account, restaurant, branch, URL and params. Update its cache after writes instead of fetching the same list again.
+- Intentional infrastructure exceptions use direct API calls: startup in main.tsx; live reconciliation and WhatsApp inbox refresh in hoc/app_layout/live_updates.tsx; and explicit auth, sync or background workflows. Do not copy these exceptions into ordinary page components.
+- Offline order changes are stored in the outbox and replayed for the workplace that created them. A definitive server rejection remains visible for review; never silently discard queued work.
+- PWA configuration and service-worker behavior live in vite.config.ts, public/push_sw.js and the related utilities.
+
+## Source layout
+
+- src/app.tsx: route definitions and route-level access policy.
+- src/main.tsx: application bootstrap, local cache/outbox hydration, initial /me request and service-worker registration.
+- `src/pages/<name>_page/`: route pages; page-only components and schemas stay beside the page.
+- src/components/: UI shared by multiple pages/components.
+- src/ui/: design-system primitives, including Form, Button, fields, modal and drawer.
+- src/hoc/app_layout/: authenticated application shell and live updates.
+- src/hooks/: reusable React hooks, including useGet and named auth/workplace hooks.
+- src/store/: shared client stores and their update actions.
+- src/types/ and repository-root shared/: client and cross-service types.
+- src/constants/: constant values and shared schemas.
+- src/utils/: reusable pure helpers and workflow utilities.
+- src/icons/: React SVG icon components.
+
+## Core implementation rules
+
+- Use the existing structure and naming conventions. Default-export the primary component/helper from each file; avoid barrel files. Named type-only exports are allowed when a consumer needs a public type.
+- Keep one source of truth. Do not mirror server/store/cache data into local state unless it is an editable draft or genuinely transient UI state. Do not impose an arbitrary one-hook-per-component limit.
+- Use useGet for screen-owned reads. Load each screen's list at the highest component that owns the screen and pass it to rows, drawers and fields; never fetch per row.
+- After a successful write, update the relevant store/cache from the response. Do not issue a follow-up GET just to refresh what the write already returned.
+- Do not add fake production records or demo/fallback responses. src/constants/sample_menu.ts is an intentional first-run starter-menu template; src/test/ fixtures are test-only.
+- Keep reusable abstractions meaningful. Avoid trivial one-line wrappers and single-use helper files, but extract logic when it is genuinely shared or improves clear separation.
+- React Compiler is enabled. Avoid manual memoization as routine decoration; use refs, effect events, cancellation or request identifiers when an actual lifecycle, imperative or async-correctness requirement calls for them.
+- Forms use the shared Form/FormDrawer patterns. Buttons inside forms that do not submit must explicitly use type="button".
+- Use design tokens from src/index.css. Do not introduce raw palette colors, arbitrary hex colors or unapproved radius classes; ESLint enforces these rules.
+- Use logical CSS properties/classes (for example ms-, pe-, text-start and inset-s) so layouts remain direction-aware.
+- Loading, empty, error and success states are part of the feature. Preserve accessible labels, keyboard behavior, responsive layouts and existing visual conventions.
+
+## Commands
+
+Use Node >=22.12 and Yarn 1.22.22.
+
+- yarn dev — Vite development server on port 3000; API proxy defaults to http://localhost:5001.
+- yarn typecheck — TypeScript checks.
+- yarn lint — ESLint, including React Hooks/Compiler and design-token rules.
+- yarn test — Vitest suite.
+- yarn build — production build; VITE_API_URL is required.
+- yarn verify — typecheck, lint, tests and production build.
+
+Copy .env.example to .env for local development. VITE_APP_URL and VITE_API_URL are public browser-build configuration; never put secrets in VITE_* variables.
