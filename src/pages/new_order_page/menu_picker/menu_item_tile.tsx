@@ -19,7 +19,7 @@ interface MenuItemTileProps {
   onQty?: (key: string, qty: number) => void;
 }
 
-const tileButton = 'flex min-h-0 flex-1 cursor-pointer flex-col items-start rounded-card p-3 text-start -outline-offset-2';
+const tileButton = 'flex min-h-28 flex-1 cursor-pointer flex-col items-start rounded-card p-3 text-start -outline-offset-2';
 
 /**
  * Tap a dish to add one with default options immediately; a dish with sizes or add-ons also provides an Options button.
@@ -34,12 +34,19 @@ export default function MenuItemTile({ dish, groups, contents, lines, onAdd }: M
   const handleAddDefault = () => onAdd(cartItemOf(dish, defaultSize, defaultAddons));
 
   return (
-    <li className={`relative flex h-24 flex-col rounded-card bg-surface shadow-card transition-shadow ${qty ? 'ring-2 ring-primary' : 'hover:shadow-lg'}`}>
+    <li className={`relative flex min-h-28 flex-col rounded-card bg-surface shadow-card transition-shadow ${qty ? 'ring-2 ring-primary' : 'hover:shadow-lg'}`}>
       <button type="button" onClick={handleAddDefault} title={contents || undefined} className={tileButton}>
         <span className={`line-clamp-2 text-sm leading-5 font-medium text-ink ${plain ? '' : 'pe-7'}`}>{dish.name}</span>
-        <span className={`mt-auto truncate text-sm font-semibold tabular-nums text-ink ${qty ? 'max-w-[calc(100%-2.25rem)]' : 'max-w-full'}`}>{priceRange(dish.sizes)}</span>
+        <span className="mt-auto flex w-full items-end justify-between gap-2 pt-2">
+          <span className="min-w-0 break-words text-sm font-semibold tabular-nums text-ink">{priceRange(dish.sizes)}</span>
+          {qty > 0 && (
+            <span aria-label={`${qty} in order`} className="pointer-events-none min-w-6 shrink-0 rounded-pill bg-primary px-1.5 text-center text-xs leading-6 font-semibold tabular-nums text-on-primary">
+              {qty}
+            </span>
+          )}
+        </span>
       </button>
-      {/* In the corner, clear of the name (it leaves room) and the price (shown in full). */}
+      {/* In the corner, clear of the name and price. */}
       {!plain && (
         <DishPicker
           dish={dish}
@@ -50,12 +57,6 @@ export default function MenuItemTile({ dish, groups, contents, lines, onAdd }: M
             <IconButton type='button' icon={SlidersHorizontal} size="sm" aria-label={`Options for ${dish.name}`} aria-haspopup="dialog" title="Size and add-ons" className="absolute end-1 top-1" onClick={open} />
           )}
         />
-      )}
-      {/* The count only: quantities change in the order panel beside the tiles. */}
-      {qty > 0 && (
-        <span aria-label={`${qty} in order`} className="pointer-events-none absolute end-2 bottom-2 min-w-6 rounded-pill bg-primary px-1.5 text-center text-xs leading-6 font-semibold tabular-nums text-on-primary">
-          {qty}
-        </span>
       )}
     </li>
   );
