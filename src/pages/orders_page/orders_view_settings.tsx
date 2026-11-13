@@ -18,16 +18,28 @@ export default function OrdersViewSettings() {
       items={[
         {
           section: 'Workspace',
+          label: 'Show navigation sidebar',
+          icon: PanelLeft,
+          selected: !sidebarHidden,
+          onClick: () => setPreferences({ sidebarHidden: false }),
+        },
+        {
           label: 'Hide navigation sidebar',
           icon: PanelLeft,
           selected: sidebarHidden,
-          onClick: () => setPreferences({ sidebarHidden: !sidebarHidden }),
+          onClick: () => setPreferences({ sidebarHidden: true }),
         },
         {
           label: 'Show separate order details',
           icon: PanelRight,
           selected: detailsPanel,
-          onClick: () => setPreferences({ detailsPanel: !detailsPanel }),
+          onClick: () => setPreferences({ detailsPanel: true }),
+        },
+        {
+          label: 'Hide separate order details',
+          icon: PanelRight,
+          selected: !detailsPanel,
+          onClick: () => setPreferences({ detailsPanel: false }),
         },
         {
           section: 'Order cards',
