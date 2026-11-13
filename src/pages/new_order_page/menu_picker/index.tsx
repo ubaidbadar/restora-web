@@ -13,7 +13,7 @@ import onSale from '../../../utils/on_sale';
  * The menu; hidden dishes, dishes sold out in this branch and deals that cannot be sold now (outside their hours, or a
  * dish in them sold out) are left out so they cannot be ordered.
  */
-export default function MenuPicker({ menuDensity, ...props }: FormComponentProps & { menuDensity: NewOrderWorkspaceState['menuDensity'] }) {
+export default function MenuPicker({ menuColumns, ...props }: FormComponentProps & { menuDensity: NewOrderWorkspaceState['menuDensity'] }) {
   const { data, loading, get } = useGet<Menu>('/menu');
   if (!data) return loading ? <SkeletonGrid tiles={6} columns="grid-cols-2 sm:grid-cols-3" height="h-20" /> : <LoadFailed what="the menu" onRetry={() => get()} />;
   const items = data.items.filter(
