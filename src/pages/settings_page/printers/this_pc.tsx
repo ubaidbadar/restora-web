@@ -87,6 +87,31 @@ export default function ThisPc({ onPaired, embedded = false }: ThisPcProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- check once on this setup page
   }, []);
 
+  // Keep the Settings card current while the background agent detects a server-side removal.
+  useEffect(() => {
+    if (state.step !== 'idle') return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const response = await agentFetch('/status', {}, 4_000);
+        if (!response.ok) return;
+        const status = await response.json() as { paired: boolean; branchId?: string; reconnectRequired?: boolean };
+        if (cancelled) return;
+        if (!status.paired && status.reconnectRequired) setState({ step: 'disconnected' });
+        else if (status.paired && status.branchId && selectedBranchId && status.branchId !== selectedBranchId) {
+          setState({ step: 'differentBranch' });
+        }
+      } catch {
+        // A temporary local-network permission or process hiccup should not flip a healthy connection to disconnected.
+      }
+    };
+    const timer = window.setInterval(() => void check(), 5_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [state.step, selectedBranchId]);
+
   if (state.step === 'idle') return null;
   if (state.step === 'connecting') return (
     <p role="status" className="flex max-w-3xl items-center gap-2 rounded-card bg-primary-soft px-4 py-3 text-sm font-medium text-accent-text">
