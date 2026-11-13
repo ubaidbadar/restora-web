@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import useBreakpoint from '../hooks/useBreakpoint';
 import type OverlayTrigger from '../types/overlay_trigger';
 import ModalOverlay from './modal/modal';
+import Drawer from './drawer/modal';
 
 interface DockedSheetProps {
   /** The sheet's title, e.g. "Order". */
@@ -11,6 +12,8 @@ interface DockedSheetProps {
   children: ReactNode;
   /** Extra classes for the docked column (tablet width and up). */
   className?: string;
+  /** Keep the order beside the menu, or open it only when the cart is selected. */
+  mode?: 'column' | 'drawer';
 }
 
 /**
@@ -18,7 +21,7 @@ interface DockedSheetProps {
  * sticky column instead. The sheet's content exists only while it is open: form fields inside keep their values in the
  * form, but a submit button there sits outside the <form> (the sheet is a portal), so it names the form with `form`.
  */
-export default function DockedSheet({ label, component, children, className = '' }: DockedSheetProps) {
+export default function DockedSheet({ label, component, children, className = '', mode = 'column' }: DockedSheetProps) {
   const { lg } = useBreakpoint();
 
   if (!lg) {
@@ -26,6 +29,13 @@ export default function DockedSheet({ label, component, children, className = ''
       <ModalOverlay title={label} flush component={component}>
         {children}
       </ModalOverlay>
+    );
+  }
+  if (mode === 'drawer') {
+    return (
+      <Drawer title={label} width="md" component={component}>
+        {children}
+      </Drawer>
     );
   }
   return (
