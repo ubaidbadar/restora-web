@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useWatch } from 'react-hook-form';
 import type FormComponentProps from '../../../types/form_component_props';
 import type Customer from '../../../types/customer';
+import completeAddress from '../../../utils/complete_address';
 import useGet from '../../../hooks/useGet';
 import Input from '../../../ui/input';
 import Textarea from '../../../ui/textarea';
@@ -14,11 +15,8 @@ function CustomerDeliveryDefaults({ customerId, setValue, watch }:
 
   useEffect(() => {
     if (!customer || customer._id !== customerId) return;
-    const savedAddress = customer.addresses?.find(address => address.trim());
-    const completeAddress = savedAddress && customer.area && !savedAddress.toLowerCase().includes(customer.area.toLowerCase())
-      ? `${customer.area}, ${savedAddress}`
-      : savedAddress || customer.area;
-    if (completeAddress && !watch('address')) setValue('address', completeAddress);
+    const address = completeAddress(customer.addresses?.find((saved) => saved.trim()), customer.area);
+    if (address && !watch('address')) setValue('address', address);
   }, [customer, customerId, setValue, watch]);
 
   return null;
