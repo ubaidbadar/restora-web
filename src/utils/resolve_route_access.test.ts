@@ -4,7 +4,7 @@ import sampleMe from '../test/sample_me';
 import resolveRouteAccess from './resolve_route_access';
 
 const resolve = (
-  policies: RouteAccess[],
+  policies: (RouteAccess | undefined)[],
   overrides: Partial<Parameters<typeof resolveRouteAccess>[1]> = {},
 ) =>
   resolveRouteAccess(policies, {
