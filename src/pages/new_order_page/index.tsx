@@ -106,7 +106,7 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
 
   return (
     <>
-      <div className={`min-w-0 w-full ${workspace.orderPanel === 'column' ? 'lg:pe-96' : ''}`}>
+      <div className={`min-w-0 w-full ${workspace.orderPanel === 'column' ? 'xl:pe-96' : ''}`}>
         {/* The bottom bar is hidden on this page below the sidebar width, so it gets its own way back. */}
         <div className="flex gap-1">
           {order ? (
@@ -125,7 +125,7 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
         </div>
       </div>
 
-      {/* Beside the menu from tablet width; on phones a bottom sheet, opened from the cart bar. */}
+      {/* Keep the cart in a drawer at laptop widths; reserve a side column only when the menu has enough room. */}
       <DockedSheet
         label="Order"
         mode={workspace.orderPanel}
