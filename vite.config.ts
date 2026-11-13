@@ -46,7 +46,7 @@ export default defineConfig(({ command, mode }) => {
           // Native Restora Agent launches the installed PWA through a registered OS protocol, not a browser tab.
           protocol_handlers: [{ protocol: 'web+restora', url: '/?restoraLaunch=%s' }],
           // Reuse the existing PWA window when the agent is launched again.
-          launch_handler: { client_mode: 'navigate-existing' },
+          launch_handler: { client_mode: 'focus-existing' },
           orientation: 'any',
           background_color: CANVAS,
           theme_color: CANVAS,
