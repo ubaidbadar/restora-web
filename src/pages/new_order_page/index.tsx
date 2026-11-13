@@ -12,6 +12,8 @@ import printSlip from '../../utils/print_slip';
 import printOnThisPc from '../../utils/print_on_this_pc';
 import kitchenChanges from '../../utils/kitchen_changes';
 import PageHeader from '../../components/page_header';
+import useBreakpoint from '../../hooks/useBreakpoint';
+import OrdersViewSettings from '../orders_page/orders_view_settings';
 import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
 import MenuPicker from './menu_picker';
@@ -98,20 +100,22 @@ const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.key
 const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing }) => {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
+  const { lg } = useBreakpoint();
   // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
 
   return (
     <>
-      <div className="min-w-0 w-full lg:pr-96">
-        {/* The bottom bar is hidden on this page below the sidebar width, so it gets its own way back. */}
-        <div className="flex gap-1">
-          {order ? (
-            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board." />
-          ) : (
-            <PageHeader backTo='/orders' title="New order" subtitle="Find the customer, tap dishes, place the order" />
-          )}
-        </div>
+      <div className="min-w-0 w-full">
+        {order ? (
+          <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board.">
+            {lg && <OrdersViewSettings page="new-order" />}
+          </PageHeader>
+        ) : (
+          <PageHeader backTo='/orders' title="New order" subtitle="Find the customer, tap dishes, place the order">
+            {lg && <OrdersViewSettings page="new-order" />}
+          </PageHeader>
+        )}
         <div className="flex min-w-0 flex-col gap-5">
           <CustomerStep {...props} picked={order?.customer ?? (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })} />
           <MenuPicker {...props} />
@@ -138,7 +142,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
   return (
     <>
       <Form
-        className="flex items-end md:justify-end"
+        className="grid min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]"
         id={ORDER_FORM}
         component={(props) => <Main {...props} editing={editing} />}
         schema={orderSchema}
