@@ -4,13 +4,16 @@ import EmptyState from '../../../components/empty_state';
 import LoadFailed from '../../../components/load_failed';
 import SkeletonList from '../../../components/skeleton_list';
 import STATUS_LABELS from '../../../constants/status_labels';
+import useBreakpoint from '../../../hooks/useBreakpoint';
 import useGet from '../../../hooks/useGet';
+import useOrdersWorkspaceStore from '../../../store/orders_workspace_store';
 import type OrderHistory from '../../../types/order_history';
 import type OrderStatus from '../../../types/order_status';
 import Chips from '../../../ui/chips';
 import formatRs from '../../../utils/format_rs';
 import withParam from '../../../utils/with_param';
 import HistoryOrderDrawer from './history_order_drawer';
+import HistoryOrderDetailsPanel from './history_order_details_panel';
 import LoadMore from './load_more';
 
 const STATUSES: OrderStatus[] = ['new', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled'];
@@ -28,7 +31,10 @@ interface HistoryResultsProps {
  * status (the server's summary), so picking one never hides the others. The type is picked in the filter.
  */
 export default function HistoryResults({ from, to, q, status, type }: HistoryResultsProps) {
-  const [, setParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { lg } = useBreakpoint();
+  const preferences = useOrdersWorkspaceStore();
+  const detailsPanel = lg && preferences.detailsPanel;
   const params = { from, to, q: q || undefined, status: status === 'all' ? undefined : status, type: type === 'all' ? undefined : type };
   const { data, loading, get, update } = useGet<OrderHistory>('/orders/history', { params });
 
@@ -40,6 +46,32 @@ export default function HistoryResults({ from, to, q, status, type }: HistoryRes
   const cancelled = summary.byStatus.cancelled ?? 0;
   const counted = summary.count - cancelled - (summary.byStatus.pending ?? 0);
   const statusTabs = [{ value: 'all', label: 'All', count: summary.count }, ...STATUSES.map((value) => ({ value: value as string, label: STATUS_LABELS[value], count: byStatus(value) }))];
+  const selectedOrder = data.orders.find((order) => order._id === searchParams.get('selected')) ?? data.orders[0] ?? null;
+  const selectOrder = (id: string) => setSearchParams((prev) => withParam(prev, 'selected', id), { replace: true });
+
+  const ordersList = data.orders.length === 0 ? (
+    <EmptyState icon={ClipboardList} title="No orders found" text={summary.count ? 'Try another status, type or search.' : 'Pick other days to see their orders.'} />
+  ) : (
+    <ul aria-label="Orders" className="flex flex-col gap-2">
+      {data.orders.map((order) => (
+        <li key={order._id}>
+          <HistoryOrderDrawer
+            order={order}
+            showDay={from !== to}
+            onSelect={detailsPanel ? () => selectOrder(order._id) : undefined}
+            selected={detailsPanel && selectedOrder?._id === order._id}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+
+  const results = detailsPanel && selectedOrder ? (
+    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(21rem,26rem)]">
+      <div className="min-w-0">{ordersList}</div>
+      <HistoryOrderDetailsPanel id={selectedOrder._id} />
+    </div>
+  ) : ordersList;
 
   return (
     <div className="flex flex-col gap-4">
@@ -53,18 +85,8 @@ export default function HistoryResults({ from, to, q, status, type }: HistoryRes
           <div className="flex gap-1"><dt className="sr-only">Cancelled</dt><dd><span className="font-semibold text-ink">{cancelled}</span> cancelled</dd></div>
         </dl>
       </section>
-      <Chips name="status" label="Status" options={statusTabs} value={status} onChange={(value) => setParams((prev) => withParam(prev, 'status', value, 'all'), { replace: true })} />
-      {data.orders.length === 0 ? (
-        <EmptyState icon={ClipboardList} title="No orders found" text={summary.count ? 'Try another status, type or search.' : 'Pick other days to see their orders.'} />
-      ) : (
-        <ul aria-label="Orders" className="flex flex-col gap-2">
-          {data.orders.map((order) => (
-            <li key={order._id}>
-              <HistoryOrderDrawer order={order} showDay={from !== to} />
-            </li>
-          ))}
-        </ul>
-      )}
+      <Chips name="status" label="Status" options={statusTabs} value={status} onChange={(value) => setSearchParams((prev) => withParam(prev, 'status', value, 'all'), { replace: true })} />
+      {results}
       {data.next && (
         <LoadMore
           params={params}

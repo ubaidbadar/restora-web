@@ -50,7 +50,7 @@ export default function Form({ component, onSubmit, defaultValues, schema, ...pr
   };
 
   return (
-    <form {...props} onSubmit={handleFormSubmit}>
+    <form {...props} data-dirty={formState.isDirty ? "true" : undefined} onSubmit={handleFormSubmit}>
       {component({
         register,
         errors: formState.errors,

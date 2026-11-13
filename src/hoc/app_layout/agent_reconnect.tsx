@@ -18,8 +18,8 @@ export default function AgentReconnect() {
         if (window.location.pathname.startsWith('/settings/printers')) return;
         const permission = await navigator.permissions.query({ name: 'loopback-network' as PermissionName });
         if (permission.state !== 'granted') return;
-        const status = (await (await agentFetch('/status')).json()) as { paired: boolean };
-        if (left || status.paired) return;
+        const status = (await (await agentFetch('/status')).json()) as { paired: boolean; reconnectRequired?: boolean };
+        if (left || status.paired || status.reconnectRequired) return;
         await pairThisPc();
         toast.success('The print agent on this PC is connected again.');
       } catch {

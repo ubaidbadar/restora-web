@@ -12,6 +12,7 @@ import PairingCode from './pairing_code';
 import SetupStep from './setup_step';
 
 interface SetupCardProps {
+  embedded?: boolean;
   agent?: PrintAgent;
   onAdded: (agent: PrintAgent) => void;
   onSaved: (agent: PrintAgent) => void;
@@ -19,11 +20,20 @@ interface SetupCardProps {
 }
 
 /** The normal path uses authenticated Restora + a one-time browser permission, not a code. */
-export default function SetupCard({ agent, onAdded, onSaved, onRefresh }: SetupCardProps) {
+export default function SetupCard({ agent, embedded = false, onAdded, onSaved, onRefresh }: SetupCardProps) {
   return (
     <SectionCard title="Set up printing"
-      description="Install the Windows agent once. Then Restora sends kitchen slips and receipts to your printers automatically.">
-      <ol>
+      description={embedded
+        ? 'Printing is included with Restora Desktop. No separate agent or installer is needed.'
+        : 'Install the Windows agent once. Then Restora sends kitchen slips and receipts to your printers automatically.'}>
+      {embedded ? (
+        <p className="text-sm text-body">
+          Your desktop app starts the print engine automatically. Restora connects this PC to your selected branch
+          and lets you choose printers for kitchen slips and receipts. If connection fails, use Try again above.
+        </p>
+      ) : (
+        <>
+          <ol>
         <SetupStep number={1} title="Install Restora Agent" done={!!agent?.lastSeenAt}
           summary={<a href={AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer"
             className="font-medium text-primary hover:underline">Open Microsoft Store</a>}>
@@ -69,6 +79,8 @@ export default function SetupCard({ agent, onAdded, onSaved, onRefresh }: SetupC
             onSaved={onSaved} onRefresh={onRefresh} />
         </div>}
       </details>
+        </>
+      )}
     </SectionCard>
   );
 }

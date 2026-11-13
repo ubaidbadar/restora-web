@@ -2,6 +2,7 @@ import { UtensilsCrossed } from 'lucide-react';
 import { useWatch } from 'react-hook-form';
 import EmptyState from '../../../components/empty_state';
 import useBreakpoint from '../../../hooks/useBreakpoint';
+import useOrdersWorkspaceStore from '../../../store/orders_workspace_store';
 import type CartItem from '../../../types/cart_item';
 import type FormComponentProps from '../../../types/form_component_props';
 import type Menu from '../../../types/menu';
@@ -31,8 +32,10 @@ const addItem = (items: CartItem[], item: CartItem): CartItem[] =>
  */
 export default function MenuGrid({ menu, search, category, allItems, control, setValue }: MenuGridProps) {
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
-  // Tablet width and up has room for tiles, and the order panel beside them.
-  const { lg: wide } = useBreakpoint();
+  // Wide desktops have room for larger product tiles beside the docked order panel.
+  const { xl: wide } = useBreakpoint();
+  const { menuDensity } = useOrdersWorkspaceStore();
+  const density = wide ? menuDensity : 'comfortable';
   const shown = filterMenu(menu, search, category);
   const save = (next: CartItem[]) => setValue('items', next, { shouldDirty: true, shouldValidate: next.length > 0 });
 
@@ -55,8 +58,11 @@ export default function MenuGrid({ menu, search, category, allItems, control, se
     );
   }
   return (
-    <ul aria-label="Dishes" className="grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2.5">
-      {shown.map((dish) => <MenuItemTile key={dish._id} {...props(dish)} />)}
+    <ul aria-label="Dishes" className={density === 'compact'
+      ? 'grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2'
+      : 'grid grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-3'
+    }>
+      {shown.map((dish) => <MenuItemTile key={dish._id} {...props(dish)} density={density} />)}
     </ul>
   );
 }

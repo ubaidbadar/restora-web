@@ -14,6 +14,6 @@ export default async function pairThisPc(code?: string): Promise<void> {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code: pairing, api: apiOrigin ? `${apiOrigin}/api/v1` : undefined }),
-  });
+  }, 20_000);
   if (!res.ok) throw new Error(((await res.json()) as { message?: string }).message ?? 'The print agent could not connect.');
 }

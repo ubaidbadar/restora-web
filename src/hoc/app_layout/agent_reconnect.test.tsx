@@ -34,6 +34,14 @@ describe('AgentReconnect', () => {
     expect(JSON.parse(init.body).code).toBe('482913');
   });
 
+  it('does not silently re-pair a PC that was deliberately disconnected', async () => {
+    allow('granted');
+    fetchMock.mockResolvedValueOnce({ json: async () => ({ paired: false, reconnectRequired: true }) });
+    render(<AgentReconnect />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(post).not.toHaveBeenCalled();
+  });
+
   it('never reaches for the agent before the browser has been allowed to', async () => {
     allow('prompt');
     render(<AgentReconnect />);
