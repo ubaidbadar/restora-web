@@ -12,13 +12,14 @@ interface OrderRowLineProps {
   /** Over several days the day goes before the time. */
   showDay?: boolean;
   onClick: () => void;
+  selected?: boolean;
 }
 
 const statusBadges = { completed: 'success', cancelled: 'error', pending: 'warning' } as const;
 const paymentBadges = { paid: ['success', 'Paid'], unpaid: ['warning', 'Unpaid'], khata: ['warning', 'On khata'] } as const;
 
 /** One order on one line: token, time, type or table, customer, dishes, total, status and payment. Opens its details. */
-export default function OrderRowLine({ order, showDay = false, onClick }: OrderRowLineProps) {
+export default function OrderRowLine({ order, showDay = false, onClick, selected = false }: OrderRowLineProps) {
   const [paymentVariant, paymentLabel] = paymentBadges[order.paymentStatus];
   const isNew = useOrderAlertStore((state) => state.fresh.includes(order._id));
   return (
@@ -28,7 +29,7 @@ export default function OrderRowLine({ order, showDay = false, onClick }: OrderR
         useOrderAlertStore.getState().seen(order._id);
         onClick();
       }}
-      className={`flex min-h-16 w-full items-center gap-3 rounded-card bg-surface px-4 py-2.5 text-start shadow-card transition-colors -outline-offset-2 hover:bg-sunken ${isNew ? 'outline-2 outline-primary motion-safe:animate-new-order' : ''}`}
+      className={`flex min-h-16 w-full items-center gap-3 rounded-card bg-surface px-4 py-2.5 text-start shadow-card transition-colors -outline-offset-2 hover:bg-sunken ${selected ? 'outline-2 outline-primary' : ''} ${isNew ? 'outline-2 outline-primary motion-safe:animate-new-order' : ''}`}
     >
       <span className="w-14 shrink-0 text-lg font-semibold tabular-nums text-ink">#{order.dailyToken}</span>
       <span className="min-w-0 flex-1 md:grid md:grid-cols-[8.5rem_minmax(0,1fr)_minmax(0,1.2fr)_5rem] md:items-center md:gap-4">

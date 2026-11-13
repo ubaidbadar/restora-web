@@ -23,6 +23,7 @@ import syncOutbox from '../../utils/sync_outbox';
 interface OrderCardFooterProps {
   order: Order;
   onOrderUpdated?: (order: Order) => void;
+  onSelect?: () => void;
 }
 
 const ADVANCE_LABELS: Partial<Record<OrderStatus, string>> = {
@@ -48,7 +49,7 @@ const nextStatus = (order: Pick<Order, 'status' | 'type'>): OrderStatus | null =
  * buttons, the main one moving the order on. A guest's order shows Turn down and Accept; an unpaid one also Pay.
  * Side by side on a wide card, one above the other on a narrow one (five board columns).
  */
-export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFooterProps) {
+export default function OrderCardFooter({ order, onOrderUpdated, onSelect }: OrderCardFooterProps) {
   const navigate = useNavigate();
   const workplace = useWorkplace();
   const token = order.dailyToken;
@@ -106,7 +107,7 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
                 <DropdownMenu
                   trigger={(isOpen) => <IconButton icon={MoreHorizontal} variant="ghost" aria-label={`More for order ${token}`} aria-haspopup="menu" aria-expanded={isOpen} />}
                   items={[
-                    { label: 'Details', icon: FileText, onClick: showDetails },
+                    { label: 'Details', icon: FileText, onClick: onSelect ?? showDetails },
                     { label: 'Print kitchen slip', icon: ChefHat, onClick: () => printSlip(order, 'kitchen') },
                     { label: 'Print receipt', icon: Receipt, onClick: () => printSlip(order, 'receipt') },
                     ...(editable ? [{ label: 'Edit order', icon: Pencil, onClick: () => navigate(`/orders/${order._id}/edit`) }] : []),
