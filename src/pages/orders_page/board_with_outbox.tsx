@@ -39,7 +39,7 @@ export default function BoardWithOutbox({ orders, onOrderUpdated }: BoardWithOut
   const currentStatusOrders = status === 'all'
     ? shown
     : shown.filter((order) => order.status === status || (status === 'new' && order.status === 'pending'));
-  const selectedOrder = currentStatusOrders.find((order) => order._id === params.get('selected')) ?? currentStatusOrders[0] ?? null;
+  const selectedOrder = shown.find((order) => order._id === params.get('selected')) ?? currentStatusOrders[0] ?? null;
   const selectOrder = (order: Order) => setParams((prev) => withParam(prev, 'selected', order._id), { replace: true });
 
   if (!shown.length) {
