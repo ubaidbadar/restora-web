@@ -1,7 +1,10 @@
-export default interface OrdersWorkspaceState {
+type OrdersWorkspacePreferences = {
   sidebarHidden: boolean;
   detailsPanel: boolean;
   density: 'comfortable' | 'compact';
-  setPreferences: (patch: Partial<Pick<OrdersWorkspaceState, 'sidebarHidden' | 'detailsPanel' | 'density'>>) => void;
+};
+
+export default interface OrdersWorkspaceState extends OrdersWorkspacePreferences {
+  setPreferences: (patch: Partial<OrdersWorkspacePreferences>) => void;
   reset: () => void;
 }
