@@ -53,7 +53,7 @@ jobs:
 
       - name: Install isolated Playwright harness
         working-directory: .github/authenticated-e2e
-        run: npm install --no-save @playwright/test
+        run: npm init -y && npm install --no-save @playwright/test
 
       - name: Install Chromium
         working-directory: .github/authenticated-e2e
