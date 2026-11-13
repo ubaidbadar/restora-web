@@ -22,4 +22,4 @@ Use a dedicated, non-human test account in the matching environment. It must hav
 
 The journey signs in, opens Orders, and opens New Order. It deliberately does **not** submit an order or issue any write request to `/api/v1`.
 
-Never use a staff member's personal account or production customer data for E2E credentials. Fork pull requests do not receive repository secrets and skip this authenticated workflow.
+When the secrets are absent, the workflow reports that the authenticated journey was skipped; configure them to activate it. Never use a staff member's personal account or production customer data for E2E credentials. Fork pull requests do not receive repository secrets and skip this authenticated workflow.

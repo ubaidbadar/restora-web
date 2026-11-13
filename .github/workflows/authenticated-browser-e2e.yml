@@ -42,24 +42,32 @@ jobs:
           node-version: '22'
 
       - name: Check the dedicated E2E account
+        id: e2e_account
         run: |
           set -euo pipefail
-          test -n "$RESTORA_E2E_EMAIL" || { echo "::error::Set repository secret RESTORA_E2E_EMAIL."; exit 1; }
-          test -n "$RESTORA_E2E_PASSWORD" || { echo "::error::Set repository secret RESTORA_E2E_PASSWORD."; exit 1; }
+          if [ -z "$RESTORA_E2E_EMAIL" ] || [ -z "$RESTORA_E2E_PASSWORD" ]; then
+            echo "::notice::Authenticated browser tests skipped. Configure RESTORA_E2E_EMAIL and RESTORA_E2E_PASSWORD."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           case "$RESTORA_E2E_BASE_URL" in
             https://*) ;;
             *) echo "::error::RESTORA_E2E_BASE_URL must use HTTPS."; exit 1 ;;
           esac
+          echo "configured=true" >> "$GITHUB_OUTPUT"
 
       - name: Install isolated Playwright harness
+        if: steps.e2e_account.outputs.configured == 'true'
         working-directory: .github/authenticated-e2e
         run: npm init -y && npm install --no-save @playwright/test
 
       - name: Install Chromium
+        if: steps.e2e_account.outputs.configured == 'true'
         working-directory: .github/authenticated-e2e
         run: npx playwright install --with-deps chromium
 
       - name: Run authenticated desktop and phone journeys
+        if: steps.e2e_account.outputs.configured == 'true'
         working-directory: .github/authenticated-e2e
         run: npx playwright test --config=playwright.config.cjs
 
