@@ -13,6 +13,7 @@ import printOnThisPc from '../../utils/print_on_this_pc';
 import kitchenChanges from '../../utils/kitchen_changes';
 import PageHeader from '../../components/page_header';
 import useNewOrderWorkspaceStore from '../../store/new_order_workspace_store';
+import type NewOrderWorkspaceState from '../../types/new_order_workspace_state';
 import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
 import MenuPicker from './menu_picker';
@@ -97,12 +98,11 @@ interface Editing {
 /** The customer whose profile the order was started from (`?customer=<id>`): already loaded by that page. */
 const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.keyOf(`/customers/${id}`)) as Customer | undefined) : undefined);
 
-const Main = ({ editing, ...props }: FormComponentProps & { editing?: Editing }) => {
+const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?: Editing; workspace: Pick<NewOrderWorkspaceState, 'orderPanel' | 'menuDensity'> }) => {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
   // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
-  const workspace = useNewOrderWorkspaceStore();
 
   return (
     <>
@@ -142,13 +142,14 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
   const navigate = useNavigate();
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
+  const workspace = useNewOrderWorkspaceStore();
 
   return (
     <>
       <Form
         className="flex items-end md:justify-end"
         id={ORDER_FORM}
-        component={(props) => <Main {...props} editing={editing} />}
+        component={(props) => <Main {...props} editing={editing} workspace={workspace} />}
         schema={orderSchema}
         defaultValues={
           order && {
