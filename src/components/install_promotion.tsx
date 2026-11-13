@@ -55,16 +55,18 @@ export default function InstallPromotion({ active }: InstallPromotionProps) {
 
   if (!active || !state.prompt || state.installed || state.dismissed) return null;
   return (
-    <div role="status" aria-live="polite" className="fixed inset-x-4 top-4 z-50 mx-auto flex max-w-lg items-center gap-3 rounded-card bg-surface p-4 shadow-lg ring-1 ring-border">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-control bg-primary-soft text-primary">
-        <Download size={20} aria-hidden="true" />
+    <div role="status" aria-live="polite" className="fixed inset-x-3 top-3 z-50 mx-auto flex max-w-lg items-start gap-2.5 rounded-card bg-surface p-3 shadow-lg ring-1 ring-border">
+      <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-control bg-primary-soft text-primary">
+        <Download size={18} aria-hidden="true" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-semibold text-ink">Install Restora</p>
-        <p className="mt-0.5 text-sm text-muted">Open Restora like a desktop app, without keeping a browser tab open.</p>
+        <p className="text-sm font-semibold text-ink">Install Restora</p>
+        <p className="mt-0.5 text-xs leading-4 text-muted">Open Restora in its own app window.</p>
       </div>
-      <Button size="sm" onClick={() => void install()}>Install</Button>
-      <IconButton icon={X} size="sm" aria-label="Not now" onClick={() => setState((current) => ({ ...current, dismissed: true }))} />
+      <div className="mt-0.5 flex shrink-0 items-start gap-1">
+        <Button size="sm" onClick={() => void install()}>Install</Button>
+        <IconButton icon={X} size="sm" aria-label="Not now" onClick={() => setState((current) => ({ ...current, dismissed: true }))} />
+      </div>
     </div>
   );
 }
