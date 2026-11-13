@@ -19,7 +19,7 @@ import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
 import MenuPicker from './menu_picker';
 import PlaceOrderBar from './place_order_bar';
-import OrderColumn from './order_column';
+import CartLines from './cart_panel/cart_lines';
 import Form from '../../ui/form';
 import type FormComponentProps from '../../types/form_component_props';
 import orderSchema from './schema';
@@ -129,7 +129,10 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
 
       {xl ? (
         <>
-          <OrderColumn {...props} />
+          <section aria-label="Order" className="hidden min-h-0 w-80 shrink-0 flex-col overflow-y-auto px-4 py-5 xl:flex">
+            <h2 className="mb-4 text-heading text-ink">Order</h2>
+            <CartLines {...props} />
+          </section>
           <aside aria-label="Checkout" className="fixed inset-y-0 end-0 z-30 flex w-90 flex-col bg-surface">
             <CartPanel
               {...props}
