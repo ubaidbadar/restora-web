@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router';
+import { Outlet, useLocation, useNavigate } from 'react-router';
 import BottomNav from './bottom_nav';
 import SideNav from './side_nav';
 import TableCallsBanner from './table_calls_banner';
@@ -19,11 +19,13 @@ import api from '../../config/api';
 /** Sidebar on desktop, bottom bar on phones and tablets: only the one in use is rendered. */
 export default function AppLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { lg } = useBreakpoint();
   const me = useAuthStore((state) => state.me);
   const workplace = useWorkplace();
   const preferences = workplace?.preferences ?? DEFAULT_WORKSPACE_PREFERENCES;
-  const sidebarHidden = lg && preferences.orders.sidebarHidden;
+  const onOrdersPage = location.pathname === '/orders';
+  const sidebarHidden = lg && onOrdersPage && preferences.orders.sidebarHidden;
   // Pages start again (and load fresh data) when the restaurant or branch changes.
   const place = `${me?.workplace?.restaurant._id}:${me?.workplace?.branch?._id}`;
   const TYPING = 'input, textarea, select, [contenteditable="true"]';
@@ -64,9 +66,11 @@ export default function AppLayout() {
       </a>
       {lg && !sidebarHidden && <SideNav />}
       <main id="main" className={`mx-auto min-h-dvh w-full flex flex-col px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 ${sidebarHidden ? 'max-w-none' : 'max-w-7xl'}`}>
-        <div className="mb-4 hidden justify-end lg:flex">
-          <WorkspaceControls />
-        </div>
+        {lg && onOrdersPage && (
+          <div className="mb-4 flex justify-end">
+            <WorkspaceControls />
+          </div>
+        )}
         <SyncStatus />
         <Can permission="tables:view">
           <TableCallsBanner key={place} />
