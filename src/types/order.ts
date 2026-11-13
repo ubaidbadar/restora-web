@@ -17,7 +17,7 @@ export default interface Order {
   /** Present only for orders initiated through a connected restaurant WhatsApp number. */
   whatsappPhone?: string;
   whatsappPhoneNumberId?: string;
-  /** Name and phone of the customer, sent with list responses. */
+  /** Customer snapshot; a named walk-in may have no saved id or phone. */
   customer?: OrderCustomerSnapshot;
   type: OrderType;
   status: OrderStatus;
