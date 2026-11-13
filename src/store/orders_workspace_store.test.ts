@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import useOrdersWorkspaceStore from './orders_workspace_store';
 
 const KEY = 'restora-orders-workspace-v1';
-const DEFAULTS = { sidebarHidden: false, detailsPanel: false, density: 'comfortable' };
+const DEFAULTS = { sidebarHidden: false, detailsPanel: false, density: 'comfortable', menuDensity: 'comfortable' };
 
 describe('orders workspace store', () => {
   beforeEach(() => {
@@ -15,22 +15,24 @@ describe('orders workspace store', () => {
 
   it('saves layout choices in this browser and keeps unrelated choices when one changes', () => {
     useOrdersWorkspaceStore.getState().setPreferences({ sidebarHidden: true, detailsPanel: true });
-    useOrdersWorkspaceStore.getState().setPreferences({ density: 'compact' });
+    useOrdersWorkspaceStore.getState().setPreferences({ density: 'compact', menuDensity: 'compact' });
 
     expect(useOrdersWorkspaceStore.getState()).toMatchObject({
       sidebarHidden: true,
       detailsPanel: true,
       density: 'compact',
+      menuDensity: 'compact',
     });
     expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual({
       sidebarHidden: true,
       detailsPanel: true,
       density: 'compact',
+      menuDensity: 'compact',
     });
   });
 
   it('restores the default layout and removes the saved value', () => {
-    useOrdersWorkspaceStore.getState().setPreferences({ sidebarHidden: true, detailsPanel: true, density: 'compact' });
+    useOrdersWorkspaceStore.getState().setPreferences({ sidebarHidden: true, detailsPanel: true, density: 'compact', menuDensity: 'compact' });
     useOrdersWorkspaceStore.getState().reset();
 
     expect(useOrdersWorkspaceStore.getState()).toMatchObject(DEFAULTS);
@@ -38,13 +40,14 @@ describe('orders workspace store', () => {
   });
 
   it('syncs changes made in another tab', () => {
-    localStorage.setItem(KEY, JSON.stringify({ sidebarHidden: true, detailsPanel: true, density: 'compact' }));
+    localStorage.setItem(KEY, JSON.stringify({ sidebarHidden: true, detailsPanel: true, density: 'compact', menuDensity: 'compact' }));
     window.dispatchEvent(new StorageEvent('storage', { key: KEY }));
 
     expect(useOrdersWorkspaceStore.getState()).toMatchObject({
       sidebarHidden: true,
       detailsPanel: true,
       density: 'compact',
+      menuDensity: 'compact',
     });
   });
 
