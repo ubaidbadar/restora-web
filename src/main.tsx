@@ -45,7 +45,7 @@ const launchQueue = (window as Window & {
 launchQueue?.setConsumer(({ targetURL }) => {
   try {
     const target = new URL(targetURL);
-    if (target.origin !== window.location.origin || target.pathname === '/' && !target.search && !target.hash) return;
+    if (target.origin !== window.location.origin || (target.pathname === '/' && !target.search && !target.hash)) return;
     const path = `${target.pathname}${target.search}${target.hash}`;
     if (path !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
       void router.navigate(path);
