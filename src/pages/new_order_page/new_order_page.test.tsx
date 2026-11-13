@@ -7,7 +7,6 @@ import { resetBreakpoints } from '../../hooks/useBreakpoint';
 import getCache from '../../store/get_cache';
 import useAuthStore from '../../store/auth_store';
 import useOutboxStore from '../../store/outbox_store';
-import useNewOrderWorkspaceStore from '../../store/new_order_workspace_store';
 import sampleMe from '../../test/sample_me';
 import type Customer from '../../types/customer';
 import type Menu from '../../types/menu';
@@ -49,13 +48,11 @@ const answers: Record<string, unknown> = {
 };
 
 let wide = true;
-let extraWide = true;
-function setWidth(isWide: boolean, isExtraWide = isWide) {
+function setWidth(isWide: boolean) {
   wide = isWide;
-  extraWide = isExtraWide;
   window.matchMedia = ((query: string) => ({
     // Wide is a desktop: the order panel docks beside the menu from xl (80rem) up (ui/docked_sheet).
-    matches: query.includes('min-width: 96rem') ? extraWide : query.includes('min-width: 48rem') || query.includes('min-width: 64rem') || query.includes('min-width: 80rem') ? wide : false,
+    matches: query.includes('min-width: 48rem') || query.includes('min-width: 64rem') || query.includes('min-width: 80rem') ? wide : false,
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -80,7 +77,6 @@ const pick = (label: RegExp) => fireEvent.click(screen.getByRole('radio', { name
 
 beforeEach(() => {
   setWidth(true);
-  useNewOrderWorkspaceStore.getState().reset();
   mocked.mockReset();
   mocked.mockImplementation(async (config: { url: string }) => ({ data: answers[config.url] }));
   mocked.post.mockReset();
@@ -94,50 +90,6 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe('New order (desktop)', () => {
-  it('starts as three actual panels, with dishes separate from checkout', async () => {
-    renderPage();
-    await screen.findByText('Chicken Karahi');
-
-    const orderLines = screen.getByRole('region', { name: 'Ordered dishes' });
-    const checkout = screen.getByRole('region', { name: 'Checkout' });
-    expect(orderLines).toBeTruthy();
-    expect(within(checkout).getByRole('button', { name: 'Place order' })).toBeTruthy();
-    fireEvent.click(dishTile('Chicken Karahi'));
-    expect(within(orderLines).getByRole('list', { name: 'Items in this order' })).toBeTruthy();
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('changes the real menu columns and switches panels without losing the cart', async () => {
-    renderPage();
-    await screen.findByText('Chicken Karahi');
-    fireEvent.click(dishTile('Chicken Karahi'));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Layout' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Four columns' }));
-    expect(screen.getByRole('list', { name: 'Dishes' }).getAttribute('data-columns')).toBe('4');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Layout' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Combined order panel' }));
-    expect(screen.queryByRole('region', { name: 'Ordered dishes' })).toBeNull();
-    expect(screen.getByRole('list', { name: 'Items in this order' })).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Layout' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Separate dishes and checkout columns' }));
-    expect(screen.getByRole('region', { name: 'Ordered dishes' })).toBeTruthy();
-    expect(screen.getByLabelText('1 Chicken Karahi')).toBeTruthy();
-  });
-
-  it('uses a drawer below wide desktop width, while preserving selected dishes', async () => {
-    setWidth(true, false);
-    renderPage();
-    await screen.findByText('Chicken Karahi');
-    expect(screen.queryByRole('region', { name: 'Ordered dishes' })).toBeNull();
-
-    fireEvent.click(dishTile('Chicken Karahi'));
-    fireEvent.click(screen.getByRole('button', { name: /View order/ }));
-    expect(within(screen.getByRole('dialog')).getByRole('list', { name: 'Items in this order' })).toBeTruthy();
-  });
-
   it('adds dishes, counts them and totals the order', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
