@@ -12,6 +12,7 @@ export default function TotalsList({ totals, taxRate, deliveryFee }: TotalsListP
   const rows = [
     ['Subtotal', formatRs(totals.subtotal)],
     ...(totals.discount ? [['Discount', `− ${formatRs(totals.discount)}`]] : []),
+    ...(totals.serviceCharge > 0 ? [['Service charge', formatRs(totals.serviceCharge)]] : []),
     taxRate === null ? ['Tax', 'Added when paid'] : [`Tax (${taxRate}%)`, formatRs(totals.tax)],
     ...(deliveryFee ? [['Delivery', formatRs(deliveryFee)]] : []),
   ];
