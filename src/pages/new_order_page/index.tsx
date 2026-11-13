@@ -129,7 +129,7 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
 
       {xl ? (
         <>
-          <section aria-label="Order" className="hidden min-h-0 w-80 shrink-0 flex-col overflow-y-auto px-4 py-5 xl:flex">
+          <section aria-label="Order" className="min-h-0 w-80 shrink-0 flex flex-col overflow-y-auto px-4 py-5">
             <h2 className="mb-4 text-heading text-ink">Order</h2>
             <CartLines {...props} />
           </section>
