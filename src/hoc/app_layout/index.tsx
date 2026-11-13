@@ -12,12 +12,13 @@ import SyncStatus from './sync_status';
 import AgentReconnect from './agent_reconnect';
 import useBreakpoint from '../../hooks/useBreakpoint';
 import api from '../../config/api';
+import useNewOrderWorkspaceStore from '../../store/new_order_workspace_store';
 
 /** Sidebar on desktop, bottom bar on phones and tablets: only the one in use is rendered. */
 function AppLayoutFrame({ lg, me, place }: { lg: boolean; me: ReturnType<typeof useAuthStore.getState>['me']; place: string }) {
   const location = useLocation();
   const sidebarHidden = useNewOrderWorkspaceStore((state) => state.sidebarHidden);
-  const orderEditor = location.pathname === '/orders/new' || /^\\/orders\\/[^/]+\\/edit$/.test(location.pathname);
+  const orderEditor = location.pathname === '/orders/new' || /^\/orders\/[^/]+\/edit$/.test(location.pathname);
   const showSidebar = lg && !(orderEditor && sidebarHidden);
   const expandMain = lg && orderEditor && sidebarHidden;
 
