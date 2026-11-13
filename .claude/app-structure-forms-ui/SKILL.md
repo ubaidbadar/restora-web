@@ -83,9 +83,8 @@ loaded by a parent, or can the client work it out from what it just sent and got
   Page-only zod schemas go in `schema.ts` (or `<name>_schema.ts` when there are several).
 - `components/`: UI used by two or more components (including `can.tsx`, `load_failed.tsx`, `skeleton_list.tsx`, `skeleton_grid.tsx`, the switchers).
 - `ui/`: design-system primitives (button, input, select, textarea, checkbox, radio, toggle, modal, drawer, tabs, `form/`).
-- `hoc/`: every higher-order or wrapping component: `withOverlay`, `app_layout/`, `boot_gate` (logo until `/me` is
-  known) and the route guards `guest_only`, `require_auth`, `require_web`, `require_restaurant`, `require_setup`,
-  `require_permission`.
+- `hoc/`: genuine higher-order or wrapping UI components: `withOverlay`, `app_layout/`, and `boot_gate` (logo until `/me` is known).
+- **Route access is centralized in `src/app.tsx`; do not add per-condition route guard components to `hoc/`.**
 - `hooks/`: hooks. `useGet` is the only way to read from the API. The named store hooks live here too (`useWorkplace`,
   `useRestaurantSettings`, `useCan`, `useNavLinks`).
 - `store/`: every module-level store: `create_store` and each store made with it (`auth_store`, `toast_store`),
@@ -170,6 +169,16 @@ loaded by a parent, or can the client work it out from what it just sent and got
 - A new record made offline carries a `clientId` (and `placedAt`); the server saves it once however often it is sent.
 - Payments and khata are online only: they change what customers owe.
 
+## Routing and route access
+- `src/app.tsx` is the single source of truth for route definitions and route-level access policy.
+- Do not stack nested `<Route element={<RequireAuth />}/>`, `<RequireWeb />`, `<RequireRestaurant />`, `<RequireSetup />`, or `<RequirePermission />` wrappers. Do not create one guard component per access condition.
+- `App` reads the auth state and current workplace once, then derives all route decisions from that snapshot. For route-level checks, `useWorkplace()` is called only in `app.tsx`; route guard components must never call it.
+- Evaluate route permissions with the pure `can(workplace, permission)` helper from `@shared/can`, not `useCan()`. `useCan()` and `<Can>` remain appropriate for component-level UI visibility inside pages.
+- Keep access requirements declarative alongside the route definitions and resolve them through one centralized route-policy path. Do not maintain a second path-to-permission table that can drift from the route definitions.
+- Preserve the existing behavior when changing routing: signed-out users return to login with a safe `next`; locked POS terminals go to `/pos`; POS/web mode restrictions remain correct; users without a workplace go to `/restaurants`; first-run setup redirects remain correct; permission denials preserve their current redirect or not-allowed UI; guest routes retain the `?add=1` exception and safe-next behavior.
+- This is client-side navigation and UI gating only. The backend remains authoritative and must enforce every permission and tenant boundary.
+- Page components may still use the established workplace hooks when they genuinely need workplace data for their own UI or business logic. The single-`useWorkplace()` rule above applies specifically to route-level access checks.
+
 ## Auth and permissions
 - The session is an httpOnly cookie (Better Auth); a POS terminal's key is an httpOnly cookie too. Never store a token,
   restaurant id or branch id in the page or `localStorage`.
@@ -178,9 +187,8 @@ loaded by a parent, or can the client work it out from what it just sent and got
 - Read: `useAuthStore((state) => state.me)` for the account; `useWorkplace()` (restaurant, branch, branches,
   allBranches, permissions, roleNames, `isOwner`, `isPrimaryOwner`, `hasPin`, `settings`); inside a restaurant
   `useRestaurantSettings()`.
-- One permission: `useCan('orders:create')`, `can(workplace, …)` from `@shared/can` outside components, or
-  `<Can permission="orders:create">`. The server checks again. Gate UI and routes by permission (`resource:action`),
-  never by role name: roles are editable. Owner-only actions check `workplace.isPrimaryOwner`.
+- Component-level permission checks use `useCan('orders:create')` or `<Can permission="orders:create">`; use pure `can(workplace, permission)` from `@shared/can` outside components. Use `useCan`/`Can` for controls inside pages. Route-level permission checks belong to `src/app.tsx` and use the workplace snapshot there, never `useCan` inside route guards.
+- The server checks again. Gate UI and routes by permission (`resource:action`), never by role name: roles are editable. Owner-only actions check `workplace.isPrimaryOwner`.
 - Change where they work with `api.post('/me/workplace' | '/me/branch')`; the answer is the new `me`.
   `utils/sign_out` signs every account out; `utils/lock_terminal` locks a terminal.
 - Better Auth calls (sign in/up, passwords, email verification, accounts on this browser) go through
@@ -240,4 +248,6 @@ Every field follows the pattern of `ui/input.tsx` and `ui/select.tsx`:
   covers permissions, tenant isolation and that writes answer with the saved record in its list's shape.
 - Before finishing: `yarn typecheck`, `yarn lint`, `yarn test` and `yarn build` pass, and a search finds none of: `get()` after a
   write, `useGet` inside rows, the same URL loaded twice on one screen, `me` in an answer the client could work out,
-  `useAuthStore((state) => state.me?.workplace…)` in a component, one-line wrapper functions, helper files that only one file uses, and `demo`/`DEMO`/fallback data.
+  `useAuthStore((state) => state.me?.workplace…)` in a component, route guard components that independently read auth/workplace state,
+  route-level `useWorkplace()`/`useCan()` calls outside `app.tsx`, nested per-condition `Require*` route wrappers,
+  one-line wrapper functions, helper files that only one file uses, and `demo`/`DEMO`/fallback data.
