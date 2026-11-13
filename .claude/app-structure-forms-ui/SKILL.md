@@ -193,6 +193,27 @@ must reconcile missed events. Before adding any request, check whether the data 
 - A new record made offline carries a `clientId` (and `placedAt`); the server saves it once however often it is sent.
 - Payments and khata are online only: they change what customers owe.
 
+## Routing and route access
+- `src/app.tsx` is the single source of truth for route definitions and route-level access policy.
+- Do not stack nested `<Route element={<RequireAuth />}/>`, `<RequireWeb />`, `<RequireRestaurant />`,
+  `<RequireSetup />` or `<RequirePermission />` wrappers. Do not create a separate guard component for each access
+  condition.
+- The current route tree still uses legacy `Require*` wrappers. Do not add to that pattern or remove those wrappers
+  during unrelated work. Replace them only in a deliberate routing migration, with behavior tests and a review of every
+  existing route.
+- In the centralized implementation, read the auth/workplace snapshot once in `App` for route decisions. Do not let
+  individual route guards subscribe to `useWorkplace()` or `useCan()`. Derive the workplace from the `me` snapshot or
+  call the workplace hook once in `App`; use pure `can(workplace, permission)` from `@shared/can` for route permissions.
+- Keep access requirements declarative beside the route definitions and resolve them through one policy path. Do not
+  maintain a second path-to-permission table that can drift from the routes.
+- Preserve current behavior during the migration: safe `next` redirects, the guest `?add=1` exception, locked POS
+  terminal handling, web/POS mode restrictions, restaurant selection, onboarding/setup redirects, permission-denied
+  redirects and not-allowed states, public table/invitation/auth routes, and the not-found route.
+- Route checks are client navigation and UI gating only. The backend remains authoritative and must enforce every
+  permission and tenant boundary.
+- Page components may still use `useWorkplace()`, `useRestaurantSettings()` or `useCan()` when they need that data
+  for their own UI or business logic. The single-snapshot rule applies to route-level decisions, not page behavior.
+
 ## Auth and permissions
 - The session is an httpOnly cookie (Better Auth); a POS terminal's key is an httpOnly cookie too. Never store a token,
   restaurant id or branch id in the page or `localStorage`.
