@@ -28,7 +28,7 @@ Stack: React 19, TypeScript, Vite, Tailwind CSS v4 and the React Compiler.
 
 - src/app.tsx: route definitions and route-level access policy.
 - src/main.tsx: application bootstrap, local cache/outbox hydration, initial /me request and service-worker registration.
-- src/pages/<name>_page/: route pages; page-only components and schemas stay beside the page.
+- `src/pages/<name>_page/`: route pages; page-only components and schemas stay beside the page.
 - src/components/: UI shared by multiple pages/components.
 - src/ui/: design-system primitives, including Form, Button, fields, modal and drawer.
 - src/hoc/app_layout/: authenticated application shell and live updates.
