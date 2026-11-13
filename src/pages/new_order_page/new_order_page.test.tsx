@@ -93,6 +93,7 @@ describe('New order (desktop)', () => {
   it('keeps ordered dishes in their own column and checkout flush on the right', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
 
     const order = screen.getByRole('region', { name: 'Order' });
     const checkout = screen.getByRole('complementary', { name: 'Checkout' });
