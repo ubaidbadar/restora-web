@@ -24,7 +24,7 @@ export default function QtyStepper({ itemId, name, qty, onChange }: QtyStepperPr
         variant="ghost"
         size="sm"
         aria-label={`One less ${name}`}
-        className="rounded-full text-primary hover:bg-primary/15"
+        className="size-11 rounded-full text-primary hover:bg-primary/15 sm:size-8"
         onClick={(e) => {
           e.stopPropagation();
           onChange(itemId, qty - 1);
@@ -39,7 +39,7 @@ export default function QtyStepper({ itemId, name, qty, onChange }: QtyStepperPr
         variant="ghost"
         size="sm"
         aria-label={`One more ${name}`}
-        className="rounded-full text-primary hover:bg-primary/15"
+        className="size-11 rounded-full text-primary hover:bg-primary/15 sm:size-8"
         onClick={(e) => {
           e.stopPropagation();
           onChange(itemId, qty + 1);

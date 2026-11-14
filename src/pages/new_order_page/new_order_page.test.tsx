@@ -117,6 +117,9 @@ describe('New order (desktop)', () => {
     expect(chargeType.value).toBe('percentage');
     expect(chargeType.style.width).toBe('auto');
     expect(chargeType.className).toContain('shrink-0');
+    const charge = screen.getByRole('region', { name: 'Service charge' });
+    expect(within(charge).getByRole('heading', { name: 'Service charge' })).toBeTruthy();
+    expect(chargeType.closest('label')?.textContent).toContain('Type');
     expect((screen.getByRole('spinbutton', { name: 'Percentage (%)' }) as HTMLInputElement).value).toBe('0');
     expect(screen.queryByRole('button', { name: 'Add service charge' })).toBeNull();
   });
@@ -159,9 +162,8 @@ describe('New order (desktop)', () => {
     const actionRow = addCustomer.parentElement?.parentElement;
     expect(addCustomer.className).toContain('text-primary');
     expect(addCustomer.className).not.toContain('border-border-strong');
-    expect(addCustomer.parentElement?.className).toContain('ms-auto');
-    expect(actionRow).toBe(addDiscount.parentElement?.parentElement);
-    expect(actionRow?.className).toContain('items-center');
+    expect(actionRow).toBe(addDiscount.parentElement);
+    expect(actionRow?.className).toContain('justify-between');
     expect(actionRow?.className).toContain('gap-3');
     expect(heading.parentElement).not.toBe(actionRow);
     expect(heading.parentElement?.className).toContain('sticky top-0');
@@ -471,6 +473,39 @@ describe('New order (desktop)', () => {
     expect(screen.queryByLabelText('Area')).toBeNull();
   });
 
+  it('shows the applied discount when the entered amount exceeds the subtotal', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+    fireEvent.click(screen.getByRole('button', { name: 'Add discount' }));
+    fireEvent.change(screen.getByLabelText('Discount (Rs)'), { target: { value: '1500' } });
+    expect(screen.getByRole('status').textContent).toContain('Only Rs 1,000 can be applied');
+    expect(screen.getAllByText('− Rs 1,000').length).toBeGreaterThan(0);
+  });
+
+  it('keeps the selected customer beside the discount label while the input spans the full width', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+
+    fireEvent.change(customerSearch(), { target: { value: 'ali' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
+    const selected = screen.getByRole('button', { name: 'Remove Ali Raza' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add discount' }));
+    const input = screen.getByLabelText('Discount (Rs)') as HTMLInputElement;
+    const label = screen.getByText('Discount (Rs)', { selector: 'label' }) as HTMLLabelElement;
+    const header = label.parentElement;
+    expect(label.htmlFor).toBe(input.id);
+    expect(selected.parentElement?.parentElement).toBe(header);
+    expect(header?.className).toContain('justify-between');
+    expect(input.closest('div.flex.min-w-0.flex-col')?.contains(header)).toBe(true);
+
+    fireEvent.change(input, { target: { value: '500' } });
+    expect((screen.getByLabelText('Discount (Rs)') as HTMLInputElement).value).toBe('500');
+    expect(screen.getByRole('button', { name: 'Remove Ali Raza' })).toBeTruthy();
+  });
+
   it('an empty discount box folds back to the link', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
@@ -555,6 +590,23 @@ describe('New order (phone)', () => {
     fireEvent.click(within(picker).getByRole('button', { name: /^Raita/ }));
     fireEvent.click(within(picker).getByRole('button', { name: 'Add · Rs 600' }));
     expect(screen.getAllByText('Rs 600').length).toBeGreaterThan(0);
+  });
+
+  it('stacks delivery details and keeps quantity taps large in the mobile checkout', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(screen.getByRole('button', { name: 'Add Chicken Karahi' }));
+    fireEvent.click(screen.getByRole('button', { name: /View order/ }));
+    const dialog = sheet();
+    const stepper = within(dialog).getByRole('button', { name: 'One more Chicken Karahi' });
+    expect(stepper.className).toContain('size-11');
+
+    pick(/Delivery/);
+    const rider = within(dialog).getByLabelText('Rider');
+    const container = rider.closest('div.grid');
+    expect(container?.className).toContain('grid-cols-1');
+    expect(container?.className).toContain('sm:grid-cols-2');
+    expect(within(dialog).getByLabelText('Delivery fee (Rs)')).toBeTruthy();
   });
 
   it('keeps the order type and payment when the sheet is closed and opened again', async () => {

@@ -277,6 +277,46 @@ test('responsive layout has no page overflow and category navigation matches the
   }
 });
 
+test('small phone checkout keeps fields, quantity buttons and the footer usable', async ({ app }, testInfo) => {
+  test.skip(!['chromium-phone', 'chromium-small-phone'].includes(testInfo.project.name));
+
+  const { page } = app;
+  await addDish(page, 'Chicken Karahi');
+  const checkout = await openCheckout(page);
+
+  for (const name of ['One less Chicken Karahi', 'One more Chicken Karahi']) {
+    const bounds = await checkout.getByRole('button', { name }).boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds.width).toBeGreaterThanOrEqual(44);
+    expect(bounds.height).toBeGreaterThanOrEqual(44);
+  }
+
+  await chooseRadio(page, checkout, 'Delivery');
+  const rider = checkout.getByLabel('Rider');
+  const deliveryFee = checkout.getByLabel('Delivery fee (Rs)');
+  const riderBounds = await rider.boundingBox();
+  const feeBounds = await deliveryFee.boundingBox();
+  expect(riderBounds).not.toBeNull();
+  expect(feeBounds).not.toBeNull();
+  expect(feeBounds.y).toBeGreaterThanOrEqual(riderBounds.y + riderBounds.height);
+  await deliveryFee.fill('100');
+
+  const content = checkout.locator('#order-details');
+  const scrollWidths = await content.evaluate((element) => ({
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }));
+  expect(scrollWidths.scrollWidth).toBeLessThanOrEqual(scrollWidths.clientWidth + 1);
+
+  const placeOrder = checkout.getByRole('button', { name: 'Place order' });
+  await expect(placeOrder).toBeInViewport();
+  const footer = await placeOrder.boundingBox();
+  const viewport = page.viewportSize();
+  expect(footer).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  expect(footer.y + footer.height).toBeLessThanOrEqual(viewport.height + 1);
+});
+
 test('category filters work across a large real-menu-shaped catalogue', async ({ app }) => {
   const { page } = app;
   await chooseRadio(page, page, 'Pizza');
@@ -342,8 +382,28 @@ test('customer picker is a separate searchable modal and selection collapses to 
   await expect(customerDialog).toBeVisible();
   await customerDialog.getByRole('combobox', { name: 'Find customer by phone number or name' }).fill('ali');
   await activate(page, customerDialog.getByRole('option', { name: /Ali Raza/ }));
-  await expect(checkout.getByRole('button', { name: 'Remove Ali Raza' })).toBeVisible();
+  const selected = checkout.getByRole('button', { name: 'Remove Ali Raza' });
+  await expect(selected).toBeVisible();
   await expect(customerDialog).toHaveCount(0);
+
+  await activate(page, checkout.getByRole('button', { name: 'Add discount' }));
+  const discountInput = checkout.getByRole('textbox', { name: 'Discount (Rs)' });
+  await discountInput.fill('1500');
+  await expect(checkout.getByText('Only Rs 1,000 can be applied; discounts cannot exceed the subtotal.')).toBeVisible();
+  const label = checkout.locator('label[for]').filter({ hasText: 'Discount (Rs)' });
+  await expect(label).toBeVisible();
+  const inputBounds = await discountInput.boundingBox();
+  const labelBounds = await label.boundingBox();
+  const selectedBounds = await selected.boundingBox();
+  const checkoutBounds = await checkout.boundingBox();
+  expect(inputBounds).not.toBeNull();
+  expect(labelBounds).not.toBeNull();
+  expect(selectedBounds).not.toBeNull();
+  expect(checkoutBounds).not.toBeNull();
+  expect(Math.abs(labelBounds.y - selectedBounds.y)).toBeLessThan(20);
+  expect(inputBounds.y).toBeGreaterThan(selectedBounds.y + selectedBounds.height);
+  expect(inputBounds.width).toBeGreaterThan(checkoutBounds.width * 0.7);
+
   await chooseRadio(page, checkout, 'Khata');
   await expect(checkout.getByRole('radio', { name: 'Cash', exact: true })).toBeVisible();
   await expect(checkout.getByText(/Khata needs a saved customer/)).toHaveCount(0);
@@ -385,7 +445,7 @@ test('fixed service charge and payment-method tax recalculate without stale valu
   const checkout = await openCheckout(page);
   await checkout.getByLabel('Charge type').selectOption('fixed');
   await checkout.getByLabel('Amount (Rs)').fill('75');
-  await expect(checkout.getByText('Service charge', { exact: true })).toBeVisible();
+  await expect(checkout.getByRole('heading', { name: 'Service charge' })).toBeVisible();
   await expect(checkout.getByText('Rs 1,075')).toBeVisible();
 
   await chooseRadio(page, checkout, 'Paid now');

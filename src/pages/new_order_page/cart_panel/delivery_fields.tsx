@@ -26,10 +26,10 @@ export default function DeliveryFields({ control, register, errors, setValue, wa
   const customerId = useWatch({ control, name: 'customerId' });
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {customerId && <CustomerDeliveryDefaults key={customerId} customerId={customerId}
         setValue={setValue} watch={watch} />}
-      <div className="col-span-2">
+      <div className="col-span-full">
         <Input label="Complete address" dir="auto" placeholder="Street, building, area, city" required {...register('address')} error={fieldError(errors, 'address')} />
       </div>
       <Input label="Rider" dir="auto" {...register('rider')} />
