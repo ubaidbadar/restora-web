@@ -127,30 +127,19 @@ describe('New order (desktop)', () => {
   });
 
   it('adds mouse navigation for overflowing categories while keeping the row scrollable', async () => {
-    class ResizeObserverMock {
-      callback: ResizeObserverCallback;
-      constructor(callback: ResizeObserverCallback) { this.callback = callback; }
-      observe(target: Element) {
-        if (target instanceof HTMLDivElement && target.classList.contains('overflow-x-auto')) {
-          Object.defineProperty(target, 'clientWidth', { configurable: true, value: 300 });
-          Object.defineProperty(target, 'scrollWidth', { configurable: true, value: 900 });
-        }
-        this.callback([], this as unknown as ResizeObserver);
-      }
-      unobserve() {}
-      disconnect() {}
-    }
-    vi.stubGlobal('ResizeObserver', ResizeObserverMock);
-
     renderPage();
     await screen.findByText('Chicken Karahi');
 
     const categories = screen.getByRole('group', { name: 'Category' });
     const viewport = categories.querySelector('.overflow-x-auto') as HTMLDivElement;
+    Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 300 });
+    Object.defineProperty(viewport, 'scrollWidth', { configurable: true, value: 900 });
     Object.defineProperty(viewport, 'scrollBy', { configurable: true, value: vi.fn() });
     expect(categories.parentElement?.className).toContain('md:-mx-6');
 
-    fireEvent.click(within(categories).getByRole('button', { name: 'Scroll category right', hidden: true }));
+    fireEvent(window, new Event('resize'));
+    const next = await within(categories).findByRole('button', { name: 'Scroll category right', hidden: true });
+    fireEvent.click(next);
     expect(viewport.scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }));
   });
 
