@@ -328,7 +328,15 @@ test('customer picker is a separate searchable modal and selection collapses to 
   const { page } = app;
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
-  await activate(page, checkout.getByRole('button', { name: 'Add customer' }));
+  const addDiscount = checkout.getByRole('button', { name: 'Add discount' });
+  const addCustomer = checkout.getByRole('button', { name: 'Add customer' });
+  const discountBounds = await addDiscount.boundingBox();
+  const customerBounds = await addCustomer.boundingBox();
+  expect(discountBounds).not.toBeNull();
+  expect(customerBounds).not.toBeNull();
+  expect(customerBounds.x).toBeGreaterThan(discountBounds.x);
+  expect(Math.abs(customerBounds.y - discountBounds.y)).toBeLessThan(4);
+  await activate(page, addCustomer);
 
   const customerDialog = page.getByRole('dialog', { name: 'Select customer' });
   await expect(customerDialog).toBeVisible();
