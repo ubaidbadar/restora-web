@@ -192,7 +192,7 @@ describe('New order (desktop)', () => {
     fireEvent.click(dishTile('Chicken Karahi'));
     pick(/Dine-in/);
     fireEvent.click(screen.getByRole('button', { name: 'Add service charge' }));
-    pick(/Fixed \(Rs\)/);
+    pick(/^Fixed$/);
     fireEvent.change(screen.getByLabelText('Amount (Rs)'), { target: { value: '175' } });
     expect(screen.getAllByText('Rs 1,175').length).toBeGreaterThan(0);
     pick(/Delivery/);
