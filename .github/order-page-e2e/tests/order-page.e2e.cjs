@@ -352,7 +352,7 @@ test('customer picker is a separate searchable modal and selection collapses to 
   await expect(checkout.getByText('Only Rs 1,000 can be applied; discounts cannot exceed the subtotal.')).toBeVisible();
   const inputBounds = await discountInput.boundingBox();
   const selectedBounds = await selected.boundingBox();
-  expect(inputBounds.y).toBeGreaterThan(selectedBounds.y + selectedBounds.height - 1);
+  expect(selectedBounds.y).toBeGreaterThan(inputBounds.y + inputBounds.height - 1);
 
   await chooseRadio(page, checkout, 'Khata');
   await expect(checkout.getByRole('radio', { name: 'Cash', exact: true })).toBeVisible();
