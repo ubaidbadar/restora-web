@@ -37,6 +37,8 @@ const orderSchema = z
     // Delivery fee is only registered for delivery orders; an empty or missing amount is 0.
     deliveryFee: amountField.default(0),
     discount: amountField.default(0),
+    serviceChargeType: z.preprocess((value) => value || undefined, z.enum(['percentage', 'fixed']).optional()),
+    serviceChargeValue: z.coerce.number().finite().min(0).default(0),
     // Nothing picked until the customer pays: a radio group with none checked gives null.
     paymentMethod: z.preprocess((value) => value || undefined, z.enum(PAYMENT_METHODS).optional()),
     paymentStatus: z.enum(PAYMENT_STATUSES),
@@ -47,6 +49,8 @@ const orderSchema = z
       ctx.addIssue({ code: 'custom', path: ['tableName'], message: 'Enter the table' });
     }
     if (order.type === 'delivery' && !order.address) ctx.addIssue({ code: 'custom', path: ['address'], message: 'Enter the delivery address' });
+    if (order.type === 'dine_in' && order.serviceChargeValue > 0 && !order.serviceChargeType) ctx.addIssue({ code: 'custom', path: ['serviceChargeType'], message: 'Choose percentage or fixed charge' });
+    if (order.type === 'dine_in' && order.serviceChargeType === 'percentage' && order.serviceChargeValue > 100) ctx.addIssue({ code: 'custom', path: ['serviceChargeValue'], message: 'Percentage cannot exceed 100' });
     if (order.paymentStatus !== 'unpaid' && !order.paymentMethod) ctx.addIssue({ code: 'custom', path: ['paymentMethod'], message: order.paymentStatus === 'khata' ? 'Pick how they will pay' : 'Pick how the customer paid' });
     if (order.paymentStatus === 'khata' && !order.customerId) ctx.addIssue({ code: 'custom', path: ['paymentStatus'], message: 'Khata needs a customer. Pick one above first.' });
   })
@@ -54,6 +58,8 @@ const orderSchema = z
   .transform((order) => ({
     ...order,
     newName: order.type === 'takeaway' || order.newPhone ? order.newName : undefined,
+    serviceChargeType: order.type === 'dine_in' && order.serviceChargeValue > 0 ? order.serviceChargeType : null,
+    serviceChargeValue: order.type === 'dine_in' ? order.serviceChargeValue : 0,
     paymentMethod: order.paymentStatus === 'unpaid' ? undefined : order.paymentMethod,
   }));
 
