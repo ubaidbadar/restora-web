@@ -130,7 +130,9 @@ describe('New order (desktop)', () => {
 
     fireEvent.click(addCustomer);
     expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(within(screen.getByRole('dialog')).getByRole('heading', { name: 'Select customer' })).toBeTruthy();
+    const customerDialog = screen.getByRole('dialog');
+    expect(within(customerDialog).getByRole('heading', { name: 'Select customer' })).toBeTruthy();
+    expect(await within(customerDialog).findByRole('option', { name: /Ali Raza/ })).toBeTruthy();
   });
 
   it('adds mouse navigation for overflowing categories while keeping the row scrollable', async () => {

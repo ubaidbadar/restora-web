@@ -164,6 +164,7 @@ function Main({ setValue, watch, control, picked }: FormComponentProps & { picke
               <SearchMenu
                 value={search}
                 onChange={setSearch}
+                autoFocus
                 items={searching ? matches : (list ?? []).slice(0, MAX_MATCHES)}
                 getKey={(match) => match._id}
                 renderItem={(match) => <CustomerResult customer={match} query={byName ? query : ''} />}

@@ -32,6 +32,7 @@ interface SearchMenuProps<T> {
   placeholder?: string;
   icon?: LucideIcon;
   inputMode?: 'search' | 'tel' | 'text' | 'numeric';
+  autoFocus?: boolean;
 }
 
 /**
@@ -52,6 +53,7 @@ export default function SearchMenu<T>({
   placeholder,
   icon = Search,
   inputMode = 'search',
+  autoFocus = false,
 }: SearchMenuProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -108,6 +110,7 @@ export default function SearchMenu<T>({
         type="search"
         inputMode={inputMode}
         autoComplete="off"
+        autoFocus={autoFocus}
         placeholder={placeholder}
         aria-label={label}
         role="combobox"
