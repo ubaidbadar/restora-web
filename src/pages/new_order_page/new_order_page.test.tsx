@@ -301,7 +301,7 @@ describe('New order (desktop)', () => {
     expect(screen.getByRole('button', { name: 'Remove Ali Raza' })).toBeTruthy();
     expect(screen.queryByText('+923001234567')).toBeNull();
     expect(screen.queryByText('Owes Rs 500')).toBeNull();
-    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     fireEvent.click(dishTile('Chicken Karahi'));
     placeOrder();
     await screen.findByText('Orders board');
