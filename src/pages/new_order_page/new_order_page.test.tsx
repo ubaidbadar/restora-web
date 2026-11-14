@@ -177,7 +177,7 @@ describe('New order (desktop)', () => {
     await screen.findByText('Chicken Karahi');
     fireEvent.click(dishTile('Chicken Karahi'));
     pick(/Dine-in/);
-    fireEvent.change(screen.getByLabelText(/Table/), { target: { value: '6' } });
+    fireEvent.change(await screen.findByLabelText(/Table/), { target: { value: '6' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add service charge' }));
     fireEvent.change(screen.getByLabelText('Percentage (%)'), { target: { value: '10' } });
     expect(screen.getAllByText('Rs 1,100').length).toBeGreaterThan(0);
