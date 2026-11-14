@@ -12,6 +12,6 @@ interface OrderTotalsProps extends FormComponentProps {
 /** Subtotal, discount, tax and delivery, worked out from the watched order fields. */
 export default function OrderTotals({ control, taxByPaymentMethod }: OrderTotalsProps) {
   const watched = useWatch({ control, name: [...ORDER_TOTAL_FIELDS] });
-  const { totals, taxRate, deliveryFee } = orderTotalsOf(watched, taxByPaymentMethod);
-  return <TotalsList totals={totals} taxRate={taxRate} deliveryFee={deliveryFee} />;
+  const { totals, taxRate, deliveryFee, serviceChargeType, serviceChargeValue } = orderTotalsOf(watched, taxByPaymentMethod);
+  return <TotalsList totals={totals} taxRate={taxRate} deliveryFee={deliveryFee} serviceChargeType={serviceChargeType} serviceChargeValue={serviceChargeValue} />;
 }
