@@ -8,8 +8,8 @@ import Input from '../../../ui/input';
 import fieldError from '../../../utils/field_error';
 
 const KINDS = [
-  { value: 'percentage', label: 'Percentage (%)' },
-  { value: 'fixed', label: 'Fixed (Rs)' },
+  { value: 'percentage', label: 'Percent' },
+  { value: 'fixed', label: 'Fixed' },
 ];
 
 /** Optional dine-in surcharge, with its exact basis saved on the order for later edits and payment. */
@@ -60,7 +60,7 @@ export default function ServiceChargeField({ control, register, errors, setValue
         {...register('serviceChargeValue')}
         error={error}
       />
-      <p className="text-xs text-muted">Applied after the discount, before tax. Only for dine-in.</p>
+      <p className="text-xs text-muted">Percentages apply to discounted dishes. Tax is calculated separately.</p>
     </section>
   );
 }
