@@ -22,6 +22,7 @@ module.exports = defineConfig({
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
     reducedMotion: 'reduce',
+    serviceWorkers: 'block',
   },
   projects: [
     {
@@ -64,7 +65,7 @@ module.exports = defineConfig({
     },
   ],
   webServer: {
-    command: 'cd ../.. && corepack yarn dev --host 127.0.0.1',
+    command: 'cd ../.. && corepack yarn build && corepack yarn preview --host 127.0.0.1 --port 3000',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
