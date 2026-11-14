@@ -51,7 +51,7 @@ function Main({ setValue, watch, control, picked }: FormComponentProps & { picke
   const searching = byName || /\d/.test(query);
   const online = useOutboxStore((state) => state.online);
 
-  const { data: list, loading } = useGet<Customer[]>('/customers', { active: searching });
+  const { data: list, loading } = useGet<Customer[]>('/customers');
   const { data: older, loading: searchingServer, get: askFor } = useGet<Customer[]>('/customers', { active: true });
   const isMatch = (saved: Customer) =>
     byName ? saved.name.toLowerCase().includes(query) : national(saved.phone).includes(digits) || national(saved.altPhone ?? '').includes(digits);
