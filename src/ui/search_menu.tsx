@@ -33,6 +33,8 @@ interface SearchMenuProps<T> {
   icon?: LucideIcon;
   inputMode?: 'search' | 'tel' | 'text' | 'numeric';
   autoFocus?: boolean;
+  /** Keeps results in normal document flow instead of floating over the content. */
+  inline?: boolean;
 }
 
 /**
@@ -54,6 +56,7 @@ export default function SearchMenu<T>({
   icon = Search,
   inputMode = 'search',
   autoFocus = false,
+  inline = false,
 }: SearchMenuProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -104,7 +107,7 @@ export default function SearchMenu<T>({
   });
 
   return (
-    <div ref={boxRef} className="relative">
+    <div ref={boxRef} className={inline ? 'min-w-0' : 'relative'}>
       <Input
         icon={icon}
         type="search"
@@ -129,7 +132,7 @@ export default function SearchMenu<T>({
         rightElement={value ? <IconButton icon={X} size="sm" aria-label="Clear search" onClick={() => onChange('')} /> : undefined}
       />
       {showMenu && (
-        <div className="absolute inset-x-0 top-full z-30 mt-1.5 overflow-hidden rounded-card bg-surface shadow-lg animate-pop-in motion-reduce:animate-none">
+        <div className={`${inline ? 'mt-2 overflow-hidden rounded-card border border-border bg-surface' : 'absolute inset-x-0 top-full z-30 mt-1.5 overflow-hidden rounded-card bg-surface shadow-lg'} animate-pop-in motion-reduce:animate-none`}>
           {loading ? (
             <div role="status" aria-label="Searching" className="flex flex-col gap-3 p-3">
               {[1, 2].map((row) => (

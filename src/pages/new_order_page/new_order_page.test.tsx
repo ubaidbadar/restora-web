@@ -145,6 +145,11 @@ describe('New order (desktop)', () => {
     expect(screen.getByRole('dialog')).toBeTruthy();
     const customerDialog = screen.getByRole('dialog');
     expect(within(customerDialog).getByRole('heading', { name: 'Select customer' })).toBeTruthy();
+    expect(customerDialog.className).toContain('sm:max-w-xl');
+    expect(within(customerDialog).getByRole('combobox', { name: /Find customer/i })).toBeTruthy();
+    const customerList = await within(customerDialog).findByRole('listbox');
+    expect(customerList.parentElement?.className).not.toContain('absolute');
+    expect(customerList.parentElement?.className).not.toContain('fixed');
     expect(await within(customerDialog).findByRole('option', { name: /Ali Raza/ })).toBeTruthy();
   });
 

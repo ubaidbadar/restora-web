@@ -112,6 +112,7 @@ function Main({ setValue, watch, control, picked }: FormComponentProps & { picke
   return (
     <ModalOverlay
       title="Select customer"
+      size="lg"
       component={({ open }) => selectedCustomer
         ? <CustomerMatchCard customer={selectedCustomer} onClear={clear} />
         : (
@@ -165,6 +166,7 @@ function Main({ setValue, watch, control, picked }: FormComponentProps & { picke
                 value={search}
                 onChange={setSearch}
                 autoFocus
+                inline
                 items={searching ? matches : (list ?? []).slice(0, MAX_MATCHES)}
                 getKey={(match) => match._id}
                 renderItem={(match) => <CustomerResult customer={match} query={byName ? query : ''} />}
