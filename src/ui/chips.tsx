@@ -95,12 +95,12 @@ export default function Chips<T extends string>({ name, label, options, value, o
         ))}
         </div>
         {scrollControls && !wrap && scrollState.left && (
-          <button type="button" aria-label={`Scroll ${label.toLowerCase()} left`} onClick={() => scroll(-1)} className="absolute start-0 top-1/2 z-10 grid size-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
+          <button type="button" aria-label={`Scroll ${label.toLowerCase()} left`} onClick={() => scroll(-1)} className="absolute start-0 top-1/2 z-10 hidden size-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
         )}
         {scrollControls && !wrap && scrollState.right && (
-          <button type="button" aria-label={`Scroll ${label.toLowerCase()} right`} onClick={() => scroll(1)} className="absolute end-0 top-1/2 z-10 grid size-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
+          <button type="button" aria-label={`Scroll ${label.toLowerCase()} right`} onClick={() => scroll(1)} className="absolute end-0 top-1/2 z-10 hidden size-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
             <ChevronRight size={16} aria-hidden="true" />
           </button>
         )}
