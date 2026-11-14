@@ -162,11 +162,9 @@ describe('New order (desktop)', () => {
     const actionRow = addCustomer.parentElement?.parentElement;
     expect(addCustomer.className).toContain('text-primary');
     expect(addCustomer.className).not.toContain('border-border-strong');
-    expect(addCustomer.parentElement?.className).toContain('col-start-2');
-    expect(actionRow).toBe(addDiscount.parentElement?.parentElement);
-    expect(actionRow?.className).toContain('grid-cols-[minmax(0,1fr)_auto]');
+    expect(actionRow).toBe(addDiscount.parentElement);
+    expect(actionRow?.className).toContain('justify-between');
     expect(actionRow?.className).toContain('gap-3');
-    expect(addDiscount.parentElement?.className).toContain('has-[input]:col-span-2');
     expect(heading.parentElement).not.toBe(actionRow);
     expect(heading.parentElement?.className).toContain('sticky top-0');
 
@@ -483,6 +481,29 @@ describe('New order (desktop)', () => {
     fireEvent.change(screen.getByLabelText('Discount (Rs)'), { target: { value: '1500' } });
     expect(screen.getByRole('status').textContent).toContain('Only Rs 1,000 can be applied');
     expect(screen.getAllByText('− Rs 1,000').length).toBeGreaterThan(0);
+  });
+
+  it('keeps the selected customer beside the discount label while the input spans the full width', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+
+    fireEvent.change(customerSearch(), { target: { value: 'ali' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
+    const selected = screen.getByRole('button', { name: 'Remove Ali Raza' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add discount' }));
+    const input = screen.getByLabelText('Discount (Rs)') as HTMLInputElement;
+    const label = screen.getByText('Discount (Rs)', { selector: 'label' }) as HTMLLabelElement;
+    const header = label.parentElement;
+    expect(label.htmlFor).toBe(input.id);
+    expect(selected.parentElement?.parentElement).toBe(header);
+    expect(header?.className).toContain('justify-between');
+    expect(input.closest('div.flex.min-w-0.flex-col')?.contains(header)).toBe(true);
+
+    fireEvent.change(input, { target: { value: '500' } });
+    expect((screen.getByLabelText('Discount (Rs)') as HTMLInputElement).value).toBe('500');
+    expect(screen.getByRole('button', { name: 'Remove Ali Raza' })).toBeTruthy();
   });
 
   it('an empty discount box folds back to the link', async () => {

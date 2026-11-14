@@ -390,9 +390,19 @@ test('customer picker is a separate searchable modal and selection collapses to 
   const discountInput = checkout.getByRole('textbox', { name: 'Discount (Rs)' });
   await discountInput.fill('1500');
   await expect(checkout.getByText('Only Rs 1,000 can be applied; discounts cannot exceed the subtotal.')).toBeVisible();
+  const label = checkout.locator('label[for]').filter({ hasText: 'Discount (Rs)' });
+  await expect(label).toBeVisible();
   const inputBounds = await discountInput.boundingBox();
+  const labelBounds = await label.boundingBox();
   const selectedBounds = await selected.boundingBox();
-  expect(selectedBounds.y).toBeGreaterThan(inputBounds.y + inputBounds.height - 1);
+  const checkoutBounds = await checkout.boundingBox();
+  expect(inputBounds).not.toBeNull();
+  expect(labelBounds).not.toBeNull();
+  expect(selectedBounds).not.toBeNull();
+  expect(checkoutBounds).not.toBeNull();
+  expect(Math.abs(labelBounds.y - selectedBounds.y)).toBeLessThan(20);
+  expect(inputBounds.y).toBeGreaterThan(selectedBounds.y + selectedBounds.height);
+  expect(inputBounds.width).toBeGreaterThan(checkoutBounds.width * 0.7);
 
   await chooseRadio(page, checkout, 'Khata');
   await expect(checkout.getByRole('radio', { name: 'Cash', exact: true })).toBeVisible();
