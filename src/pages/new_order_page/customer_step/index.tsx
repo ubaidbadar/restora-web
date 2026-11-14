@@ -1,4 +1,5 @@
 import { UserPlus } from 'lucide-react';
+import Button from '../../../ui/button';
 import { useEffect, useState } from 'react';
 import can from '@shared/can';
 import api from '../../../config/api';
@@ -32,8 +33,9 @@ const national = (phone: string) => phone.replace(/\D/g, '').replace(/^(?:0092|9
  * Find the customer by number or name (ui/search_menu), or save a new number on the spot. The search text is local,
  * so typing re-renders this section only; the form gets the picked customer.
  */
-function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order['customer'] }) {
+function Main({ setValue, watch, picked, compact }: FormComponentProps & { picked?: Order['customer']; compact?: boolean }) {
   const [search, setSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(!compact);
   // Editing an order starts with its customer picked: the full record when the customer list is already loaded.
   const [customer, setCustomer] = useState<Customer | null>(() =>
     picked?._id
@@ -95,6 +97,7 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
     setValue('newPhone', undefined);
     setCustomer(chosen);
     setSearch('');
+    setSearchOpen(false);
   };
 
   const clear = () => {
@@ -103,9 +106,13 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
     if (customer && watch('newName') === customer.name) setValue('newName', undefined);
     setValue('newPhone', undefined);
     setCustomer(null);
+    setSearchOpen(true);
   };
 
   if (customer) return <CustomerMatchCard customer={customer} onClear={clear} />;
+  if (compact && !searchOpen) {
+    return <Button type="button" variant="outline" icon={UserPlus} className="self-start" onClick={() => setSearchOpen(true)}>Add customer</Button>;
+  }
 
   return (
     <FormDrawer
@@ -162,13 +169,15 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
   );
 }
 
-export default function CustomerStep(props: FormComponentProps & { picked?: Order['customer'] }) {
+export default function CustomerStep({ compact = false, ...props }: FormComponentProps & { picked?: Order['customer']; compact?: boolean }) {
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-heading text-ink">
-        Customer <span className="text-sm font-normal text-muted">· optional for walk-ins</span>
-      </h2>
-      <Main {...props} />
+      {!compact && (
+        <h2 className="text-heading text-ink">
+          Customer <span className="text-sm font-normal text-muted">· optional for walk-ins</span>
+        </h2>
+      )}
+      <Main {...props} compact={compact} />
     </section>
   );
 }

@@ -6,14 +6,17 @@ interface TotalsListProps {
   /** Null while it isn't known how the customer pays: tax is added then. */
   taxRate: number | null;
   deliveryFee: number;
+  serviceChargeType?: 'percentage' | 'fixed';
+  serviceChargeValue?: number;
 }
 
-export default function TotalsList({ totals, taxRate, deliveryFee }: TotalsListProps) {
+export default function TotalsList({ totals, taxRate, deliveryFee, serviceChargeType, serviceChargeValue }: TotalsListProps) {
   const rows = [
     ['Subtotal', formatRs(totals.subtotal)],
     ...(totals.discount ? [['Discount', `− ${formatRs(totals.discount)}`]] : []),
     taxRate === null ? ['Tax', 'Added when paid'] : [`Tax (${taxRate}%)`, formatRs(totals.tax)],
     ...(deliveryFee ? [['Delivery', formatRs(deliveryFee)]] : []),
+    ...(totals.serviceCharge ? [[serviceChargeType === 'percentage' ? `Service charge (${serviceChargeValue}%)` : 'Service charge', formatRs(totals.serviceCharge)]] : []),
   ];
 
   return (

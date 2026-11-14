@@ -1,5 +1,6 @@
 import { useWatch } from 'react-hook-form';
 import Tabs from '../../../ui/tabs';
+import Chips from '../../../ui/chips';
 import PAYMENT_LABELS from '../../../constants/payment_labels';
 import PAYMENT_METHODS from '../../../constants/payment_methods';
 import type FormComponentProps from '../../../types/form_component_props';
@@ -28,11 +29,11 @@ export default function PaymentPicker(props: FormComponentProps) {
       <Tabs register={props.register} name="paymentStatus" label="Payment" options={STATUSES} value={status} fill showLabel />
       {/* On khata nothing is paid yet: the method only sets the tax, as the customer will pay that way. */}
       {status !== 'unpaid' && (
-        <Tabs register={props.register} name="paymentMethod" label={status === 'paid' ? 'Paid by' : 'They will pay by'} options={METHODS} value={(method ?? '') as (typeof PAYMENT_METHODS)[number]} wrap fill showLabel />
+        <Chips register={props.register} name="paymentMethod" label={status === 'paid' ? 'Paid by' : 'They will pay by'} options={METHODS} value={(method ?? '') as (typeof PAYMENT_METHODS)[number]} wrap showLabel />
       )}
       {status === 'khata' && !customerId && !error && (
         <p className="flex items-center gap-2 rounded-control bg-warning-50 px-3 py-2 text-sm font-medium text-warning-800">
-          Khata needs a saved customer: pick one at the top.
+          Khata needs a saved customer: tap Add customer above.
         </p>
       )}
       {error && <p role="alert" className="text-sm font-medium text-danger-700">{error}</p>}

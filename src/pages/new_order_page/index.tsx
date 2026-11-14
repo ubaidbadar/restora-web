@@ -12,11 +12,10 @@ import toast from '../../utils/toast';
 import printSlip from '../../utils/print_slip';
 import printOnThisPc from '../../utils/print_on_this_pc';
 import kitchenChanges from '../../utils/kitchen_changes';
-import PageHeader from '../../components/page_header';
+import BackButton from '../../components/back_button';
 import useNewOrderWorkspaceStore from '../../store/new_order_workspace_store';
 import type NewOrderWorkspaceState from '../../types/new_order_workspace_state';
 import CartPanel from './cart_panel';
-import CustomerStep from './customer_step';
 import MenuPicker from './menu_picker';
 import PlaceOrderBar from './place_order_bar';
 import CartLines from './cart_panel/cart_lines';
@@ -60,6 +59,8 @@ function offlineOrder(data: FieldValues, clientId: string, token: string): Order
   const rates: Record<string, number> = me.workplace!.settings.taxByPaymentMethod;
   const taxRate = method ? (rates[method] ?? 0) : 0;
   const deliveryFee = data.type === 'delivery' ? data.deliveryFee : 0;
+  const serviceChargeType = data.type === 'dine_in' && Number(data.serviceChargeValue) > 0 ? data.serviceChargeType : undefined;
+  const serviceChargeValue = serviceChargeType ? Number(data.serviceChargeValue) : 0;
   const saved = (getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((customer) => customer._id === data.customerId)
     ?? (data.customerId ? getCache.get(getCache.keyOf(`/customers/${data.customerId}`)) as Customer | undefined : undefined);
   const name = data.newName?.trim() || saved?.name;
@@ -76,7 +77,9 @@ function offlineOrder(data: FieldValues, clientId: string, token: string): Order
     type: data.type,
     status: 'new',
     items: data.items,
-    ...calcTotals(data.items, data.discount, taxRate, deliveryFee),
+    ...calcTotals(data.items, data.discount, taxRate, deliveryFee, serviceChargeType, serviceChargeValue),
+    serviceChargeType,
+    serviceChargeValue,
     taxRate,
     deliveryFee,
     paymentMethod: method,
@@ -112,39 +115,38 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
   const { xl } = useBreakpoint();
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 xl:pe-90">
+    <div className="flex min-h-0 min-w-0 flex-1 xl:pe-[42.5rem]">
       <div className={`flex min-w-0 flex-1 flex-col ${xl ? 'overflow-y-auto px-6 py-5' : 'lg:px-6 lg:py-5'}`}>
-        {order ? (
-          <PageHeader backTo="/orders" title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board." />
-        ) : (
-          <PageHeader backTo="/orders" title="New order" subtitle="Find the customer, tap dishes, place the order" />
-        )}
-        <div className="flex min-w-0 flex-col gap-5">
-          <CustomerStep
-            {...props}
-            picked={order?.customer?._id ? order.customer : (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })}
-          />
-          <MenuPicker {...props} menuDensity={workspace.menuDensity} />
-        </div>
+        <header className="mb-5 flex items-start gap-3">
+          <BackButton className="-ms-2" iconOnly to="/orders" />
+          <div className="min-w-0">
+            <h1 className="h2 text-ink">{order ? `Edit order #${order.dailyToken}` : 'New order'}</h1>
+            <p className="mt-0.5 text-sm text-muted">{order ? 'Change the order before payment' : 'Choose dishes and place the order'}</p>
+          </div>
+        </header>
+        <MenuPicker {...props} menuDensity={workspace.menuDensity} />
       </div>
 
       {xl ? (
         <>
-          <section aria-label="Order" className="min-h-0 w-80 shrink-0 flex flex-col overflow-y-auto px-4 py-5">
-            <h2 className="mb-4 text-heading text-ink">Order</h2>
-            <CartLines {...props} />
-          </section>
-          <aside aria-label="Checkout" className="fixed inset-y-0 end-0 z-30 flex w-90 flex-col bg-surface">
-            <CartPanel
-              {...props}
-              taxByPaymentMethod={taxByPaymentMethod}
-              editing={Boolean(order)}
-              showHeading
-              heading="Checkout"
-              showLines={false}
-            />
-            <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
-          </aside>
+          <div className="fixed inset-y-0 end-0 z-30 flex w-[42.5rem] bg-surface">
+            <section aria-label="Order" className="flex min-h-0 w-80 shrink-0 flex-col overflow-y-auto border-e border-border px-4 py-5">
+              <h2 className="mb-4 text-heading text-ink">Order</h2>
+              <CartLines {...props} />
+            </section>
+            <aside aria-label="Checkout" className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <CartPanel
+                {...props}
+                taxByPaymentMethod={taxByPaymentMethod}
+                editing={Boolean(order)}
+                showHeading
+                heading="Checkout"
+                showLines={false}
+                picked={order?.customer?._id ? order.customer : fromProfile}
+              />
+              <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
+            </aside>
+          </div>
         </>
       ) : (
         <DockedSheet
@@ -152,7 +154,7 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
           mode={workspace.orderPanel}
           component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} showEmpty={Boolean(order)} onOpen={open} />}
         >
-          <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} showHeading={false} />
+          <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} showHeading={false} picked={order?.customer?._id ? order.customer : fromProfile} />
           <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
         </DockedSheet>
       )}
@@ -186,6 +188,8 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             rider: order.rider,
             deliveryFee: order.deliveryFee,
             discount: order.discount,
+            serviceChargeType: order.serviceChargeType,
+            serviceChargeValue: order.serviceChargeValue ?? 0,
             paymentStatus: 'unpaid',
           } || {
             // Pay later until someone picks otherwise; people who can't take payments never see the choice.
@@ -233,8 +237,8 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             }
             // No internet: the edit waits in the outbox and the board shows it at once.
             const queue = () => {
-              const { customerId, customer, type, items, subtotal, discount, tax, taxRate, total, deliveryFee, tableId, tableName, area, address, rider } = local;
-              const preview = { customerId, customer, type, items, subtotal, discount, tax, taxRate, total, deliveryFee, tableId, tableName, area, address, rider };
+              const { customerId, customer, type, items, subtotal, discount, tax, taxRate, total, deliveryFee, serviceChargeType, serviceChargeValue, serviceCharge, tableId, tableName, area, address, rider } = local;
+              const preview = { customerId, customer, type, items, subtotal, discount, tax, taxRate, total, deliveryFee, serviceChargeType, serviceChargeValue, serviceCharge, tableId, tableName, area, address, rider };
               useOutboxStore.getState().add({ id: `${order._id}-edit-${Date.now().toString(36)}`, method: 'put', url: `/orders/${order._id}`, body: changes, label: `Changes to order #${token}`, createdAt: new Date().toISOString(), preview });
               done(`Order #${token} changed. It will be sent when the internet is back.`, { ...order, ...preview });
             };

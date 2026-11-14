@@ -27,6 +27,9 @@ export default interface Order {
   taxRate: number;
   tax: number;
   deliveryFee: number;
+  serviceChargeType?: 'percentage' | 'fixed';
+  serviceChargeValue?: number;
+  serviceCharge?: number;
   total: number;
   /** How the customer paid. Empty until they pay; tax is added then. */
   paymentMethod?: PaymentMethod;
