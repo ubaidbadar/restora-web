@@ -299,9 +299,9 @@ describe('New order (desktop)', () => {
     fireEvent.change(customerSearch(), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
     expect(screen.getByRole('button', { name: 'Remove Ali Raza' })).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(screen.queryByText('+923001234567')).toBeNull();
     expect(screen.queryByText('Owes Rs 500')).toBeNull();
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     fireEvent.click(dishTile('Chicken Karahi'));
     placeOrder();
     await screen.findByText('Orders board');
