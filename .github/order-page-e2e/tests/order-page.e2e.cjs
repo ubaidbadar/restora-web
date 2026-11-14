@@ -342,8 +342,18 @@ test('customer picker is a separate searchable modal and selection collapses to 
   await expect(customerDialog).toBeVisible();
   await customerDialog.getByRole('combobox', { name: 'Find customer by phone number or name' }).fill('ali');
   await activate(page, customerDialog.getByRole('option', { name: /Ali Raza/ }));
-  await expect(checkout.getByRole('button', { name: 'Remove Ali Raza' })).toBeVisible();
+  const selected = checkout.getByRole('button', { name: 'Remove Ali Raza' });
+  await expect(selected).toBeVisible();
   await expect(customerDialog).toHaveCount(0);
+
+  await activate(page, checkout.getByRole('button', { name: 'Add discount' }));
+  const discountInput = checkout.getByRole('textbox', { name: 'Discount (Rs)' });
+  await discountInput.fill('1500');
+  await expect(checkout.getByText('Only Rs 1,000 can be applied; discounts cannot exceed the subtotal.')).toBeVisible();
+  const inputBounds = await discountInput.boundingBox();
+  const selectedBounds = await selected.boundingBox();
+  expect(inputBounds.y).toBeGreaterThan(selectedBounds.y + selectedBounds.height - 1);
+
   await chooseRadio(page, checkout, 'Khata');
   await expect(checkout.getByRole('radio', { name: 'Cash', exact: true })).toBeVisible();
   await expect(checkout.getByText(/Khata needs a saved customer/)).toHaveCount(0);

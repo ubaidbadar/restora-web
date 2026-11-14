@@ -117,6 +117,9 @@ describe('New order (desktop)', () => {
     expect(chargeType.value).toBe('percentage');
     expect(chargeType.style.width).toBe('auto');
     expect(chargeType.className).toContain('shrink-0');
+    const charge = screen.getByRole('region', { name: 'Service charge' });
+    expect(within(charge).getByRole('heading', { name: 'Service charge' })).toBeTruthy();
+    expect(chargeType.closest('label')?.textContent).toContain('Type');
     expect((screen.getByRole('spinbutton', { name: 'Percentage (%)' }) as HTMLInputElement).value).toBe('0');
     expect(screen.queryByRole('button', { name: 'Add service charge' })).toBeNull();
   });
@@ -161,8 +164,9 @@ describe('New order (desktop)', () => {
     expect(addCustomer.className).not.toContain('border-border-strong');
     expect(addCustomer.parentElement?.className).toContain('ms-auto');
     expect(actionRow).toBe(addDiscount.parentElement?.parentElement);
-    expect(actionRow?.className).toContain('items-center');
+    expect(actionRow?.className).toContain('flex-wrap');
     expect(actionRow?.className).toContain('gap-3');
+    expect(addDiscount.parentElement?.className).toContain('has-[input]:basis-full');
     expect(heading.parentElement).not.toBe(actionRow);
     expect(heading.parentElement?.className).toContain('sticky top-0');
 
@@ -469,6 +473,16 @@ describe('New order (desktop)', () => {
     fireEvent.click(await screen.findByRole('option', { name: /Sara Khan/ }));
     await waitFor(() => expect((screen.getByLabelText(/Complete address/) as HTMLInputElement).value).toBe('Model Town, Shop 8, Main Road'));
     expect(screen.queryByLabelText('Area')).toBeNull();
+  });
+
+  it('shows the applied discount when the entered amount exceeds the subtotal', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+    fireEvent.click(screen.getByRole('button', { name: 'Add discount' }));
+    fireEvent.change(screen.getByLabelText('Discount (Rs)'), { target: { value: '1500' } });
+    expect(screen.getByRole('status').textContent).toContain('Only Rs 1,000 can be applied');
+    expect(screen.getAllByText('− Rs 1,000').length).toBeGreaterThan(0);
   });
 
   it('an empty discount box folds back to the link', async () => {

@@ -17,29 +17,32 @@ export default function ServiceChargeField({ control, register, errors }: FormCo
   if (orderType !== 'dine_in') return null;
 
   return (
-    <section className="flex items-end gap-2" aria-label="Service charge">
-      <Select
-        aria-label="Charge type"
-        options={KINDS}
-        defaultValue={kind || 'percentage'}
-        {...register('serviceChargeType')}
-        error={fieldError(errors, 'serviceChargeType')}
-        className="shrink-0"
-        style={{ width: 'auto' }}
-        label="Service Charges"
-      />
-      <div className="flex-1">
-        <Input
-          type="number"
-          inputMode="decimal"
-          min={0}
-          step="0.01"
-          max={kind === 'percentage' ? 100 : undefined}
-          label={kind === 'fixed' ? 'Amount (Rs)' : 'Percentage (%)'}
-          placeholder="0"
-          {...register('serviceChargeValue')}
-          error={fieldError(errors, 'serviceChargeValue')}
+    <section className="flex flex-col gap-2" aria-label="Service charge">
+      <h3 className="text-sm font-semibold text-ink">Service charge</h3>
+      <div className="flex min-w-0 items-end gap-2">
+        <Select
+          aria-label="Charge type"
+          label="Type"
+          options={KINDS}
+          defaultValue={kind || 'percentage'}
+          {...register('serviceChargeType')}
+          error={fieldError(errors, 'serviceChargeType')}
+          className="shrink-0"
+          style={{ width: 'auto' }}
         />
+        <div className="min-w-0 flex-1">
+          <Input
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step="0.01"
+            max={kind === 'percentage' ? 100 : undefined}
+            label={kind === 'fixed' ? 'Amount (Rs)' : 'Percentage (%)'}
+            placeholder="0"
+            {...register('serviceChargeValue')}
+            error={fieldError(errors, 'serviceChargeValue')}
+          />
+        </div>
       </div>
     </section>
   );
