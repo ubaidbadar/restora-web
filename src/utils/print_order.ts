@@ -104,6 +104,7 @@ export default function printOrder(order: Order, kind: 'kitchen' | 'receipt') {
         ${order.discount ? line('Discount', `− ${formatRs(order.discount)}`) : ''}
         ${order.paymentMethod ? line(`Tax (${order.taxRate}%)`, formatRs(order.tax)) : line('Tax', 'Added when paid')}
         ${order.deliveryFee ? line('Delivery', formatRs(order.deliveryFee)) : ''}
+        ${order.serviceCharge ? line('Service charge', formatRs(order.serviceCharge)) : ''}
         ${line('Total', formatRs(order.total), 'grand')}
       </div>
       <div class="footer center">
