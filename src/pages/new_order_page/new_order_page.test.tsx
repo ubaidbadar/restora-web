@@ -122,6 +122,9 @@ describe('New order (desktop)', () => {
     expect(checkout.parentElement).toBe(order.parentElement);
     expect(checkout.parentElement?.className).toContain('fixed inset-y-0 end-0');
     expect(order.className).toContain('border-e');
+    const orderHeading = within(order).getByRole('heading', { name: 'Order' });
+    expect(orderHeading.parentElement?.className).toContain('sticky top-0');
+    expect(orderHeading.parentElement?.className).toContain('border-b');
     expect(within(checkout).getByRole('heading', { name: 'Checkout' })).toBeTruthy();
     expect(within(checkout).queryByRole('list', { name: 'Items in this order' })).toBeNull();
     expect(within(checkout).getByRole('button', { name: 'Place order' })).toBeTruthy();
@@ -156,27 +159,19 @@ describe('New order (desktop)', () => {
     expect(await within(customerDialog).findByRole('option', { name: /Ali Raza/ })).toBeTruthy();
   });
 
-  it('adds mouse navigation for overflowing categories while keeping the row scrollable', async () => {
+  it('wraps desktop categories without arrow controls and shows the selected quantity on each category', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
 
     const categories = screen.getByRole('group', { name: 'Category' });
-    const viewport = categories.querySelector('.overflow-x-auto') as HTMLDivElement;
-    Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 300 });
-    Object.defineProperty(viewport, 'scrollWidth', { configurable: true, value: 900 });
-    const scrollTo = vi.fn();
-    Object.defineProperty(viewport, 'scrollTo', { configurable: true, value: scrollTo });
-    expect(categories.parentElement?.className).toContain('lg:-mx-6');
+    const chips = Array.from(categories.querySelectorAll('div')).find((element) => element.className.includes('lg:flex-wrap'));
+    expect(chips?.className).toContain('lg:flex-wrap');
+    expect(within(categories).queryByRole('button', { name: /Scroll category/ })).toBeNull();
 
-    await waitFor(() => {
-      fireEvent(window, new Event('resize'));
-      expect(within(categories).queryByRole('button', { name: 'Scroll category right', hidden: true })).toBeTruthy();
-    });
-    const next = within(categories).getByRole('button', { name: 'Scroll category right', hidden: true });
-    fireEvent.click(next);
-    fireEvent.click(next);
-    expect(scrollTo).toHaveBeenNthCalledWith(1, { left: 195, behavior: 'smooth' });
-    expect(scrollTo).toHaveBeenNthCalledWith(2, { left: 390, behavior: 'smooth' });
+    fireEvent.click(dishTile('Chicken Karahi'));
+    fireEvent.click(dishTile('Chicken Karahi'));
+    expect(within(categories).getByRole('radio', { name: 'All 2' })).toBeTruthy();
+    expect(within(categories).getByRole('radio', { name: 'Karahi 2' })).toBeTruthy();
   });
 
   it('adds dishes, counts them and totals the order', async () => {
@@ -193,14 +188,16 @@ describe('New order (desktop)', () => {
     expect(screen.queryByRole('list', { name: 'Items in this order' })).toBeNull();
   });
 
-  it('a dish with sizes adds its first size, and Options picks another size and add-ons', async () => {
+  it('opens size and add-on choices by tapping a dish that has options', async () => {
     renderPage();
     await screen.findByText('Biryani');
     fireEvent.click(dishTile('Biryani'));
-    fireEvent.click(screen.getByRole('button', { name: 'Options for Biryani' }));
-    fireEvent.click(await screen.findByRole('radio', { name: /Full · Rs 550/ }));
-    fireEvent.click(screen.getByRole('button', { name: /^Raita/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Add · Rs 600' }));
+    const picker = screen.getByRole('dialog');
+    expect(within(picker).getByRole('heading', { name: 'Biryani' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Options for Biryani' })).toBeNull();
+    fireEvent.click(await within(picker).findByRole('radio', { name: /Full · Rs 550/ }));
+    fireEvent.click(within(picker).getByRole('button', { name: /^Raita/ }));
+    fireEvent.click(within(picker).getByRole('button', { name: 'Add · Rs 600' }));
     await waitFor(() => expect(screen.getByText('2 items')).toBeTruthy());
     expect(screen.getAllByText('Rs 900').length).toBeGreaterThan(0);
   });
@@ -507,6 +504,18 @@ describe('New order (phone)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'One more Chicken Karahi' }));
     expect(screen.getByLabelText('2 Chicken Karahi')).toBeTruthy();
     expect(screen.getByText('Rs 2,000')).toBeTruthy();
+  });
+
+  it('opens size and add-on choices by tapping a dish row with options', async () => {
+    renderPage();
+    await screen.findByText('Biryani');
+    fireEvent.click(dishTile('Biryani'));
+    const picker = screen.getByRole('dialog');
+    expect(within(picker).getByRole('heading', { name: 'Biryani' })).toBeTruthy();
+    fireEvent.click(await within(picker).findByRole('radio', { name: /Full · Rs 550/ }));
+    fireEvent.click(within(picker).getByRole('button', { name: /^Raita/ }));
+    fireEvent.click(within(picker).getByRole('button', { name: 'Add · Rs 600' }));
+    expect(screen.getAllByText('Rs 600').length).toBeGreaterThan(0);
   });
 
   it('keeps the order type and payment when the sheet is closed and opened again', async () => {

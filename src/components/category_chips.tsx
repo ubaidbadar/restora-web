@@ -6,10 +6,18 @@ interface CategoryChipsProps {
   categories: MenuCategory[];
   value: string;
   onChange: (categoryId: string) => void;
-  scrollControls?: boolean;
+  counts?: Record<string, number>;
+  wrapOnDesktop?: boolean;
 }
 
-export default function CategoryChips({ categories, value, onChange, scrollControls = false }: CategoryChipsProps) {
-  const options = [{ value: ALL_CATEGORIES, label: 'All' }, ...categories.map((category) => ({ value: category._id, label: category.name }))];
-  return <Chips name="category" label="Category" options={options} value={value} onChange={onChange} scrollControls={scrollControls} />;
+export default function CategoryChips({ categories, value, onChange, counts, wrapOnDesktop = false }: CategoryChipsProps) {
+  const options = [
+    { value: ALL_CATEGORIES, label: 'All', count: counts?.[ALL_CATEGORIES] || undefined },
+    ...categories.map((category) => ({
+      value: category._id,
+      label: category.name,
+      count: counts?.[category._id] || undefined,
+    })),
+  ];
+  return <Chips name="category" label="Category" options={options} value={value} onChange={onChange} wrapOnDesktop={wrapOnDesktop} />;
 }
