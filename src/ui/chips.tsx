@@ -45,13 +45,15 @@ export default function Chips<T extends string>({ name, label, options, value, o
 
     update();
     element.addEventListener('scroll', update, { passive: true });
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    Array.from(element.children).forEach((child) => observer.observe(child));
+    window.addEventListener('resize', update);
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(update);
+    observer?.observe(element);
+    Array.from(element.children).forEach((child) => observer?.observe(child));
 
     return () => {
       element.removeEventListener('scroll', update);
-      observer.disconnect();
+      window.removeEventListener('resize', update);
+      observer?.disconnect();
     };
   }, [options.length, scrollControls, wrap]);
 
