@@ -71,13 +71,12 @@ jobs:
         working-directory: .github/authenticated-e2e
         run: npx playwright test --config=playwright.config.cjs
 
-      - name: Upload traces, screenshots and HTML report
+      - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: authenticated-browser-e2e-${{ github.run_number }}
           path: |
-            .github/authenticated-e2e/test-results
             .github/authenticated-e2e/playwright-report
           retention-days: 14
           if-no-files-found: warn

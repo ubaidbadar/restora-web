@@ -19,7 +19,9 @@ test('a signed-in team member can open Orders and start, but not submit, a new o
   await page.goto('/login?next=%2Forders', { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('Welcome back to Restora.')).toBeVisible();
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
+  const passwordField = page.locator('input[name="password"]');
+  await expect(passwordField).toHaveCount(1);
+  await passwordField.fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
   await expect(page).toHaveURL(/\/orders(?:[?#].*)?$/, { timeout: 60_000 });
