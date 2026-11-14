@@ -57,6 +57,13 @@ const orderSchema = z
   // "Pay later" keeps no method, even one picked before switching: it is chosen when the customer pays.
   .transform((order) => ({
     ...order,
+    // Type-specific fields must not leak when the person changes the order type before saving.
+    tableId: order.type === 'dine_in' ? order.tableId : undefined,
+    tableName: order.type === 'dine_in' ? order.tableName : undefined,
+    area: order.type === 'delivery' ? order.area : undefined,
+    address: order.type === 'delivery' ? order.address : undefined,
+    rider: order.type === 'delivery' ? order.rider : undefined,
+    deliveryFee: order.type === 'delivery' ? order.deliveryFee : 0,
     newName: order.type === 'takeaway' || order.newPhone ? order.newName : undefined,
     serviceChargeType: order.type === 'dine_in' && order.serviceChargeValue > 0 ? order.serviceChargeType : null,
     serviceChargeValue: order.type === 'dine_in' ? order.serviceChargeValue : 0,

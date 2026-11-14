@@ -3,6 +3,7 @@
 ## Automated checks
 
 - `yarn verify` runs TypeScript, ESLint, Vitest and the production Vite build.
+- `.github/workflows/order-page-browser-e2e.yml` runs an API-isolated Playwright suite against the real Vite-rendered order page. It covers Chromium at phone, tablet, laptop and desktop breakpoints plus Firefox desktop and WebKit phone, captures screenshots/traces, and runs axe WCAG 2.2 AA scans. It never writes to a live restaurant backend and needs no account credentials.
 - `.github/workflows/verify.yml` runs on pull requests and pushes to `dev` / `main`.
 - `.github/workflows/firebase-hosting-merge.yml` repeats verification as a dependency of Firebase deployment. A failed check prevents the Hosting deployment.
 - `.github/workflows/authenticated-browser-e2e.yml` runs the signed-in Orders/Create Order journey against the configured dev app URL on desktop Chromium, Pixel 7 phone emulation and iPad Pro 11 tablet emulation. It runs on PRs to `main` / `dev`, manually, and nightly. This is a staging smoke test; it does not claim to exercise an unmerged PR preview.
