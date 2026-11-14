@@ -31,7 +31,7 @@ const MAX_MATCHES = 6;
  */
 const national = (phone: string) => phone.replace(/\D/g, '').replace(/^(?:0092|92|0)(?=3)/, '');
 
-/** Customer selection is separate from order type: the checkout header opens a short, searchable picker. */
+/** Customer selection is separate from order type: the checkout action opens a short, searchable picker. */
 function Main({ setValue, watch, control, picked }: FormComponentProps & { picked?: Order['customer'] }) {
   const [search, setSearch] = useState('');
   const [customer, setCustomer] = useState<Customer | null>(() =>

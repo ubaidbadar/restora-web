@@ -17,10 +17,11 @@ export default function CartPanel({ taxByPaymentMethod, editing, showHeading, sh
   return (
     // Scrolls inside the panel so Place order below it stays in reach.
     <div id="order-details" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-      <div className={`sticky top-0 z-20 flex min-h-14 items-center gap-3 border-b border-border bg-surface p-5 ${showHeading ? 'justify-between' : 'justify-end'}`}>
-        {showHeading && <h2 className="text-heading text-ink">{heading}</h2>}
-        <CustomerStep {...props} picked={picked} />
-      </div>
+      {showHeading && (
+        <div className="sticky top-0 z-20 flex min-h-14 items-center border-b border-border bg-surface p-5">
+          <h2 className="text-heading text-ink">{heading}</h2>
+        </div>
+      )}
       <div className="px-5 flex flex-col gap-4">
         {showLines && <CartLines {...props} />}
       <OrderTypePicker {...props} />
@@ -32,9 +33,16 @@ export default function CartPanel({ taxByPaymentMethod, editing, showHeading, sh
           <PaymentPicker {...props} />
         </Can>
       )}
-      <Can permission="orders:discount">
-        <DiscountField {...props} />
-      </Can>
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <Can permission="orders:discount">
+            <DiscountField {...props} />
+          </Can>
+        </div>
+        <div className="ms-auto min-w-0">
+          <CustomerStep {...props} picked={picked} />
+        </div>
+      </div>
       <OrderTotals {...props} taxByPaymentMethod={taxByPaymentMethod} />
       </div>
     </div>

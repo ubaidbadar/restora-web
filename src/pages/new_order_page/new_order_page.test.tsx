@@ -143,7 +143,7 @@ describe('New order (desktop)', () => {
     expect(within(checkout).getByRole('button', { name: 'Place order' })).toBeTruthy();
   });
 
-  it('centres the empty order hint and uses a text-only Add customer action', async () => {
+  it('centres the empty order hint and places Add customer beside Add discount', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
 
@@ -154,10 +154,16 @@ describe('New order (desktop)', () => {
 
     const checkout = screen.getByRole('complementary', { name: 'Checkout' });
     const heading = within(checkout).getByRole('heading', { name: 'Checkout' });
+    const addDiscount = within(checkout).getByRole('button', { name: 'Add discount' });
     const addCustomer = within(checkout).getByRole('button', { name: 'Add customer' });
+    const actionRow = addCustomer.parentElement?.parentElement;
     expect(addCustomer.className).toContain('text-primary');
     expect(addCustomer.className).not.toContain('border-border-strong');
-    expect(heading.parentElement).toBe(addCustomer.parentElement);
+    expect(addCustomer.parentElement?.className).toContain('ms-auto');
+    expect(actionRow).toBe(addDiscount.parentElement?.parentElement);
+    expect(actionRow?.className).toContain('items-center');
+    expect(actionRow?.className).toContain('gap-3');
+    expect(heading.parentElement).not.toBe(actionRow);
     expect(heading.parentElement?.className).toContain('sticky top-0');
 
     fireEvent.click(addCustomer);
@@ -322,7 +328,7 @@ describe('New order (desktop)', () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
     pick(/^Khata/);
-    expect(screen.getByText('Khata needs a saved customer: tap Add customer above.')).toBeTruthy();
+    expect(screen.getByText('Khata needs a saved customer: tap Add customer below.')).toBeTruthy();
   });
 
   it('finds a customer by name, keeps only their name in checkout, and sends them with the order', async () => {

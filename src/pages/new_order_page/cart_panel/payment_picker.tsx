@@ -33,7 +33,7 @@ export default function PaymentPicker(props: FormComponentProps) {
       )}
       {status === 'khata' && !customerId && !error && (
         <p className="flex items-center gap-2 rounded-control bg-warning-50 px-3 py-2 text-sm font-medium text-warning-800">
-          Khata needs a saved customer: tap Add customer above.
+          Khata needs a saved customer: tap Add customer below.
         </p>
       )}
       {error && <p role="alert" className="text-sm font-medium text-danger-700">{error}</p>}
