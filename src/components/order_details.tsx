@@ -30,6 +30,7 @@ function receiptText(order: Order, restaurantName: string): string {
     ...(order.discount ? [`Discount: -${formatRs(order.discount)}`] : []),
     order.paymentMethod ? `Tax (${order.taxRate}%): ${formatRs(order.tax)}` : 'Tax: added when paid',
     ...(order.deliveryFee ? [`Delivery: ${formatRs(order.deliveryFee)}`] : []),
+    ...(order.serviceCharge ? [`Service charge: ${formatRs(order.serviceCharge)}`] : []),
     `Total: ${formatRs(order.total)}`,
     order.paymentMethod ? `${PAYMENT_LINES[order.paymentStatus]} ${PAYMENT_LABELS[order.paymentMethod]}` : 'Not paid yet',
     '',
@@ -68,7 +69,7 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
           </li>
         ))}
       </ul>
-      <TotalsList totals={order} taxRate={order.paymentMethod ? order.taxRate : null} deliveryFee={order.deliveryFee} />
+      <TotalsList totals={order} taxRate={order.paymentMethod ? order.taxRate : null} deliveryFee={order.deliveryFee} serviceChargeType={order.serviceChargeType} serviceChargeValue={order.serviceChargeValue} />
       <p className="-mt-2 flex justify-between border-t border-border pt-3 text-xl font-semibold">
         <span>Total</span>
         <span className="tabular-nums">{formatRs(order.total)}</span>
