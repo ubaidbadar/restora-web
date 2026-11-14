@@ -192,7 +192,10 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             serviceChargeValue: order.serviceChargeValue ?? 0,
             paymentStatus: 'unpaid',
           } || {
-            // Pay later until someone picks otherwise; people who can't take payments never see the choice.
+            // New orders start as dine-in; Pay later is selected until someone picks otherwise.
+            type: 'dine_in',
+            serviceChargeType: 'percentage',
+            serviceChargeValue: 0,
             paymentStatus: 'unpaid',
             customerId: fromProfile?._id,
             newName: fromProfile?.name,

@@ -95,6 +95,18 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('New order (desktop)', () => {
+  it('starts new orders as dine-in with service charge controls already visible', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+
+    expect((screen.getByRole('radio', { name: /Dine-in/ }) as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByLabelText(/Table/)).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Service charge' })).toBeTruthy();
+    expect((screen.getByRole('radio', { name: 'Percent' }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole('spinbutton', { name: 'Percentage (%)' }) as HTMLInputElement).value).toBe('0');
+    expect(screen.queryByRole('button', { name: 'Add service charge' })).toBeNull();
+  });
+
   it('keeps ordered dishes in their own column and checkout flush on the right', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
@@ -127,6 +139,7 @@ describe('New order (desktop)', () => {
     expect(addCustomer.className).toContain('text-primary');
     expect(addCustomer.className).not.toContain('border-border-strong');
     expect(heading.parentElement).toBe(addCustomer.parentElement);
+    expect(heading.parentElement?.className).toContain('sticky top-0');
 
     fireEvent.click(addCustomer);
     expect(screen.getByRole('dialog')).toBeTruthy();
@@ -188,6 +201,7 @@ describe('New order (desktop)', () => {
     mocked.post.mockResolvedValue({ data: { _id: 'srv-name', dailyToken: 70 } });
     renderPage();
     await screen.findByText('Chicken Karahi');
+    pick(/^Takeaway$/);
     fireEvent.change(screen.getByLabelText('Name (optional)'), { target: { value: 'For Ahmed' } });
     fireEvent.click(dishTile('Chicken Karahi'));
     placeOrder();
@@ -199,6 +213,7 @@ describe('New order (desktop)', () => {
     mocked.post.mockResolvedValue({ data: { _id: 'srv-customer-name', dailyToken: 71 } });
     renderPage();
     await screen.findByText('Chicken Karahi');
+    pick(/^Takeaway$/);
     fireEvent.change(customerSearch(), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
     expect(screen.queryByLabelText('Name (optional)')).toBeNull();
@@ -218,14 +233,14 @@ describe('New order (desktop)', () => {
     expect((screen.getByRole('radio', { name: 'Card' }) as HTMLInputElement).checked).toBe(true);
   });
 
-  it('adds and clears a percentage service charge for dine-in, updating the total', async () => {
+  it('shows dine-in service charge controls by default and updates the total', async () => {
     mocked.post.mockResolvedValue({ data: { _id: 'srv-charge', dailyToken: 72 } });
     renderPage();
     await screen.findByText('Chicken Karahi');
     fireEvent.click(dishTile('Chicken Karahi'));
-    pick(/Dine-in/);
+    expect(screen.getByRole('region', { name: 'Service charge' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Add service charge' })).toBeNull();
     fireEvent.change(await screen.findByLabelText(/Table/), { target: { value: '6' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add service charge' }));
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Percentage (%)' }), { target: { value: '10' } });
     expect(screen.getAllByText('Rs 1,100').length).toBeGreaterThan(0);
     placeOrder();
@@ -237,8 +252,6 @@ describe('New order (desktop)', () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
     fireEvent.click(dishTile('Chicken Karahi'));
-    pick(/Dine-in/);
-    fireEvent.click(screen.getByRole('button', { name: 'Add service charge' }));
     pick(/^Fixed$/);
     fireEvent.change(screen.getByLabelText('Amount (Rs)'), { target: { value: '175' } });
     expect(screen.getAllByText('Rs 1,175').length).toBeGreaterThan(0);
@@ -251,6 +264,7 @@ describe('New order (desktop)', () => {
     mocked.post.mockResolvedValue({ data: { _id: 'srv1', dailyToken: 7 } });
     renderPage();
     await screen.findByText('Chicken Karahi');
+    pick(/^Takeaway$/);
     fireEvent.click(dishTile('Chicken Karahi'));
     placeOrder();
     await screen.findByText('Orders board');
@@ -296,6 +310,7 @@ describe('New order (desktop)', () => {
     mocked.post.mockResolvedValue({ data: { _id: 'srv3', dailyToken: 9 } });
     renderPage();
     await screen.findByText('Chicken Karahi');
+    pick(/^Takeaway$/);
     fireEvent.change(customerSearch(), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
     expect(screen.getByRole('button', { name: 'Remove Ali Raza' })).toBeTruthy();
@@ -320,6 +335,7 @@ describe('New order (desktop)', () => {
     useOutboxStore.setState({ online: false });
     renderPage();
     await screen.findByText('Chicken Karahi');
+    pick(/^Takeaway$/);
     fireEvent.click(dishTile('Chicken Karahi'));
     placeOrder();
     await screen.findByText('Orders board');
@@ -334,6 +350,7 @@ describe('New order (desktop)', () => {
     mocked.request.mockRejectedValue(Object.assign(new Error('Network Error'), { response: undefined }));
     renderPage();
     await screen.findByText('Chicken Karahi');
+    pick(/^Takeaway$/);
     fireEvent.click(dishTile('Chicken Karahi'));
     placeOrder();
     await screen.findByText('Orders board');
@@ -344,6 +361,7 @@ describe('New order (desktop)', () => {
     mocked.post.mockRejectedValue(Object.assign(new Error('x'), { isAxiosError: true, response: { status: 400, data: { message: '"Chicken Karahi" is sold out in this branch' } } }));
     renderPage();
     await screen.findByText('Chicken Karahi');
+    pick(/^Takeaway$/);
     fireEvent.click(dishTile('Chicken Karahi'));
     placeOrder();
     expect(await screen.findByText('"Chicken Karahi" is sold out in this branch')).toBeTruthy();
@@ -518,6 +536,7 @@ describe('New order (phone)', () => {
     await screen.findByText('Chicken Karahi');
     fireEvent.click(screen.getByRole('button', { name: 'Add Chicken Karahi' }));
     fireEvent.click(screen.getByRole('button', { name: /View order/ }));
+    pick(/^Takeaway$/);
     fireEvent.click(within(sheet()).getByRole('button', { name: 'Place order' }));
     await screen.findByText('Orders board');
     expect(mocked.post.mock.calls[0]![1]).toMatchObject({ type: 'takeaway', items: [{ itemId: 'd1', qty: 1 }] });

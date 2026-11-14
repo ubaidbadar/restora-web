@@ -16,8 +16,8 @@ import CustomerStep from '../customer_step';
 export default function CartPanel({ taxByPaymentMethod, editing, showHeading, showLines = true, heading = 'Order', picked, ...props }: FormComponentProps & Pick<RestaurantSettings, 'taxByPaymentMethod'> & { editing?: boolean; showHeading: boolean; showLines?: boolean; heading?: string; picked?: Order['customer'] }) {
   return (
     // Scrolls inside the panel so Place order below it stays in reach.
-    <div id="order-details" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-1 pb-4 md:pt-5">
-      <div className={`flex items-center gap-3 ${showHeading ? 'justify-between' : 'justify-end'}`}>
+    <div id="order-details" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4">
+      <div className={`sticky top-0 z-20 -mx-5 flex min-h-14 items-center gap-3 border-b border-border bg-surface px-5 py-3 md:pt-5 ${showHeading ? 'justify-between' : 'justify-end'}`}>
         {showHeading && <h2 className="text-heading text-ink">{heading}</h2>}
         <CustomerStep {...props} picked={picked} />
       </div>

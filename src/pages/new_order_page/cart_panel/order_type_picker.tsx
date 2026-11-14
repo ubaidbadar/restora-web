@@ -12,9 +12,9 @@ const TYPES = ORDER_TYPES.map((value) => ({ value, label: ORDER_TYPE_LABELS[valu
 
 /** Order type, plus the table or delivery fields it needs. Re-renders only when the type changes. */
 export default function OrderTypePicker(props: FormComponentProps) {
-  // From the Tables page, "New order for this table" opens with ?table=<id>: start as dine-in at that table.
+  // New orders start as dine-in; ?table=<id> additionally preselects that table.
   const table = useSearchParams()[0].get('table') ?? '';
-  const start = table ? 'dine_in' : 'takeaway';
+  const start = 'dine_in';
   const type = useWatch({ control: props.control, name: 'type', defaultValue: start });
   const customerId = useWatch({ control: props.control, name: 'customerId' });
   const customerPhone = useWatch({ control: props.control, name: 'newPhone' });
