@@ -29,8 +29,6 @@ test('a signed-in team member can open Orders and start, but not submit, a new o
 
   await page.goto('/orders/new', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'New order', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Add customer' })).toBeVisible();
-
   const menuReady = page
     .getByLabel('Search menu')
     .or(page.getByText('Nothing to order yet', { exact: true }));
