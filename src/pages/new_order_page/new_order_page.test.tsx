@@ -137,9 +137,11 @@ describe('New order (desktop)', () => {
     Object.defineProperty(viewport, 'scrollBy', { configurable: true, value: vi.fn() });
     expect(categories.parentElement?.className).toContain('md:-mx-6');
 
-    fireEvent(window, new Event('resize'));
-    const next = await within(categories).findByRole('button', { name: 'Scroll category right', hidden: true });
-    fireEvent.click(next);
+    await waitFor(() => {
+      fireEvent(window, new Event('resize'));
+      expect(within(categories).queryByRole('button', { name: 'Scroll category right', hidden: true })).toBeTruthy();
+    });
+    fireEvent.click(within(categories).getByRole('button', { name: 'Scroll category right', hidden: true }));
     expect(viewport.scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }));
   });
 
