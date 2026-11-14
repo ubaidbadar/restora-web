@@ -102,7 +102,10 @@ describe('New order (desktop)', () => {
     expect((screen.getByRole('radio', { name: /Dine-in/ }) as HTMLInputElement).checked).toBe(true);
     expect(screen.getByLabelText(/Table/)).toBeTruthy();
     expect(screen.getByRole('region', { name: 'Service charge' })).toBeTruthy();
-    expect((screen.getByRole('radio', { name: 'Percent' }) as HTMLInputElement).checked).toBe(true);
+    const chargeType = screen.getByRole('combobox', { name: 'Charge type' }) as HTMLSelectElement;
+    expect(chargeType.value).toBe('percentage');
+    expect(chargeType.style.width).toBe('auto');
+    expect(chargeType.className).toContain('shrink-0');
     expect((screen.getByRole('spinbutton', { name: 'Percentage (%)' }) as HTMLInputElement).value).toBe('0');
     expect(screen.queryByRole('button', { name: 'Add service charge' })).toBeNull();
   });
@@ -257,7 +260,7 @@ describe('New order (desktop)', () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
     fireEvent.click(dishTile('Chicken Karahi'));
-    pick(/^Fixed$/);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Charge type' }), { target: { value: 'fixed' } });
     fireEvent.change(screen.getByLabelText('Amount (Rs)'), { target: { value: '175' } });
     expect(screen.getAllByText('Rs 1,175').length).toBeGreaterThan(0);
     pick(/Delivery/);
@@ -318,7 +321,9 @@ describe('New order (desktop)', () => {
     pick(/^Takeaway$/);
     fireEvent.change(customerSearch(), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
-    expect(screen.getByRole('button', { name: 'Remove Ali Raza' })).toBeTruthy();
+    const selectedCustomer = screen.getByRole('button', { name: 'Remove Ali Raza' });
+    expect(selectedCustomer.className).toContain('text-primary');
+    expect(selectedCustomer.className).not.toContain('border-border');
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(screen.queryByText('+923001234567')).toBeNull();
     expect(screen.queryByText('Owes Rs 500')).toBeNull();
