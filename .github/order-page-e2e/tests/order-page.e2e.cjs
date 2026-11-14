@@ -144,7 +144,7 @@ const test = base.extend({
       const method = request.method();
 
       // The live order stream is intentionally disabled; every REST response is deterministic and isolated.
-      if (path === '/orders/stream') return route.abort();
+      if (path === '/orders/stream') return route.fulfill({ status: 204 });
 
       if (method === 'GET') {
         if (path === '/me') return route.fulfill({ json: ME });
@@ -260,7 +260,12 @@ test('slash focuses menu search and typing filters dishes', async ({ app }) => {
 
 test('size and add-on picker calculates the selected dish price', async ({ app }) => {
   const { page } = app;
-  await page.getByRole('button').filter({ hasText: 'Biryani' }).first().click();
+  const biryani = page.getByRole('list', { name: 'Dishes' }).getByText('Biryani', { exact: true });
+  await biryani.scrollIntoViewIfNeeded();
+  await expect(biryani).toBeVisible();
+  // iPad WebKit can still be settling content-visibility:auto after an automatic scroll.
+  await page.waitForTimeout(150);
+  await biryani.click();
   const dialog = page.getByRole('dialog', { name: 'Biryani' });
   await expect(dialog).toBeVisible();
   await chooseRadio(dialog, 'Full · Rs 550');
@@ -296,7 +301,7 @@ test('customer picker is a separate searchable modal and selection collapses to 
   await expect(checkout.getByRole('button', { name: 'Remove Ali Raza' })).toBeVisible();
   await expect(customerDialog).toHaveCount(0);
   await chooseRadio(checkout, 'Khata');
-  await expect(checkout.getByRole('radio', { name: 'Cash' })).toBeVisible();
+  await expect(checkout.getByRole('radio', { name: 'Cash', exact: true })).toBeVisible();
   await expect(checkout.getByText(/Khata needs a saved customer/)).toHaveCount(0);
 });
 

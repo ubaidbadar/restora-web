@@ -39,7 +39,17 @@ module.exports = defineConfig({
     },
     {
       name: 'chromium-tablet',
-      use: { ...devices['iPad Pro 11'] },
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 834, height: 1194 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      name: 'webkit-tablet',
+      use: { ...devices['iPad Pro 11'], browserName: 'webkit' },
     },
     {
       name: 'chromium-phone',
