@@ -109,6 +109,10 @@ async function addDish(page, name) {
   await page.getByRole('button').filter({ hasText: name }).first().click();
 }
 
+async function chooseRadio(scope, name) {
+  await scope.getByRole('radio', { name, exact: true }).check({ force: true });
+}
+
 async function openCheckout(page) {
   const desktopCheckout = page.getByRole('complementary', { name: 'Checkout' });
   if (await desktopCheckout.count() && await desktopCheckout.isVisible()) return desktopCheckout;
@@ -242,7 +246,7 @@ test('size and add-on picker calculates the selected dish price', async ({ app }
   await page.getByRole('button').filter({ hasText: 'Biryani' }).first().click();
   const dialog = page.getByRole('dialog', { name: 'Biryani' });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole('radio', { name: 'Full · Rs 550' }).click();
+  await chooseRadio(dialog, 'Full · Rs 550');
   await dialog.getByRole('button', { name: /Raita/ }).click();
   await dialog.getByRole('button', { name: 'Add · Rs 600' }).click();
   await expect(dialog).toHaveCount(0);
@@ -298,8 +302,8 @@ test('fixed service charge and payment-method tax recalculate without stale valu
   await expect(checkout.getByText('Service charge', { exact: true })).toBeVisible();
   await expect(checkout.getByText('Rs 1,075')).toBeVisible();
 
-  await checkout.getByRole('radio', { name: 'Paid now' }).click();
-  await checkout.getByRole('radio', { name: 'Cash' }).click();
+  await chooseRadio(checkout, 'Paid now');
+  await chooseRadio(checkout, 'Cash');
   await expect(checkout.getByText('Tax (15%)')).toBeVisible();
   await expect(checkout.getByText('Rs 1,225')).toBeVisible();
 });
@@ -310,13 +314,13 @@ test('changing order type removes stale table and delivery-only fields from the 
   const checkout = await openCheckout(page);
 
   await checkout.getByLabel('Table').fill('Table 8');
-  await checkout.getByRole('radio', { name: 'Delivery' }).click();
+  await chooseRadio(checkout, 'Delivery');
   await expect(checkout.getByRole('region', { name: 'Service charge' })).toHaveCount(0);
   await expect(checkout.getByLabel('Delivery fee (Rs)')).toBeVisible();
   await checkout.getByLabel('Complete address').fill('House 5, Main Road');
   await checkout.getByLabel('Rider').fill('Ahmed');
   await checkout.getByLabel('Delivery fee (Rs)').fill('150');
-  await checkout.getByRole('radio', { name: 'Takeaway' }).click();
+  await chooseRadio(checkout, 'Takeaway');
   await expect(checkout.getByRole('region', { name: 'Service charge' })).toHaveCount(0);
   await expect(checkout.getByLabel('Delivery fee (Rs)')).toHaveCount(0);
 
@@ -346,7 +350,7 @@ test('rapid double activation cannot create duplicate orders', async ({ app }, t
   test.skip(!['chromium-desktop', 'chromium-phone'].includes(testInfo.project.name));
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
-  await checkout.getByRole('radio', { name: 'Takeaway' }).click();
+  await chooseRadio(checkout, 'Takeaway');
   const place = checkout.getByRole('button', { name: 'Place order' });
   await place.dblclick({ timeout: 5_000 }).catch(() => {});
   await expect(page).toHaveURL(/\/orders$/, { timeout: 15_000 });
