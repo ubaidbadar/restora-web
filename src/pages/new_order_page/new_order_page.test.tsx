@@ -150,7 +150,7 @@ describe('New order (desktop)', () => {
     Object.defineProperty(viewport, 'scrollBy', { configurable: true, value: vi.fn() });
     expect(categories.parentElement?.className).toContain('md:-mx-6');
 
-    fireEvent.click(within(categories).getByRole('button', { name: 'Scroll category right' }));
+    fireEvent.click(within(categories).getByRole('button', { name: 'Scroll category right', hidden: true }));
     expect(viewport.scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }));
   });
 
