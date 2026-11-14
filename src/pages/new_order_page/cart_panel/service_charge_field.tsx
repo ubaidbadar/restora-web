@@ -18,8 +18,7 @@ export default function ServiceChargeField({ control, register, errors }: FormCo
 
   return (
     <section className="flex items-end gap-2" aria-label="Service charge">
-      <div>
-        <Select
+      <Select
         aria-label="Charge type"
         options={KINDS}
         defaultValue={kind || 'percentage'}
@@ -27,16 +26,16 @@ export default function ServiceChargeField({ control, register, errors }: FormCo
         error={fieldError(errors, 'serviceChargeType')}
         className="shrink-0"
         style={{ width: 'auto' }}
-        label='Service Charges'
+        label="Service Charges"
       />
-      </div>
-      <div className='flex-1'>
+      <div className="flex-1">
         <Input
           type="number"
           inputMode="decimal"
           min={0}
           step="0.01"
           max={kind === 'percentage' ? 100 : undefined}
+          label={kind === 'fixed' ? 'Amount (Rs)' : 'Percentage (%)'}
           placeholder="0"
           {...register('serviceChargeValue')}
           error={fieldError(errors, 'serviceChargeValue')}
