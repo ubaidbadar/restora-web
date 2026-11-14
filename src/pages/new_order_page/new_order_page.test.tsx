@@ -118,13 +118,15 @@ describe('New order (desktop)', () => {
     const order = screen.getByRole('region', { name: 'Order' });
     const checkout = screen.getByRole('complementary', { name: 'Checkout' });
     const lines = within(order).getByRole('list', { name: 'Items in this order' });
-    expect(lines.parentElement).toBe(order);
+    expect(lines.parentElement?.className).toContain('overflow-y-auto');
+    expect(lines.parentElement?.parentElement).toBe(order);
     expect(checkout.parentElement).toBe(order.parentElement);
-    expect(checkout.parentElement?.className).toContain('fixed inset-y-0 end-0');
+    expect(checkout.parentElement?.className).toContain('fixed inset-y-0 inset-e-0');
     expect(order.className).toContain('border-e');
+    expect(order.className).toContain('overflow-hidden');
     const orderHeading = within(order).getByRole('heading', { name: 'Order' });
-    expect(orderHeading.parentElement?.className).toContain('sticky top-0');
-    expect(orderHeading.parentElement?.className).toContain('border-b');
+    expect(orderHeading.parentElement).toBe(order);
+    expect(orderHeading.className).toContain('border-b');
     expect(within(checkout).getByRole('heading', { name: 'Checkout' })).toBeTruthy();
     expect(within(checkout).queryByRole('list', { name: 'Items in this order' })).toBeNull();
     expect(within(checkout).getByRole('button', { name: 'Place order' })).toBeTruthy();
@@ -166,6 +168,7 @@ describe('New order (desktop)', () => {
     const categories = screen.getByRole('group', { name: 'Category' });
     const chips = Array.from(categories.querySelectorAll('div')).find((element) => element.className.includes('lg:flex-wrap'));
     expect(chips?.className).toContain('lg:flex-wrap');
+    expect(chips?.className).toContain('[@media(hover:hover)_and_(pointer:fine)]:flex-wrap');
     expect(within(categories).queryByRole('button', { name: /Scroll category/ })).toBeNull();
 
     fireEvent.click(dishTile('Chicken Karahi'));
@@ -411,6 +414,30 @@ describe('New order (desktop)', () => {
       customerId: 'cu1', type: 'delivery', address: 'Different entrance, House 20',
     });
     expect(mocked.post.mock.calls[0]![1].area).toBeUndefined();
+  });
+
+  it('clears table and delivery-only details when the order type changes before saving', async () => {
+    mocked.post.mockResolvedValue({ data: { _id: 'srv-type-switch', dailyToken: 73 } });
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+
+    fireEvent.change(await screen.findByLabelText('Table'), { target: { value: 'Table 8' } });
+    pick(/Delivery/);
+    fireEvent.change(screen.getByLabelText(/Complete address/i), { target: { value: 'House 5, Main Road' } });
+    fireEvent.change(screen.getByLabelText('Rider'), { target: { value: 'Ahmed' } });
+    fireEvent.change(screen.getByLabelText(/Delivery fee/i), { target: { value: '150' } });
+    pick(/^Takeaway$/);
+
+    placeOrder();
+    await screen.findByText('Orders board');
+    const body = mocked.post.mock.calls[0]![1];
+    expect(body).toMatchObject({ type: 'takeaway', deliveryFee: 0 });
+    expect(body.tableId).toBeUndefined();
+    expect(body.tableName).toBeUndefined();
+    expect(body.area).toBeUndefined();
+    expect(body.address).toBeUndefined();
+    expect(body.rider).toBeUndefined();
   });
 
   it('fills the address when the delivery customer is picked afterward', async () => {

@@ -1,0 +1,52 @@
+name: New Order browser quality
+
+on:
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-quality:
+    name: Playwright UI, journeys and accessibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile --non-interactive
+
+      - name: Install isolated browser test harness
+        working-directory: .github/order-page-e2e
+        run: npm init -y && npm install --no-save @playwright/test @axe-core/playwright
+
+      - name: Validate browser test discovery
+        working-directory: .github/order-page-e2e
+        run: npx playwright test --list --config=playwright.config.cjs
+
+      - name: Install Chromium, Firefox and WebKit
+        working-directory: .github/order-page-e2e
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Run real-browser order page suite
+        working-directory: .github/order-page-e2e
+        run: npx playwright test --config=playwright.config.cjs
+
+      - name: Upload screenshots, traces and HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: new-order-browser-quality
+          path: |
+            .github/order-page-e2e/test-results
+            .github/order-page-e2e/playwright-report
+          retention-days: 14
+          if-no-files-found: warn

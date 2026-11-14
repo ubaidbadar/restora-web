@@ -27,9 +27,14 @@ interface ChipsProps<T extends string> {
  * radios, so arrow keys move. Two or three short options that flip a view are `ui/tabs` instead.
  */
 export default function Chips<T extends string>({ name, label, options, value, onChange, register, wrap = false, wrapOnDesktop = false, showLabel = false, className = '' }: ChipsProps<T>) {
+  // Touch users keep the compact horizontal rail; a mouse user gets wrapped filters even on a narrow laptop.
+  // This avoids relying on a hidden horizontal-scroll gesture when a precise pointer is available.
+  const finePointerWrap = wrapOnDesktop
+    ? '[@media(hover:hover)_and_(pointer:fine)]:flex-wrap [@media(hover:hover)_and_(pointer:fine)]:overflow-visible [@media(hover:hover)_and_(pointer:fine)]:pe-0 [@media(hover:hover)_and_(pointer:fine)]:[mask-image:none]'
+    : '';
   const layout = wrap
     ? 'flex-wrap'
-    : `hide-scrollbar fade-end overflow-x-auto pe-8 scroll-smooth ${wrapOnDesktop ? 'lg:flex-wrap lg:overflow-visible lg:pe-0 lg:[mask-image:none]' : ''}`;
+    : `hide-scrollbar fade-end overflow-x-auto pe-8 scroll-smooth ${wrapOnDesktop ? `lg:flex-wrap lg:overflow-visible lg:pe-0 lg:[mask-image:none] ${finePointerWrap}` : ''}`;
 
   return (
     <fieldset className={`min-w-0 ${className}`}>

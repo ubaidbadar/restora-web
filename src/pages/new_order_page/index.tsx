@@ -129,12 +129,9 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
 
       {xl ? (
         <>
-          <div className="fixed inset-y-0 inset-e-0 z-30 flex w-170 bg-surface border-x border-border">
-            <section 
-              aria-label="Order"
-              className="flex min-h-0 w-80 shrink-0 flex-col overflow-y-auto"
-            >
-              <h2 className="text-heading p-5 border-b border-border text-ink">Order</h2>
+          <div className="fixed inset-y-0 inset-e-0 z-30 flex w-170 bg-surface">
+            <section aria-label="Order" className="flex min-h-0 w-80 shrink-0 flex-col overflow-hidden border-e border-border">
+              <h2 className="text-heading border-b border-border p-5 text-ink">Order</h2>
               <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pt-5">
                 <CartLines {...props} centerEmpty />
               </div>
