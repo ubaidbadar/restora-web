@@ -5,8 +5,8 @@ module.exports = defineConfig({
   testMatch: '**/*.e2e.cjs',
   fullyParallel: false,
   workers: 1,
-  timeout: 60_000,
-  retries: 1,
+  timeout: 45_000,
+  retries: 0,
   reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
   use: {
     baseURL: process.env.RESTORA_E2E_BASE_URL || 'https://dev-app.restora.live',

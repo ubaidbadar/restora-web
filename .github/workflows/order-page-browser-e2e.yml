@@ -1,18 +1,20 @@
-name: New Order browser quality
+name: New Order full browser matrix
 
 on:
-  pull_request:
-    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: new-order-full-matrix-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   browser-quality:
-    name: Playwright UI, journeys and accessibility
+    name: Full Chromium, Firefox and WebKit matrix
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
 
@@ -24,9 +26,15 @@ jobs:
       - run: corepack enable
       - run: yarn install --frozen-lockfile --non-interactive
 
+      - name: Build production app
+        run: yarn build
+        env:
+          VITE_API_URL: https://dev.restora.live
+          VITE_APP_URL: https://dev-app.restora.live
+
       - name: Install isolated browser test harness
         working-directory: .github/order-page-e2e
-        run: npm init -y && npm install --no-save @playwright/test @axe-core/playwright
+        run: npm install --no-save --no-package-lock @playwright/test @axe-core/playwright
 
       - name: Validate browser test discovery
         working-directory: .github/order-page-e2e
@@ -36,7 +44,7 @@ jobs:
         working-directory: .github/order-page-e2e
         run: npx playwright install --with-deps chromium firefox webkit
 
-      - name: Run real-browser order page suite
+      - name: Run all browser and device profiles
         working-directory: .github/order-page-e2e
         run: npx playwright test --config=playwright.config.cjs
 
@@ -44,7 +52,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: new-order-browser-quality
+          name: new-order-full-browser-matrix
           path: |
             .github/order-page-e2e/test-results
             .github/order-page-e2e/playwright-report

@@ -14,7 +14,11 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "verify": "yarn typecheck && yarn lint && yarn test && yarn build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "qa:setup": "node .github/scripts/setup-qa.cjs",
+    "qa:order": "yarn build && yarn qa:order:built",
+    "qa:order:built": "node .github/scripts/run-order-page-e2e.cjs",
+    "qa:verify": "yarn verify && yarn qa:order:built"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
