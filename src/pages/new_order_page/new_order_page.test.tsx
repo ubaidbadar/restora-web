@@ -134,15 +134,19 @@ describe('New order (desktop)', () => {
     const viewport = categories.querySelector('.overflow-x-auto') as HTMLDivElement;
     Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 300 });
     Object.defineProperty(viewport, 'scrollWidth', { configurable: true, value: 900 });
-    Object.defineProperty(viewport, 'scrollBy', { configurable: true, value: vi.fn() });
+    const scrollTo = vi.fn();
+    Object.defineProperty(viewport, 'scrollTo', { configurable: true, value: scrollTo });
     expect(categories.parentElement?.className).toContain('lg:-mx-6');
 
     await waitFor(() => {
       fireEvent(window, new Event('resize'));
       expect(within(categories).queryByRole('button', { name: 'Scroll category right', hidden: true })).toBeTruthy();
     });
-    fireEvent.click(within(categories).getByRole('button', { name: 'Scroll category right', hidden: true }));
-    expect(viewport.scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }));
+    const next = within(categories).getByRole('button', { name: 'Scroll category right', hidden: true });
+    fireEvent.click(next);
+    fireEvent.click(next);
+    expect(scrollTo).toHaveBeenNthCalledWith(1, { left: 195, behavior: 'smooth' });
+    expect(scrollTo).toHaveBeenNthCalledWith(2, { left: 390, behavior: 'smooth' });
   });
 
   it('adds dishes, counts them and totals the order', async () => {

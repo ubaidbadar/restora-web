@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import Button from './button';
 import type FormComponentProps from '../types/form_component_props';
 
 interface ChipsProps<T extends string> {
@@ -30,6 +31,7 @@ interface ChipsProps<T extends string> {
  */
 export default function Chips<T extends string>({ name, label, options, value, onChange, register, wrap = false, showLabel = false, className = '', scrollControls = false }: ChipsProps<T>) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollTargetRef = useRef<number | null>(null);
   const [scrollState, setScrollState] = useState({ left: false, right: false });
 
   useEffect(() => {
@@ -45,6 +47,10 @@ export default function Chips<T extends string>({ name, label, options, value, o
 
     update();
     element.addEventListener('scroll', update, { passive: true });
+    element.addEventListener('wheel', () => { scrollTargetRef.current = null; }, { passive: true });
+    element.addEventListener('pointerdown', () => { scrollTargetRef.current = null; });
+    element.addEventListener('touchstart', () => { scrollTargetRef.current = null; }, { passive: true });
+    element.addEventListener('keydown', () => { scrollTargetRef.current = null; });
     window.addEventListener('resize', update);
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(update);
     observer?.observe(element);
@@ -59,7 +65,13 @@ export default function Chips<T extends string>({ name, label, options, value, o
 
   const scroll = (direction: -1 | 1) => {
     const element = scrollRef.current;
-    element?.scrollBy({ left: direction * Math.max(180, element.clientWidth * 0.7), behavior: 'smooth' });
+    if (!element) return;
+
+    const maxScroll = element.scrollWidth - element.clientWidth;
+    const current = scrollTargetRef.current ?? element.scrollLeft;
+    const next = Math.max(0, Math.min(maxScroll, current + direction * Math.max(180, element.clientWidth * 0.65)));
+    scrollTargetRef.current = next;
+    element.scrollTo({ left: next, behavior: 'smooth' });
   };
 
   return (
@@ -95,14 +107,10 @@ export default function Chips<T extends string>({ name, label, options, value, o
         ))}
         </div>
         {scrollControls && !wrap && scrollState.left && (
-          <button type="button" aria-label={`Scroll ${label.toLowerCase()} left`} onClick={() => scroll(-1)} className="absolute start-0 top-1/2 z-10 hidden size-6 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
-            <ChevronLeft size={14} aria-hidden="true" />
-          </button>
+          <Button type="button" variant="outline" size="sm" icon={ChevronLeft} aria-label={`Scroll ${label.toLowerCase()} left`} onClick={() => scroll(-1)} className="absolute start-0 top-1/2 z-10 hidden size-8 -translate-y-1/2 rounded-pill px-0 shadow-sm md:inline-flex" />
         )}
         {scrollControls && !wrap && scrollState.right && (
-          <button type="button" aria-label={`Scroll ${label.toLowerCase()} right`} onClick={() => scroll(1)} className="absolute end-0 top-1/2 z-10 hidden size-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
-            <ChevronRight size={14} aria-hidden="true" />
-          </button>
+          <Button type="button" variant="outline" size="sm" icon={ChevronRight} aria-label={`Scroll ${label.toLowerCase()} right`} onClick={() => scroll(1)} className="absolute end-0 top-1/2 z-10 hidden size-8 -translate-y-1/2 rounded-pill px-0 shadow-sm md:inline-flex" />
         )}
       </div>
     </fieldset>
