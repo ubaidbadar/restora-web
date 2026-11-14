@@ -111,7 +111,7 @@ function Main({ setValue, watch, picked, compact }: FormComponentProps & { picke
 
   if (customer) return <CustomerMatchCard customer={customer} onClear={clear} />;
   if (compact && !searchOpen) {
-    return <Button type="button" variant="outline" icon={UserPlus} className="self-start" onClick={() => setSearchOpen(true)}>Add customer</Button>;
+    return <Button type="button" variant="primaryLink" icon={UserPlus} className="self-start text-sm" onClick={() => setSearchOpen(true)}>Add customer</Button>;
   }
 
   return (

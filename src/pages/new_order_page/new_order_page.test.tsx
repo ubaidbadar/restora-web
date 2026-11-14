@@ -92,7 +92,7 @@ beforeEach(() => {
   window.scrollTo = vi.fn() as never;
   Element.prototype.scrollIntoView = vi.fn();
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('New order (desktop)', () => {
   it('keeps ordered dishes in their own column and checkout flush on the right', async () => {
@@ -110,6 +110,48 @@ describe('New order (desktop)', () => {
     expect(within(checkout).getByRole('heading', { name: 'Checkout' })).toBeTruthy();
     expect(within(checkout).queryByRole('list', { name: 'Items in this order' })).toBeNull();
     expect(within(checkout).getByRole('button', { name: 'Place order' })).toBeTruthy();
+  });
+
+  it('centres the empty order hint and uses a text-only Add customer action', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+
+    const order = screen.getByRole('region', { name: 'Order' });
+    const hint = within(order).getByText('Tap a dish to add it.');
+    expect(hint.parentElement?.className).toContain('flex-1');
+    expect(hint.parentElement?.className).toContain('items-center');
+
+    const addCustomer = screen.getByRole('button', { name: 'Add customer' });
+    expect(addCustomer.className).toContain('text-primary');
+    expect(addCustomer.className).not.toContain('border-border-strong');
+  });
+
+  it('adds mouse navigation for overflowing categories while keeping the row scrollable', async () => {
+    class ResizeObserverMock {
+      callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; }
+      observe(target: Element) {
+        if (target instanceof HTMLDivElement && target.classList.contains('overflow-x-auto')) {
+          Object.defineProperty(target, 'clientWidth', { configurable: true, value: 300 });
+          Object.defineProperty(target, 'scrollWidth', { configurable: true, value: 900 });
+        }
+        this.callback([], this as unknown as ResizeObserver);
+      }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+
+    const categories = screen.getByRole('group', { name: 'Category' });
+    const viewport = categories.querySelector('.overflow-x-auto') as HTMLDivElement;
+    Object.defineProperty(viewport, 'scrollBy', { configurable: true, value: vi.fn() });
+    expect(categories.parentElement?.className).toContain('md:-mx-6');
+
+    fireEvent.click(within(categories).getByRole('button', { name: 'Scroll category right' }));
+    expect(viewport.scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }));
   });
 
   it('adds dishes, counts them and totals the order', async () => {

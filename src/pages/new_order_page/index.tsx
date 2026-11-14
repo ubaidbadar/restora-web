@@ -132,7 +132,7 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
           <div className="fixed inset-y-0 end-0 z-30 flex w-[42.5rem] bg-surface">
             <section aria-label="Order" className="flex min-h-0 w-80 shrink-0 flex-col overflow-y-auto border-e border-border px-4 py-5">
               <h2 className="mb-4 text-heading text-ink">Order</h2>
-              <CartLines {...props} />
+              <CartLines {...props} centerEmpty />
             </section>
             <aside aria-label="Checkout" className="flex min-h-0 min-w-0 flex-1 flex-col">
               <CartPanel

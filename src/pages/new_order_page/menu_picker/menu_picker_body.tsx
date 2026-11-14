@@ -26,7 +26,9 @@ export default function MenuPickerBody({ menu, menuDensity, ...props }: MenuPick
       {/* On phones search and categories stay at the top while the dishes scroll under them. */}
       <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-2 bg-canvas px-4 py-2 sm:-mx-6 sm:px-6 md:static md:mx-0 md:gap-3 md:bg-transparent md:p-0">
         <SearchInput label="Search menu" initialValue="" delay={150} onSearch={(search) => setFilter((f) => ({ ...f, search }))} />
-        <CategoryChips categories={menu.categories} value={filter.category} onChange={(category) => setFilter((f) => ({ ...f, category }))} />
+        <div className="md:-mx-6 md:px-6">
+          <CategoryChips categories={menu.categories} value={filter.category} onChange={(category) => setFilter((f) => ({ ...f, category }))} scrollControls />
+        </div>
       </div>
       <MenuGrid menu={menu} menuDensity={menuDensity} {...filter} {...props} />
     </section>

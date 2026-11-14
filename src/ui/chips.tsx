@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type FormComponentProps from '../types/form_component_props';
 
@@ -17,6 +19,8 @@ interface ChipsProps<T extends string> {
   /** Show the label above the chips (a group in a form), instead of only to screen readers. */
   showLabel?: boolean;
   className?: string;
+  /** Show mouse-friendly controls when a one-line filter overflows. Touch and trackpad scrolling still work. */
+  scrollControls?: boolean;
 }
 
 /**
@@ -24,11 +28,43 @@ interface ChipsProps<T extends string> {
  * dark. A filter row scrolls sideways and fades at its end; choices in a form wrap. Built from radios, so arrow keys move.
  * Two or three short options that flip a view are `ui/tabs` instead.
  */
-export default function Chips<T extends string>({ name, label, options, value, onChange, register, wrap = false, showLabel = false, className = '' }: ChipsProps<T>) {
+export default function Chips<T extends string>({ name, label, options, value, onChange, register, wrap = false, showLabel = false, className = '', scrollControls = false }: ChipsProps<T>) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollState, setScrollState] = useState({ left: false, right: false });
+
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!scrollControls || wrap || !element) return;
+
+    const update = () => {
+      const max = element.scrollWidth - element.clientWidth;
+      const left = element.scrollLeft > 1;
+      const right = max > 1 && element.scrollLeft < max - 1;
+      setScrollState((current) => current.left === left && current.right === right ? current : { left, right });
+    };
+
+    update();
+    element.addEventListener('scroll', update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    Array.from(element.children).forEach((child) => observer.observe(child));
+
+    return () => {
+      element.removeEventListener('scroll', update);
+      observer.disconnect();
+    };
+  }, [options.length, scrollControls, wrap]);
+
+  const scroll = (direction: -1 | 1) => {
+    const element = scrollRef.current;
+    element?.scrollBy({ left: direction * Math.max(180, element.clientWidth * 0.7), behavior: 'smooth' });
+  };
+
   return (
     <fieldset className={`min-w-0 ${className}`}>
       <legend className={showLabel ? 'mb-2 text-sm font-semibold text-ink' : 'sr-only'}>{label}</legend>
-      <div className={`flex gap-2 ${wrap ? 'flex-wrap' : 'hide-scrollbar fade-end overflow-x-auto pe-8'}`}>
+      <div className="relative min-w-0">
+        <div ref={scrollRef} className={`flex gap-2 ${wrap ? 'flex-wrap' : 'hide-scrollbar fade-end overflow-x-auto pe-8 scroll-smooth'}`}>
         {options.map(({ value: optionValue, label: optionLabel, count, icon: Icon, dot }) => (
           <label
             key={optionValue}
@@ -55,6 +91,17 @@ export default function Chips<T extends string>({ name, label, options, value, o
             )}
           </label>
         ))}
+        </div>
+        {scrollControls && !wrap && scrollState.left && (
+          <button type="button" aria-label={`Scroll ${label.toLowerCase()} left`} onClick={() => scroll(-1)} className="absolute start-0 top-1/2 z-10 grid size-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
+            <ChevronLeft size={16} aria-hidden="true" />
+          </button>
+        )}
+        {scrollControls && !wrap && scrollState.right && (
+          <button type="button" aria-label={`Scroll ${label.toLowerCase()} right`} onClick={() => scroll(1)} className="absolute end-0 top-1/2 z-10 grid size-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
+            <ChevronRight size={16} aria-hidden="true" />
+          </button>
+        )}
       </div>
     </fieldset>
   );

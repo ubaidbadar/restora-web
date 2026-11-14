@@ -5,16 +5,22 @@ import fieldError from '../../../utils/field_error';
 import setQty from '../../../utils/set_qty';
 import CartLine from './cart_line';
 
+interface CartLinesProps extends FormComponentProps {
+  centerEmpty?: boolean;
+}
+
 /** The lines in the cart. Reads `items` from the form and writes quantity changes back with setValue. */
-export default function CartLines({ control, setValue, errors }: FormComponentProps) {
+export default function CartLines({ control, setValue, errors, centerEmpty = false }: CartLinesProps) {
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
   const error = fieldError(errors, 'items');
 
   if (items.length === 0) {
     return (
-      <p role={error ? 'alert' : undefined} className={`py-4 text-sm ${error ? 'text-danger-700' : 'text-muted'}`}>
-        {error ?? 'Tap a dish to add it.'}
-      </p>
+      <div className={centerEmpty ? 'flex min-h-0 flex-1 items-center justify-center' : 'py-4'}>
+        <p role={error ? 'alert' : undefined} className={`text-sm ${error ? 'text-danger-700' : 'text-muted'}`}>
+          {error ?? 'Tap a dish to add it.'}
+        </p>
+      </div>
     );
   }
 
