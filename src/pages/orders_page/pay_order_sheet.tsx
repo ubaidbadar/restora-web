@@ -22,7 +22,7 @@ interface PayOrderSheetProps {
 export default function PayOrderSheet({ order, onOrderUpdated, className = '' }: PayOrderSheetProps) {
   const { taxByPaymentMethod } = useRestaurantSettings();
   const totalBy = (method: (typeof PAYMENT_METHODS)[number]) =>
-    calcTotals(order.items, order.discount, taxByPaymentMethod[method] ?? 0, order.deliveryFee).total;
+    calcTotals(order.items, order.discount, taxByPaymentMethod[method] ?? 0, order.deliveryFee, order.type === 'dine_in' ? order.serviceChargeType : undefined, order.serviceChargeValue ?? 0).total;
 
   return (
     <ModalOverlay
