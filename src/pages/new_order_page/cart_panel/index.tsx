@@ -34,12 +34,12 @@ export default function CartPanel({ taxByPaymentMethod, editing, showHeading, sh
         </Can>
       )}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1 has-[input]:order-2 has-[input]:basis-full">
+        <div className="min-w-0 flex-1 has-[input]:basis-full">
           <Can permission="orders:discount">
             <DiscountField {...props} />
           </Can>
         </div>
-        <div className="order-1 ms-auto min-w-0">
+        <div className="ms-auto min-w-0">
           <CustomerStep {...props} picked={picked} />
         </div>
       </div>
