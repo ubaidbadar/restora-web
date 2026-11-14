@@ -1,0 +1,83 @@
+name: Authenticated browser E2E
+
+on:
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Restora web app URL (use the matching API environment)'
+        required: false
+        type: string
+        default: 'https://dev-app.restora.live'
+  schedule:
+    - cron: '17 2 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: authenticated-browser-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  authenticated:
+    # Fork PRs do not receive repository secrets. They still get the normal build/unit checks.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      RESTORA_E2E_EMAIL: ${{ secrets.RESTORA_E2E_EMAIL }}
+      RESTORA_E2E_PASSWORD: ${{ secrets.RESTORA_E2E_PASSWORD }}
+      RESTORA_E2E_BASE_URL: ${{ inputs.base_url || secrets.RESTORA_E2E_BASE_URL || 'https://dev-app.restora.live' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check the dedicated E2E account
+        id: e2e_account
+        run: |
+          set -euo pipefail
+          if [ -z "$RESTORA_E2E_EMAIL" ] || [ -z "$RESTORA_E2E_PASSWORD" ]; then
+            echo "::notice::Authenticated browser tests skipped. Configure RESTORA_E2E_EMAIL and RESTORA_E2E_PASSWORD."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          case "$RESTORA_E2E_BASE_URL" in
+            https://*) ;;
+            *) echo "::error::RESTORA_E2E_BASE_URL must use HTTPS."; exit 1 ;;
+          esac
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
+      - name: Install isolated Playwright harness
+        working-directory: .github/authenticated-e2e
+        run: npm init -y && npm install --no-save @playwright/test
+
+      - name: Validate Playwright test discovery
+        working-directory: .github/authenticated-e2e
+        run: npx playwright test --list --config=playwright.config.cjs
+
+      - name: Install Chromium
+        if: steps.e2e_account.outputs.configured == 'true'
+        working-directory: .github/authenticated-e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Run authenticated desktop and phone journeys
+        if: steps.e2e_account.outputs.configured == 'true'
+        working-directory: .github/authenticated-e2e
+        run: npx playwright test --config=playwright.config.cjs
+
+      - name: Upload traces, screenshots and HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: authenticated-browser-e2e-${{ github.run_number }}
+          path: |
+            .github/authenticated-e2e/test-results
+            .github/authenticated-e2e/playwright-report
+          retention-days: 14
+          if-no-files-found: warn
