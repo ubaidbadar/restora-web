@@ -179,7 +179,7 @@ describe('New order (desktop)', () => {
     pick(/Dine-in/);
     fireEvent.change(await screen.findByLabelText(/Table/), { target: { value: '6' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add service charge' }));
-    fireEvent.change(screen.getByLabelText('Percentage (%)'), { target: { value: '10' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Percentage (%)' }), { target: { value: '10' } });
     expect(screen.getAllByText('Rs 1,100').length).toBeGreaterThan(0);
     placeOrder();
     await screen.findByText('Orders board');
