@@ -60,6 +60,18 @@ describe('new order schema: order-type fields', () => {
     expect(parsed.tableName).toBeUndefined();
   });
 
+  it('directs khata customers to the relocated picker', () => {
+    const result = orderSchema.safeParse({
+      ...order('takeaway'),
+      paymentStatus: 'khata',
+      paymentMethod: 'cash',
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues.find((issue) => issue.path[0] === 'paymentStatus')?.message)
+      .toBe('Khata needs a saved customer. Select one below.');
+  });
+
   it('keeps the selected dine-in table and service charge but removes delivery details', () => {
     const parsed = orderSchema.parse(order('dine_in'));
 

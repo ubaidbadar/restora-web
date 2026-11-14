@@ -52,7 +52,7 @@ const orderSchema = z
     if (order.type === 'dine_in' && order.serviceChargeValue > 0 && !order.serviceChargeType) ctx.addIssue({ code: 'custom', path: ['serviceChargeType'], message: 'Choose percentage or fixed charge' });
     if (order.type === 'dine_in' && order.serviceChargeType === 'percentage' && order.serviceChargeValue > 100) ctx.addIssue({ code: 'custom', path: ['serviceChargeValue'], message: 'Percentage cannot exceed 100' });
     if (order.paymentStatus !== 'unpaid' && !order.paymentMethod) ctx.addIssue({ code: 'custom', path: ['paymentMethod'], message: order.paymentStatus === 'khata' ? 'Pick how they will pay' : 'Pick how the customer paid' });
-    if (order.paymentStatus === 'khata' && !order.customerId) ctx.addIssue({ code: 'custom', path: ['paymentStatus'], message: 'Khata needs a customer. Pick one above first.' });
+    if (order.paymentStatus === 'khata' && !order.customerId) ctx.addIssue({ code: 'custom', path: ['paymentStatus'], message: 'Khata needs a saved customer. Select one below.' });
   })
   // "Pay later" keeps no method, even one picked before switching: it is chosen when the customer pays.
   .transform((order) => ({
