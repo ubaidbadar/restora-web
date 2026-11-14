@@ -422,7 +422,7 @@ describe('New order (desktop)', () => {
     await screen.findByText('Chicken Karahi');
     fireEvent.click(dishTile('Chicken Karahi'));
 
-    fireEvent.change(screen.getByLabelText('Table'), { target: { value: 'Table 8' } });
+    fireEvent.change(await screen.findByLabelText('Table'), { target: { value: 'Table 8' } });
     pick(/Delivery/);
     fireEvent.change(screen.getByLabelText(/Complete address/i), { target: { value: 'House 5, Main Road' } });
     fireEvent.change(screen.getByLabelText('Rider'), { target: { value: 'Ahmed' } });
