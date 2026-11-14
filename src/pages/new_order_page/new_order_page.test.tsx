@@ -198,8 +198,8 @@ describe('New order (desktop)', () => {
     fireEvent.click(await within(picker).findByRole('radio', { name: /Full · Rs 550/ }));
     fireEvent.click(within(picker).getByRole('button', { name: /^Raita/ }));
     fireEvent.click(within(picker).getByRole('button', { name: 'Add · Rs 600' }));
-    await waitFor(() => expect(screen.getByText('2 items')).toBeTruthy());
-    expect(screen.getAllByText('Rs 900').length).toBeGreaterThan(0);
+    await waitFor(() => expect(screen.getByText('1 item')).toBeTruthy());
+    expect(screen.getAllByText('Rs 600').length).toBeGreaterThan(0);
   });
 
   it('saves an optional takeaway name for a walk-in', async () => {

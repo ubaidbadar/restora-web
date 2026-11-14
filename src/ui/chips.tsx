@@ -54,7 +54,7 @@ export default function Chips<T extends string>({ name, label, options, value, o
               />
               {Icon && <Icon aria-hidden className="size-4 shrink-0" />}
               {optionLabel}
-              {count !== undefined && <span className="text-xs font-medium text-muted tabular-nums group-has-checked:text-surface/75">{count}</span>}
+              {count !== undefined && <> <span className="text-xs font-medium text-muted tabular-nums group-has-checked:text-surface/75">{count}</span></>}
               {dot && (
                 <span className="size-2 shrink-0 rounded-full bg-primary group-has-checked:bg-surface">
                   <span className="sr-only">, new</span>
