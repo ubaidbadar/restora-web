@@ -2,9 +2,10 @@ const { test: base, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
 const CATEGORY_NAMES = [
-  'Karahi', 'Biryani', 'BBQ', 'Burgers', 'Pizza', 'Desserts', 'Drinks',
-  'Breakfast', 'Sandwiches', 'Platters', 'Traditional favourites', 'Specials',
-  'Hot drinks', 'Cold drinks',
+  'Pizza', 'Burgers', 'Hot Wings', 'Shawarma', 'Pasta', 'Chicken Karahi',
+  'Beef Karahi', 'Mutton Karahi', 'BBQ', 'Fish', 'Tandoori', 'Desi Kahanay',
+  'Rice', 'Drink Bar', "Ice Cream's", "Shake's", 'Extra Topping', "Side Order's",
+  "Frie's", 'Appetizer', 'Salad Bar', 'Deals', 'KFG SPC.', 'Service Charges',
 ];
 const CATEGORIES = CATEGORY_NAMES.map((name, index) => ({
   _id: 'category-' + (index + 1),
@@ -12,11 +13,11 @@ const CATEGORIES = CATEGORY_NAMES.map((name, index) => ({
   sortOrder: index,
 }));
 
-const MENU_ITEMS = Array.from({ length: 20 }, (_, index) => {
+const MENU_ITEMS = Array.from({ length: 72 }, (_, index) => {
   const isBiryani = index === 1;
   return {
     _id: 'dish-' + (index + 1),
-    categoryId: CATEGORIES[index % CATEGORIES.length]._id,
+    categoryId: CATEGORIES[index === 0 ? 5 : index === 1 ? 12 : index % CATEGORIES.length]._id,
     name: index === 0 ? 'Chicken Karahi' : isBiryani ? 'Biryani' : 'Dish ' + (index + 1),
     sizes: isBiryani
       ? [
@@ -73,6 +74,14 @@ const CUSTOMERS = [
   },
 ];
 
+const TABLES = Array.from({ length: 10 }, (_, index) => ({
+  _id: 'table-' + (index + 1),
+  name: 'T' + (index + 1),
+  section: 'Main',
+  seats: index % 2 === 0 ? 4 : 2,
+  archived: false,
+}));
+
 const ME = {
   user: { id: 'e2e-owner', name: 'Browser Test Owner', email: 'owner@example.test' },
   mode: 'web',
@@ -109,6 +118,10 @@ async function addDish(page, name) {
   await page.getByRole('button').filter({ hasText: name }).first().click();
 }
 
+async function chooseRadio(scope, name) {
+  await scope.getByRole('radio', { name, exact: true }).check({ force: true });
+}
+
 async function openCheckout(page) {
   const desktopCheckout = page.getByRole('complementary', { name: 'Checkout' });
   if (await desktopCheckout.count() && await desktopCheckout.isVisible()) return desktopCheckout;
@@ -131,12 +144,12 @@ const test = base.extend({
       const method = request.method();
 
       // The live order stream is intentionally disabled; every REST response is deterministic and isolated.
-      if (path === '/orders/stream') return route.abort();
+      if (path === '/orders/stream') return route.fulfill({ status: 204 });
 
       if (method === 'GET') {
         if (path === '/me') return route.fulfill({ json: ME });
         if (path === '/menu') return route.fulfill({ json: MENU });
-        if (path === '/tables') return route.fulfill({ json: [] });
+        if (path === '/tables') return route.fulfill({ json: TABLES });
         if (path === '/orders' || path === '/tables/floor' || path === '/whatsapp/conversations') {
           return route.fulfill({ json: [] });
         }
@@ -213,6 +226,8 @@ test('responsive layout has no page overflow and category navigation matches the
     };
   });
 
+  await page.screenshot({ path: testInfo.outputPath('new-order-initial.png'), fullPage: true });
+
   if (testInfo.project.name.includes('desktop') || testInfo.project.name.includes('laptop') || testInfo.project.name.includes('lg-drawer')) {
     expect(metrics.flexWrap).toBe('wrap');
     expect(metrics.overflowX).toBe('visible');
@@ -222,9 +237,15 @@ test('responsive layout has no page overflow and category navigation matches the
     expect(metrics.scrollWidth).toBeGreaterThan(metrics.clientWidth);
     await rail.evaluate((element) => { element.scrollLeft = element.scrollWidth; });
     expect(await rail.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+    await page.screenshot({ path: testInfo.outputPath('category-rail-scrolled.png'), fullPage: true });
   }
+});
 
-  await page.screenshot({ path: testInfo.outputPath('new-order-initial.png'), fullPage: true });
+test('category filters work across a large real-menu-shaped catalogue', async ({ app }) => {
+  const { page } = app;
+  await chooseRadio(page, 'Pizza');
+  await expect(page.getByRole('button').filter({ hasText: 'Dish 25' }).first()).toBeVisible();
+  await expect(page.getByRole('button').filter({ hasText: 'Chicken Karahi' })).toHaveCount(0);
 });
 
 test('slash focuses menu search and typing filters dishes', async ({ app }) => {
@@ -239,10 +260,15 @@ test('slash focuses menu search and typing filters dishes', async ({ app }) => {
 
 test('size and add-on picker calculates the selected dish price', async ({ app }) => {
   const { page } = app;
-  await page.getByRole('button').filter({ hasText: 'Biryani' }).first().click();
+  const biryani = page.getByRole('list', { name: 'Dishes' }).getByText('Biryani', { exact: true });
+  await biryani.scrollIntoViewIfNeeded();
+  await expect(biryani).toBeVisible();
+  // iPad WebKit can still be settling content-visibility:auto after an automatic scroll.
+  await page.waitForTimeout(150);
+  await biryani.click();
   const dialog = page.getByRole('dialog', { name: 'Biryani' });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole('radio', { name: 'Full · Rs 550' }).click();
+  await chooseRadio(dialog, 'Full · Rs 550');
   await dialog.getByRole('button', { name: /Raita/ }).click();
   await dialog.getByRole('button', { name: 'Add · Rs 600' }).click();
   await expect(dialog).toHaveCount(0);
@@ -274,6 +300,26 @@ test('customer picker is a separate searchable modal and selection collapses to 
   await customerDialog.getByRole('option', { name: /Ali Raza/ }).click();
   await expect(checkout.getByRole('button', { name: 'Remove Ali Raza' })).toBeVisible();
   await expect(customerDialog).toHaveCount(0);
+  await chooseRadio(checkout, 'Khata');
+  await expect(checkout.getByRole('radio', { name: 'Cash', exact: true })).toBeVisible();
+  await expect(checkout.getByText(/Khata needs a saved customer/)).toHaveCount(0);
+});
+
+test('saved customer delivery address is prefilled and remains editable', async ({ app }) => {
+  const { page } = app;
+  await addDish(page, 'Chicken Karahi');
+  const checkout = await openCheckout(page);
+  await checkout.getByRole('button', { name: 'Add customer' }).click();
+
+  const customerDialog = page.getByRole('dialog', { name: 'Select customer' });
+  await customerDialog.getByRole('combobox', { name: 'Find customer by phone number or name' }).fill('ali');
+  await customerDialog.getByRole('option', { name: /Ali Raza/ }).click();
+  await chooseRadio(checkout, 'Delivery');
+
+  const address = checkout.getByLabel('Complete address');
+  await expect(address).toHaveValue(/House 17/);
+  await address.fill('Temporary venue, Main Gate');
+  await expect(address).toHaveValue('Temporary venue, Main Gate');
 });
 
 test('dine-in and pay-later are the defaults; service charge is immediately available', async ({ app }) => {
@@ -298,8 +344,8 @@ test('fixed service charge and payment-method tax recalculate without stale valu
   await expect(checkout.getByText('Service charge', { exact: true })).toBeVisible();
   await expect(checkout.getByText('Rs 1,075')).toBeVisible();
 
-  await checkout.getByRole('radio', { name: 'Paid now' }).click();
-  await checkout.getByRole('radio', { name: 'Cash' }).click();
+  await chooseRadio(checkout, 'Paid now');
+  await chooseRadio(checkout, 'Cash');
   await expect(checkout.getByText('Tax (15%)')).toBeVisible();
   await expect(checkout.getByText('Rs 1,225')).toBeVisible();
 });
@@ -309,14 +355,14 @@ test('changing order type removes stale table and delivery-only fields from the 
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
 
-  await checkout.getByLabel('Table').fill('Table 8');
-  await checkout.getByRole('radio', { name: 'Delivery' }).click();
+  await checkout.getByLabel('Table').selectOption('table-8');
+  await chooseRadio(checkout, 'Delivery');
   await expect(checkout.getByRole('region', { name: 'Service charge' })).toHaveCount(0);
   await expect(checkout.getByLabel('Delivery fee (Rs)')).toBeVisible();
   await checkout.getByLabel('Complete address').fill('House 5, Main Road');
   await checkout.getByLabel('Rider').fill('Ahmed');
   await checkout.getByLabel('Delivery fee (Rs)').fill('150');
-  await checkout.getByRole('radio', { name: 'Takeaway' }).click();
+  await chooseRadio(checkout, 'Takeaway');
   await expect(checkout.getByRole('region', { name: 'Service charge' })).toHaveCount(0);
   await expect(checkout.getByLabel('Delivery fee (Rs)')).toHaveCount(0);
 
@@ -337,7 +383,7 @@ test('dine-in cannot be submitted until a table is selected', async ({ app }) =>
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
   await checkout.getByRole('button', { name: 'Place order' }).click();
-  await expect(checkout.getByText('Enter the table')).toBeVisible();
+  await expect(checkout.getByText('Pick the table')).toBeVisible();
   expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(0);
 });
 
@@ -346,7 +392,7 @@ test('rapid double activation cannot create duplicate orders', async ({ app }, t
   test.skip(!['chromium-desktop', 'chromium-phone'].includes(testInfo.project.name));
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
-  await checkout.getByRole('radio', { name: 'Takeaway' }).click();
+  await chooseRadio(checkout, 'Takeaway');
   const place = checkout.getByRole('button', { name: 'Place order' });
   await place.dblclick({ timeout: 5_000 }).catch(() => {});
   await expect(page).toHaveURL(/\/orders$/, { timeout: 15_000 });
@@ -372,18 +418,46 @@ test('long carts keep the order list scrollable and the place-order action reach
   await page.screenshot({ path: testInfo.outputPath('new-order-long-cart.png'), fullPage: true });
 });
 
-test('core order page has no serious WCAG 2.2 A/AA axe violations', async ({ app }, testInfo) => {
+test('production order workspace stays within a basic navigation budget', async ({ app }, testInfo) => {
   test.skip(!['chromium-desktop', 'chromium-phone'].includes(testInfo.project.name));
   const { page } = app;
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-    .analyze();
-  const serious = results.violations.filter((violation) =>
-    violation.impact === 'critical' || violation.impact === 'serious'
-  );
-  expect(serious.map((violation) => ({
-    id: violation.id,
-    impact: violation.impact,
-    targets: violation.nodes.map((node) => node.target),
-  }))).toEqual([]);
+  const metrics = await page.evaluate(() => {
+    const navigation = performance.getEntriesByType('navigation')[0];
+    const resources = performance.getEntriesByType('resource');
+    return {
+      domContentLoaded: navigation ? navigation.domContentLoadedEventEnd : 0,
+      transferredBytes: resources.reduce((total, resource) => total + resource.transferSize, 0),
+    };
+  });
+  expect(metrics.domContentLoaded).toBeGreaterThan(0);
+  expect(metrics.domContentLoaded).toBeLessThan(8_000);
+  expect(metrics.transferredBytes).toBeLessThan(8_000_000);
+});
+
+test('menu, checkout and customer picker have no serious WCAG 2.2 A/AA axe violations', async ({ app }, testInfo) => {
+  test.skip(!['chromium-desktop', 'chromium-phone'].includes(testInfo.project.name));
+  const { page } = app;
+
+  const assertAccessible = async () => {
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    const serious = results.violations.filter((violation) =>
+      violation.impact === 'critical' || violation.impact === 'serious'
+    );
+    expect(serious.map((violation) => ({
+      id: violation.id,
+      impact: violation.impact,
+      targets: violation.nodes.map((node) => node.target),
+    }))).toEqual([]);
+  };
+
+  await assertAccessible();
+  await addDish(page, 'Chicken Karahi');
+  const checkout = await openCheckout(page);
+  await assertAccessible();
+
+  await checkout.getByRole('button', { name: 'Add customer' }).click();
+  await expect(page.getByRole('dialog', { name: 'Select customer' })).toBeVisible();
+  await assertAccessible();
 });

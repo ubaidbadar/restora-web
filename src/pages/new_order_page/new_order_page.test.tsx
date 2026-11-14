@@ -416,30 +416,6 @@ describe('New order (desktop)', () => {
     expect(mocked.post.mock.calls[0]![1].area).toBeUndefined();
   });
 
-  it('clears table and delivery-only details when the order type changes before saving', async () => {
-    mocked.post.mockResolvedValue({ data: { _id: 'srv-type-switch', dailyToken: 73 } });
-    renderPage();
-    await screen.findByText('Chicken Karahi');
-    fireEvent.click(dishTile('Chicken Karahi'));
-
-    fireEvent.change(await screen.findByLabelText('Table'), { target: { value: 'Table 8' } });
-    pick(/Delivery/);
-    fireEvent.change(screen.getByLabelText(/Complete address/i), { target: { value: 'House 5, Main Road' } });
-    fireEvent.change(screen.getByLabelText('Rider'), { target: { value: 'Ahmed' } });
-    fireEvent.change(screen.getByLabelText(/Delivery fee/i), { target: { value: '150' } });
-    pick(/^Takeaway$/);
-
-    placeOrder();
-    await screen.findByText('Orders board');
-    const body = mocked.post.mock.calls[0]![1];
-    expect(body).toMatchObject({ type: 'takeaway', deliveryFee: 0 });
-    expect(body.tableId).toBeUndefined();
-    expect(body.tableName).toBeUndefined();
-    expect(body.area).toBeUndefined();
-    expect(body.address).toBeUndefined();
-    expect(body.rider).toBeUndefined();
-  });
-
   it('fills the address when the delivery customer is picked afterward', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');

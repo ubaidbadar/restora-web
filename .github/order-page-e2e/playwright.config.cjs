@@ -22,6 +22,7 @@ module.exports = defineConfig({
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
     reducedMotion: 'reduce',
+    serviceWorkers: 'block',
   },
   projects: [
     {
@@ -38,7 +39,17 @@ module.exports = defineConfig({
     },
     {
       name: 'chromium-tablet',
-      use: { ...devices['iPad Pro 11'] },
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 834, height: 1194 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      name: 'webkit-tablet',
+      use: { ...devices['iPad Pro 11'], browserName: 'webkit' },
     },
     {
       name: 'chromium-phone',
@@ -64,8 +75,12 @@ module.exports = defineConfig({
     },
   ],
   webServer: {
-    command: 'cd ../.. && corepack yarn dev --host 127.0.0.1',
+    command: 'cd ../.. && corepack yarn build && corepack yarn preview --host 127.0.0.1 --port 3000',
     url: 'http://127.0.0.1:3000',
+    env: {
+      VITE_API_URL: 'https://dev.restora.live',
+      VITE_APP_URL: 'https://dev-app.restora.live',
+    },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
