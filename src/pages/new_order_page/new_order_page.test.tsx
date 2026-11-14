@@ -499,6 +499,7 @@ describe('New order (phone)', () => {
   it('keeps the selected customer when the order sheet is closed and reopened', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
+    fireEvent.click(screen.getByRole('button', { name: 'Add Chicken Karahi' }));
     fireEvent.click(screen.getByRole('button', { name: /View order/ }));
     fireEvent.change(customerSearch(), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
