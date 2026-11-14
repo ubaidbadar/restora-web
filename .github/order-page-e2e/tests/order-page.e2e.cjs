@@ -295,7 +295,7 @@ test('fixed service charge and payment-method tax recalculate without stale valu
   const checkout = await openCheckout(page);
   await checkout.getByLabel('Charge type').selectOption('fixed');
   await checkout.getByLabel('Amount (Rs)').fill('75');
-  await expect(checkout.getByText('Service charge')).toBeVisible();
+  await expect(checkout.getByText('Service charge', { exact: true })).toBeVisible();
   await expect(checkout.getByText('Rs 1,075')).toBeVisible();
 
   await checkout.getByRole('radio', { name: 'Paid now' }).click();
@@ -337,7 +337,7 @@ test('dine-in cannot be submitted until a table is selected', async ({ app }) =>
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
   await checkout.getByRole('button', { name: 'Place order' }).click();
-  await expect(checkout.getByText('Pick the table')).toBeVisible();
+  await expect(checkout.getByText('Enter the table')).toBeVisible();
   expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(0);
 });
 
