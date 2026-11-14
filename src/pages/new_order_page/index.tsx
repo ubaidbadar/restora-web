@@ -59,6 +59,8 @@ function offlineOrder(data: FieldValues, clientId: string, token: string): Order
   const rates: Record<string, number> = me.workplace!.settings.taxByPaymentMethod;
   const taxRate = method ? (rates[method] ?? 0) : 0;
   const deliveryFee = data.type === 'delivery' ? data.deliveryFee : 0;
+  const serviceChargeType = data.type === 'dine_in' && Number(data.serviceChargeValue) > 0 ? data.serviceChargeType : undefined;
+  const serviceChargeValue = serviceChargeType ? Number(data.serviceChargeValue) : 0;
   const saved = (getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((customer) => customer._id === data.customerId)
     ?? (data.customerId ? getCache.get(getCache.keyOf(`/customers/${data.customerId}`)) as Customer | undefined : undefined);
   const name = data.newName?.trim() || saved?.name;
@@ -75,7 +77,9 @@ function offlineOrder(data: FieldValues, clientId: string, token: string): Order
     type: data.type,
     status: 'new',
     items: data.items,
-    ...calcTotals(data.items, data.discount, taxRate, deliveryFee),
+    ...calcTotals(data.items, data.discount, taxRate, deliveryFee, serviceChargeType, serviceChargeValue),
+    serviceChargeType,
+    serviceChargeValue,
     taxRate,
     deliveryFee,
     paymentMethod: method,
@@ -184,6 +188,8 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             rider: order.rider,
             deliveryFee: order.deliveryFee,
             discount: order.discount,
+            serviceChargeType: order.serviceChargeType,
+            serviceChargeValue: order.serviceChargeValue ?? 0,
             paymentStatus: 'unpaid',
           } || {
             // Pay later until someone picks otherwise; people who can't take payments never see the choice.
@@ -231,8 +237,8 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             }
             // No internet: the edit waits in the outbox and the board shows it at once.
             const queue = () => {
-              const { customerId, customer, type, items, subtotal, discount, tax, taxRate, total, deliveryFee, tableId, tableName, area, address, rider } = local;
-              const preview = { customerId, customer, type, items, subtotal, discount, tax, taxRate, total, deliveryFee, tableId, tableName, area, address, rider };
+              const { customerId, customer, type, items, subtotal, discount, tax, taxRate, total, deliveryFee, serviceChargeType, serviceChargeValue, serviceCharge, tableId, tableName, area, address, rider } = local;
+              const preview = { customerId, customer, type, items, subtotal, discount, tax, taxRate, total, deliveryFee, serviceChargeType, serviceChargeValue, serviceCharge, tableId, tableName, area, address, rider };
               useOutboxStore.getState().add({ id: `${order._id}-edit-${Date.now().toString(36)}`, method: 'put', url: `/orders/${order._id}`, body: changes, label: `Changes to order #${token}`, createdAt: new Date().toISOString(), preview });
               done(`Order #${token} changed. It will be sent when the internet is back.`, { ...order, ...preview });
             };
