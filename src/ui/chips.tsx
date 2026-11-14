@@ -66,7 +66,7 @@ export default function Chips<T extends string>({ name, label, options, value, o
     <fieldset className={`min-w-0 ${className}`}>
       <legend className={showLabel ? 'mb-2 text-sm font-semibold text-ink' : 'sr-only'}>{label}</legend>
       <div className="relative min-w-0">
-        <div ref={scrollRef} className={`flex gap-2 ${wrap ? 'flex-wrap' : 'hide-scrollbar fade-end overflow-x-auto pe-8 scroll-smooth'}`}>
+        <div ref={scrollRef} className={`flex gap-2 ${wrap ? 'flex-wrap' : `hide-scrollbar fade-end overflow-x-auto pe-8 scroll-smooth ${scrollControls ? 'lg:ps-6' : ''}`}`}>
         {options.map(({ value: optionValue, label: optionLabel, count, icon: Icon, dot }) => (
           <label
             key={optionValue}
@@ -95,13 +95,13 @@ export default function Chips<T extends string>({ name, label, options, value, o
         ))}
         </div>
         {scrollControls && !wrap && scrollState.left && (
-          <button type="button" aria-label={`Scroll ${label.toLowerCase()} left`} onClick={() => scroll(-1)} className="absolute start-0 top-1/2 z-10 hidden size-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
-            <ChevronLeft size={16} aria-hidden="true" />
+          <button type="button" aria-label={`Scroll ${label.toLowerCase()} left`} onClick={() => scroll(-1)} className="absolute start-0 top-1/2 z-10 hidden size-6 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
+            <ChevronLeft size={14} aria-hidden="true" />
           </button>
         )}
         {scrollControls && !wrap && scrollState.right && (
           <button type="button" aria-label={`Scroll ${label.toLowerCase()} right`} onClick={() => scroll(1)} className="absolute end-0 top-1/2 z-10 hidden size-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-muted shadow-sm transition-colors hover:bg-sunken hover:text-ink focus-visible:outline-2 focus-visible:outline-focus md:grid">
-            <ChevronRight size={16} aria-hidden="true" />
+            <ChevronRight size={14} aria-hidden="true" />
           </button>
         )}
       </div>

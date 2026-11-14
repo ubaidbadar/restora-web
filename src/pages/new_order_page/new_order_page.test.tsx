@@ -135,7 +135,7 @@ describe('New order (desktop)', () => {
     Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 300 });
     Object.defineProperty(viewport, 'scrollWidth', { configurable: true, value: 900 });
     Object.defineProperty(viewport, 'scrollBy', { configurable: true, value: vi.fn() });
-    expect(categories.parentElement?.className).toContain('md:-mx-6');
+    expect(categories.parentElement?.className).toContain('lg:-mx-6');
 
     await waitFor(() => {
       fireEvent(window, new Event('resize'));
