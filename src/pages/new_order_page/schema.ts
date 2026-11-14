@@ -25,7 +25,7 @@ const orderSchema = z
   .object({
     customerId: z.string().optional(),
     newName: optionalText,
-    /** With newName: a customer saved while offline; the server makes the record when the order arrives. */
+    /** A takeaway name; paired with newPhone, it also saves a new customer when the order syncs. */
     newPhone: optionalText,
     items: z.array(orderItem, 'Add at least one dish').min(1, 'Add at least one dish'),
     type: z.enum(ORDER_TYPES),
@@ -51,6 +51,10 @@ const orderSchema = z
     if (order.paymentStatus === 'khata' && !order.customerId) ctx.addIssue({ code: 'custom', path: ['paymentStatus'], message: 'Khata needs a customer. Pick one above first.' });
   })
   // "Pay later" keeps no method, even one picked before switching: it is chosen when the customer pays.
-  .transform((order) => (order.paymentStatus === 'unpaid' ? { ...order, paymentMethod: undefined } : order));
+  .transform((order) => ({
+    ...order,
+    newName: order.type === 'takeaway' || order.newPhone ? order.newName : undefined,
+    paymentMethod: order.paymentStatus === 'unpaid' ? undefined : order.paymentMethod,
+  }));
 
 export default orderSchema;

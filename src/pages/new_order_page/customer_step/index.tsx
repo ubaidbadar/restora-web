@@ -7,6 +7,7 @@ import FormDrawer from '../../../components/form_drawer';
 import customerSchema from '../../../constants/customer_schema';
 import useGet from '../../../hooks/useGet';
 import getCache from '../../../store/get_cache';
+import completeAddress from '../../../utils/complete_address';
 import useAuthStore from '../../../store/auth_store';
 import useOutboxStore from '../../../store/outbox_store';
 import type Customer from '../../../types/customer';
@@ -35,9 +36,9 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
   const [search, setSearch] = useState('');
   // Editing an order starts with its customer picked: the full record when the customer list is already loaded.
   const [customer, setCustomer] = useState<Customer | null>(() =>
-    picked
+    picked?._id
       ? ((getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((saved) => saved._id === picked._id) ??
-        { _id: picked._id, name: picked.name, phone: picked.phone, tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: '' })
+        { _id: picked._id, name: picked.name, phone: picked.phone ?? '', tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: '' })
       : null,
   );
 
@@ -83,15 +84,14 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
     const previous = previousId
       ? getCache.get(getCache.keyOf(`/customers/${previousId}`)) as Customer | undefined
       : undefined;
-    const savedAddress = previous?.addresses?.find(address => address.trim());
-    if (!watch('address') || (savedAddress && watch('address') === savedAddress)) setValue('address', '');
-    if (!watch('area') || (previous?.area && watch('area') === previous.area)) setValue('area', '');
+    const address = completeAddress(previous?.addresses?.find((saved) => saved.trim()), previous?.area);
+    if (!watch('address') || (address && watch('address') === address)) setValue('address', '');
   };
 
   const pick = (chosen: Customer) => {
     if (watch('customerId') !== chosen._id) clearPreviousDelivery();
     setValue('customerId', chosen._id, { shouldDirty: true });
-    setValue('newName', undefined);
+    setValue('newName', chosen.name);
     setValue('newPhone', undefined);
     setCustomer(chosen);
     setSearch('');
@@ -100,7 +100,7 @@ function Main({ setValue, watch, picked }: FormComponentProps & { picked?: Order
   const clear = () => {
     clearPreviousDelivery();
     setValue('customerId', undefined, { shouldDirty: true });
-    setValue('newName', undefined);
+    if (customer && watch('newName') === customer.name) setValue('newName', undefined);
     setValue('newPhone', undefined);
     setCustomer(null);
   };

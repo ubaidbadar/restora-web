@@ -19,12 +19,13 @@ import CartPanel from './cart_panel';
 import CustomerStep from './customer_step';
 import MenuPicker from './menu_picker';
 import PlaceOrderBar from './place_order_bar';
-import WorkspaceSettings from './workspace_settings';
+import CartLines from './cart_panel/cart_lines';
 import Form from '../../ui/form';
 import type FormComponentProps from '../../types/form_component_props';
 import orderSchema from './schema';
 import type { FieldValues } from 'react-hook-form';
 import getCache from '../../store/get_cache';
+import completeAddress from '../../utils/complete_address';
 import useOutboxStore from '../../store/outbox_store';
 import type Customer from '../../types/customer';
 import type Order from '../../types/order';
@@ -59,14 +60,19 @@ function offlineOrder(data: FieldValues, clientId: string, token: string): Order
   const rates: Record<string, number> = me.workplace!.settings.taxByPaymentMethod;
   const taxRate = method ? (rates[method] ?? 0) : 0;
   const deliveryFee = data.type === 'delivery' ? data.deliveryFee : 0;
-  const saved = (getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((customer) => customer._id === data.customerId);
-  const name = saved?.name ?? data.newName;
+  const saved = (getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((customer) => customer._id === data.customerId)
+    ?? (data.customerId ? getCache.get(getCache.keyOf(`/customers/${data.customerId}`)) as Customer | undefined : undefined);
+  const name = data.newName?.trim() || saved?.name;
+  const phone = saved?.phone ?? data.newPhone;
+  const customer = name
+    ? { ...(data.customerId ? { _id: data.customerId } : {}), name, ...(phone ? { phone } : {}) }
+    : undefined;
   return {
     _id: clientId,
     dailyToken: token,
     branchId: me.workplace!.branch?._id ?? '',
     customerId: data.customerId,
-    customer: name ? { _id: data.customerId ?? '', name, phone: saved?.phone ?? data.newPhone ?? '' } : undefined,
+    customer,
     type: data.type,
     status: 'new',
     items: data.items,
@@ -102,41 +108,55 @@ const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.key
 const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?: Editing; workspace: Pick<NewOrderWorkspaceState, 'orderPanel' | 'menuDensity'> }) => {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
-  // Tax by payment method comes with /me: no request of its own.
   const { taxByPaymentMethod } = useRestaurantSettings();
   const { xl } = useBreakpoint();
 
   return (
-    <>
-      <div className={`min-w-0 w-full ${workspace.orderPanel === 'column' ? 'xl:pe-96' : ''}`}>
-        {/* The bottom bar is hidden on this page below the sidebar width, so it gets its own way back. */}
-        <div className="flex gap-1">
-          {order ? (
-            <PageHeader backTo='/orders' title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board.">
-              <WorkspaceSettings />
-            </PageHeader>
-          ) : (
-            <PageHeader backTo='/orders' title="New order" subtitle="Find the customer, tap dishes, place the order">
-              <WorkspaceSettings />
-            </PageHeader>
-          )}
-        </div>
+    <div className="flex min-h-0 min-w-0 flex-1 xl:pe-90">
+      <div className={`flex min-w-0 flex-1 flex-col ${xl ? 'overflow-y-auto px-6 py-5' : 'lg:px-6 lg:py-5'}`}>
+        {order ? (
+          <PageHeader backTo="/orders" title={`Edit order #${order.dailyToken}`} subtitle="Change the dishes, type or customer. Payment is recorded from the board." />
+        ) : (
+          <PageHeader backTo="/orders" title="New order" subtitle="Find the customer, tap dishes, place the order" />
+        )}
         <div className="flex min-w-0 flex-col gap-5">
-          <CustomerStep {...props} picked={order?.customer ?? (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })} />
+          <CustomerStep
+            {...props}
+            picked={order?.customer?._id ? order.customer : (fromProfile && { _id: fromProfile._id, name: fromProfile.name, phone: fromProfile.phone })}
+          />
           <MenuPicker {...props} menuDensity={workspace.menuDensity} />
         </div>
       </div>
 
-      {/* Keep the cart in a drawer at laptop widths; reserve a side column only when the menu has enough room. */}
-      <DockedSheet
-        label="Order"
-        mode={workspace.orderPanel}
-        component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} showEmpty={Boolean(order)} onOpen={open} />}
-      >
-        <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} showHeading={xl && workspace.orderPanel === 'column'} />
-        <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
-      </DockedSheet>
-    </>
+      {xl ? (
+        <>
+          <section aria-label="Order" className="min-h-0 w-80 shrink-0 flex flex-col overflow-y-auto px-4 py-5">
+            <h2 className="mb-4 text-heading text-ink">Order</h2>
+            <CartLines {...props} />
+          </section>
+          <aside aria-label="Checkout" className="fixed inset-y-0 end-0 z-30 flex w-90 flex-col bg-surface">
+            <CartPanel
+              {...props}
+              taxByPaymentMethod={taxByPaymentMethod}
+              editing={Boolean(order)}
+              showHeading
+              heading="Checkout"
+              showLines={false}
+            />
+            <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
+          </aside>
+        </>
+      ) : (
+        <DockedSheet
+          label="Order"
+          mode={workspace.orderPanel}
+          component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} showEmpty={Boolean(order)} onOpen={open} />}
+        >
+          <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} showHeading={false} />
+          <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
+        </DockedSheet>
+      )}
+    </div>
   );
 };
 
@@ -149,7 +169,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
   return (
     <>
       <Form
-        className="flex items-end md:justify-end"
+        className="flex min-h-0 flex-1"
         id={ORDER_FORM}
         component={(props) => <Main {...props} editing={editing} workspace={workspace} />}
         schema={orderSchema}
@@ -160,8 +180,9 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             type: order.type,
             tableId: order.tableId,
             tableName: order.tableName,
-            area: order.area,
-            address: order.address,
+            area: undefined,
+            address: order.type === 'delivery' ? completeAddress(order.address, order.area) : order.address,
+            newName: order.customer?.name,
             rider: order.rider,
             deliveryFee: order.deliveryFee,
             discount: order.discount,
@@ -170,6 +191,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             // Pay later until someone picks otherwise; people who can't take payments never see the choice.
             paymentStatus: 'unpaid',
             customerId: fromProfile?._id,
+            newName: fromProfile?.name,
           }
         }
         noValidate
@@ -187,7 +209,17 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             // The order as the board will show it, worked out here from the form and the menu prices.
             const worked = offlineOrder(data, order._id, String(token));
             // The customer list may not be loaded: an unchanged customer keeps the name the order already has.
-            const local = { ...worked, customer: worked.customer ?? (data.customerId && data.customerId === order.customerId ? order.customer : undefined) };
+            const local = {
+              ...worked,
+              customer: data.customerId && data.customerId === order.customerId && order.customer
+                ? {
+                    ...order.customer,
+                    ...worked.customer,
+                    name: worked.customer?.name ?? order.customer.name,
+                    phone: worked.customer?.phone ?? order.customer.phone,
+                  }
+                : worked.customer,
+            };
             const outbox = useOutboxStore.getState();
             const waitingOrder = outbox.items.find((item) => item.id === order._id && item.url === '/orders');
             // Taken offline and not sent yet: change the waiting order itself, so the server only ever gets the final one.
