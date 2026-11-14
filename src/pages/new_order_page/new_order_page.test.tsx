@@ -496,6 +496,21 @@ describe('New order (phone)', () => {
     expect((screen.getByRole('radio', { name: /^Khata/ }) as HTMLInputElement).checked).toBe(true);
   });
 
+  it('keeps the selected customer when the order sheet is closed and reopened', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(screen.getByRole('button', { name: /View order/ }));
+    fireEvent.change(customerSearch(), { target: { value: 'ali' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Select customer' })).toBeNull());
+
+    const orderSheet = screen.getByRole('dialog', { name: 'Order' });
+    fireEvent.click(orderSheet.parentElement!);
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Order' })).toBeNull());
+    fireEvent.click(screen.getByRole('button', { name: /View order/ }));
+    expect(screen.getByRole('button', { name: 'Remove Ali Raza' })).toBeTruthy();
+  });
+
   it('places the order from inside the sheet', async () => {
     mocked.post.mockResolvedValue({ data: { _id: 'srv4', dailyToken: 10 } });
     renderPage();
