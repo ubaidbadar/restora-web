@@ -5,7 +5,6 @@ import type Customer from '../../../types/customer';
 import completeAddress from '../../../utils/complete_address';
 import useGet from '../../../hooks/useGet';
 import Input from '../../../ui/input';
-import Textarea from '../../../ui/textarea';
 import fieldError from '../../../utils/field_error';
 
 /** Saved addresses are only on customer profiles, not in the customer search list. */
@@ -31,7 +30,7 @@ export default function DeliveryFields({ control, register, errors, setValue, wa
       {customerId && <CustomerDeliveryDefaults key={customerId} customerId={customerId}
         setValue={setValue} watch={watch} />}
       <div className="col-span-2">
-        <Textarea label="Complete address" dir="auto" rows={3} required {...register('address')} error={fieldError(errors, 'address')} />
+        <Input label="Complete address" dir="auto" placeholder="Street, building, area, city" required {...register('address')} error={fieldError(errors, 'address')} />
       </div>
       <Input label="Rider" dir="auto" {...register('rider')} />
       <Input label="Delivery fee (Rs)" inputMode="numeric" {...register('deliveryFee')} error={fieldError(errors, 'deliveryFee')} />
