@@ -44,21 +44,30 @@ export default function Chips<T extends string>({ name, label, options, value, o
       const right = max > 1 && element.scrollLeft < max - 1;
       setScrollState((current) => current.left === left && current.right === right ? current : { left, right });
     };
+    const resetScrollTarget = () => { scrollTargetRef.current = null; };
+    const onResize = () => {
+      resetScrollTarget();
+      update();
+    };
 
     update();
     element.addEventListener('scroll', update, { passive: true });
-    element.addEventListener('wheel', () => { scrollTargetRef.current = null; }, { passive: true });
-    element.addEventListener('pointerdown', () => { scrollTargetRef.current = null; });
-    element.addEventListener('touchstart', () => { scrollTargetRef.current = null; }, { passive: true });
-    element.addEventListener('keydown', () => { scrollTargetRef.current = null; });
-    window.addEventListener('resize', update);
+    element.addEventListener('wheel', resetScrollTarget, { passive: true });
+    element.addEventListener('pointerdown', resetScrollTarget);
+    element.addEventListener('touchstart', resetScrollTarget, { passive: true });
+    element.addEventListener('keydown', resetScrollTarget);
+    window.addEventListener('resize', onResize);
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(update);
     observer?.observe(element);
     Array.from(element.children).forEach((child) => observer?.observe(child));
 
     return () => {
       element.removeEventListener('scroll', update);
-      window.removeEventListener('resize', update);
+      element.removeEventListener('wheel', resetScrollTarget);
+      element.removeEventListener('pointerdown', resetScrollTarget);
+      element.removeEventListener('touchstart', resetScrollTarget);
+      element.removeEventListener('keydown', resetScrollTarget);
+      window.removeEventListener('resize', onResize);
       observer?.disconnect();
     };
   }, [options.length, scrollControls, wrap]);
