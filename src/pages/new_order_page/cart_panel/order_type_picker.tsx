@@ -7,8 +7,6 @@ import Tabs from '../../../ui/tabs';
 import Input from '../../../ui/input';
 import TableSelect from '../../../components/table_select';
 import DeliveryFields from './delivery_fields';
-import CustomerStep from '../customer_step';
-import type Order from '../../../types/order';
 
 const TYPES = ORDER_TYPES.map((value) => ({ value, label: ORDER_TYPE_LABELS[value] }));
 
@@ -18,14 +16,14 @@ export default function OrderTypePicker(props: FormComponentProps & { picked?: O
   const table = useSearchParams()[0].get('table') ?? '';
   const start = table ? 'dine_in' : 'takeaway';
   const type = useWatch({ control: props.control, name: 'type', defaultValue: start });
+  const customerId = useWatch({ control: props.control, name: 'customerId' });
 
   return (
     <section aria-label="Order type" className="flex flex-col gap-3">
       {/* Starts from the form's value, not a fixed default: the phone sheet mounts these again each time it opens, and an
           edited order starts with its own type. */}
       <Tabs register={props.register} name="type" label="Order type" options={TYPES} value={type} fill showLabel />
-      <CustomerStep {...props} compact picked={props.picked} />
-      {type === 'takeaway' && <Input label="Name (optional)" dir="auto" {...props.register('newName')} />}
+      {type === 'takeaway' && !customerId && <Input label="Name (optional)" dir="auto" {...props.register('newName')} />}
       {type === 'dine_in' && <TableSelect register={props.register} errors={props.errors} required allowTyped defaultTableId={table} />}
       {type === 'delivery' && <DeliveryFields {...props} />}
     </section>

@@ -121,9 +121,16 @@ describe('New order (desktop)', () => {
     expect(hint.parentElement?.className).toContain('flex-1');
     expect(hint.parentElement?.className).toContain('items-center');
 
-    const addCustomer = screen.getByRole('button', { name: 'Add customer' });
+    const checkout = screen.getByRole('complementary', { name: 'Checkout' });
+    const heading = within(checkout).getByRole('heading', { name: 'Checkout' });
+    const addCustomer = within(checkout).getByRole('button', { name: 'Add customer' });
     expect(addCustomer.className).toContain('text-primary');
     expect(addCustomer.className).not.toContain('border-border-strong');
+    expect(heading.parentElement).toBe(addCustomer.parentElement);
+
+    fireEvent.click(addCustomer);
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(within(screen.getByRole('dialog')).getByRole('heading', { name: 'Select customer' })).toBeTruthy();
   });
 
   it('adds mouse navigation for overflowing categories while keeping the row scrollable', async () => {
@@ -192,7 +199,8 @@ describe('New order (desktop)', () => {
     await screen.findByText('Chicken Karahi');
     fireEvent.change(customerSearch(), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
-    expect((screen.getByLabelText('Name (optional)') as HTMLInputElement).value).toBe('Ali Raza');
+    expect(screen.queryByLabelText('Name (optional)')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Remove Ali Raza' })).toBeTruthy();
     fireEvent.click(dishTile('Chicken Karahi'));
     placeOrder();
     await screen.findByText('Orders board');
@@ -282,13 +290,16 @@ describe('New order (desktop)', () => {
     expect(screen.getByText('Khata needs a saved customer: tap Add customer above.')).toBeTruthy();
   });
 
-  it('finds a customer by name, shows what they owe, and sends them with the order', async () => {
+  it('finds a customer by name, keeps only their name in checkout, and sends them with the order', async () => {
     mocked.post.mockResolvedValue({ data: { _id: 'srv3', dailyToken: 9 } });
     renderPage();
     await screen.findByText('Chicken Karahi');
     fireEvent.change(customerSearch(), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Ali Raza/ }));
-    expect(screen.getByText('Owes Rs 500')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Remove Ali Raza' })).toBeTruthy();
+    expect(screen.queryByText('+923001234567')).toBeNull();
+    expect(screen.queryByText('Owes Rs 500')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
     fireEvent.click(dishTile('Chicken Karahi'));
     placeOrder();
     await screen.findByText('Orders board');

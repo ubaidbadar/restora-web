@@ -1,6 +1,6 @@
 import { UserPlus } from 'lucide-react';
-import Button from '../../../ui/button';
 import { useEffect, useState } from 'react';
+import { useWatch } from 'react-hook-form';
 import can from '@shared/can';
 import api from '../../../config/api';
 import CustomerFields from '../../../components/customer_fields';
@@ -15,6 +15,8 @@ import type Customer from '../../../types/customer';
 import type Order from '../../../types/order';
 import type FormComponentProps from '../../../types/form_component_props';
 import SearchMenu from '../../../ui/search_menu';
+import ModalOverlay from '../../../ui/modal/modal';
+import Button from '../../../ui/button';
 import formatPhone from '../../../utils/format_phone';
 import normalizePhone from '../../../utils/normalize_phone';
 import toast from '../../../utils/toast';
@@ -29,40 +31,33 @@ const MAX_MATCHES = 6;
  */
 const national = (phone: string) => phone.replace(/\D/g, '').replace(/^(?:0092|92|0)(?=3)/, '');
 
-/**
- * Find the customer by number or name (ui/search_menu), or save a new number on the spot. The search text is local,
- * so typing re-renders this section only; the form gets the picked customer.
- */
-function Main({ setValue, watch, picked, compact }: FormComponentProps & { picked?: Order['customer']; compact?: boolean }) {
+/** Customer selection is separate from order type: the checkout header opens a short, searchable picker. */
+function Main({ setValue, watch, control, picked }: FormComponentProps & { picked?: Order['customer'] }) {
   const [search, setSearch] = useState('');
-  const [searchOpen, setSearchOpen] = useState(!compact);
-  // Editing an order starts with its customer picked: the full record when the customer list is already loaded.
   const [customer, setCustomer] = useState<Customer | null>(() =>
     picked?._id
       ? ((getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((saved) => saved._id === picked._id) ??
         { _id: picked._id, name: picked.name, phone: picked.phone ?? '', tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: '' })
       : null,
   );
+  const customerId = useWatch({ control, name: 'customerId' });
+  const customerName = useWatch({ control, name: 'newName' });
+  const customerPhone = useWatch({ control, name: 'newPhone' });
 
   const term = search.trim();
   const query = term.toLowerCase();
   const byName = /\p{L}/u.test(query);
   const digits = national(query);
-  // Results from the first letter or digit.
   const searching = byName || /\d/.test(query);
   const online = useOutboxStore((state) => state.online);
 
-  // The saved list answers at once and offline. It holds the 1,000 most recent customers, so while online the server is
-  // also asked (`q`), a moment after typing stops, for anyone older; its answer is filtered again below, so a late
-  // answer to an earlier search never shows wrong people.
   const { data: list, loading } = useGet<Customer[]>('/customers', { active: !searching });
   const { data: older, loading: searchingServer, get: askFor } = useGet<Customer[]>('/customers', { active: true });
-  const isMatch = (customer: Customer) =>
-    byName ? customer.name.toLowerCase().includes(query) : national(customer.phone).includes(digits) || national(customer.altPhone ?? '').includes(digits);
+  const isMatch = (saved: Customer) =>
+    byName ? saved.name.toLowerCase().includes(query) : national(saved.phone).includes(digits) || national(saved.altPhone ?? '').includes(digits);
   const local = searching ? (list ?? []).filter(isMatch) : [];
-  const fromServer = searching ? (older ?? []).filter((customer) => isMatch(customer) && !local.some((saved) => saved._id === customer._id)) : [];
+  const fromServer = searching ? (older ?? []).filter((saved) => isMatch(saved) && !local.some((match) => match._id === saved._id)) : [];
   const matches = [...local, ...fromServer].slice(0, MAX_MATCHES);
-  // From two characters: one letter would bring back nearly everyone.
   const askServer = searching && term.length >= 2 && online && local.length < MAX_MATCHES;
 
   useEffect(() => {
@@ -72,14 +67,20 @@ function Main({ setValue, watch, picked, compact }: FormComponentProps & { picke
   }, [askServer, term, askFor]);
 
   const fullNumber = byName ? null : normalizePhone(term);
-  // The last row always offers a new customer, with what was typed filled in: a name, or the number (whole or part).
-  // Only a full number someone already has (as their number or second number) leaves it out: that person is listed.
   const taken = Boolean(fullNumber) && matches.some((match) => match.phone === fullNumber || national(match.altPhone ?? '') === national(fullNumber!));
   const typed = fullNumber ? formatPhone(fullNumber) : term;
   const newCustomer = byName ? { name: term, phone: '' } : { name: '', phone: typed };
 
-  // On a customer change, reset only blank or previously auto-filled delivery details.
-  // A custom address typed for this order must survive changing the customer.
+  // The form values also restore the compact selected state when a phone sheet is closed and opened again.
+  const fromCache = customerId
+    ? (getCache.get(getCache.keyOf('/customers')) as Customer[] | undefined)?.find((saved) => saved._id === customerId)
+    : undefined;
+  const selectedCustomer = customer ?? fromCache ?? (customerId && customerName
+    ? { _id: customerId, name: customerName, phone: customerPhone ?? '', tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: '' }
+    : !customerId && customerName && customerPhone
+      ? { _id: '', name: customerName, phone: customerPhone, tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: '' }
+      : null);
+
   const clearPreviousDelivery = () => {
     if (watch('type') !== 'delivery') return;
     const previousId = watch('customerId');
@@ -90,94 +91,101 @@ function Main({ setValue, watch, picked, compact }: FormComponentProps & { picke
     if (!watch('address') || (address && watch('address') === address)) setValue('address', '');
   };
 
-  const pick = (chosen: Customer) => {
+  const pick = (chosen: Customer, close: () => void) => {
     if (watch('customerId') !== chosen._id) clearPreviousDelivery();
     setValue('customerId', chosen._id, { shouldDirty: true });
     setValue('newName', chosen.name);
     setValue('newPhone', undefined);
     setCustomer(chosen);
     setSearch('');
-    setSearchOpen(false);
+    close();
   };
 
   const clear = () => {
     clearPreviousDelivery();
     setValue('customerId', undefined, { shouldDirty: true });
-    if (customer && watch('newName') === customer.name) setValue('newName', undefined);
+    if (selectedCustomer && watch('newName') === selectedCustomer.name) setValue('newName', undefined);
     setValue('newPhone', undefined);
     setCustomer(null);
-    setSearchOpen(true);
   };
 
-  if (customer) return <CustomerMatchCard customer={customer} onClear={clear} />;
-  if (compact && !searchOpen) {
-    return <Button type="button" variant="primaryLink" icon={UserPlus} className="self-start text-sm" onClick={() => setSearchOpen(true)}>Add customer</Button>;
-  }
-
   return (
-    <FormDrawer
-      title="New customer"
-      schema={customerSchema}
-      defaultValues={newCustomer}
-      submitLabel="Save and pick"
-      onSave={(values) => {
-        // The order carries the name and number, and the server saves the customer with it: without internet, and for
-        // people who may take orders but not add customers (a waiter).
-        const carry = () => {
-          const phone = normalizePhone(values.phone) ?? '';
-          pick({ _id: '', name: values.name, phone, area: values.area, tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: new Date().toISOString() });
-          setValue('customerId', undefined);
-          setValue('newName', values.name);
-          setValue('newPhone', phone);
-        };
-        if (!can(useAuthStore.getState().me?.workplace, 'customers:manage')) return Promise.resolve(carry());
-        return api
-          .post('/customers', values)
-          .then((res) => {
-            getCache.update<Customer[]>(getCache.keyOf('/customers'), (current) => (current ? [res.data, ...current] : current));
-            pick(res.data);
-          })
-          .catch(async (err) => {
-            // Saved already (found only by the server, or added on another device): pick that customer instead.
-            if (err.response?.status === 409) {
-              const { data: found } = await api.get<Customer[]>('/customers', { params: { q: values.phone } });
-              const existing = found.find((customer) => customer.phone === normalizePhone(values.phone));
-              if (!existing) throw err;
-              toast.info(`${existing.name} is already saved with this number, so they are picked`);
-              return pick(existing);
-            }
-            if (err.response) throw err;
-            carry();
-          });
-      }}
-      fields={(form) => <CustomerFields {...form} />}
-      component={({ open: addNew }) => (
-        <SearchMenu
-          value={search}
-          onChange={setSearch}
-          items={searching ? matches : undefined}
-          getKey={(match) => match._id}
-          renderItem={(match) => <CustomerResult customer={match} query={byName ? query : ''} />}
-          onPick={pick}
-          action={taken ? undefined : { icon: UserPlus, label: matches.length ? `New customer “${typed}”` : `No match. Add “${typed}” as a new customer`, onSelect: addNew }}
-          loading={!matches.length && ((loading && !list) || (askServer && searchingServer))}
-          label="Find customer by phone number or name"
-          placeholder="Phone number or name"
+    <ModalOverlay
+      title="Select customer"
+      component={({ open }) => selectedCustomer
+        ? <CustomerMatchCard customer={selectedCustomer} onClear={clear} />
+        : (
+          <Button type="button" variant="primaryLink" icon={UserPlus} className="text-sm" onClick={() => {
+            setSearch('');
+            open();
+          }}>
+            Add customer
+          </Button>
+        )}
+    >
+      {(close) => (
+        <FormDrawer
+          title="New customer"
+          schema={customerSchema}
+          defaultValues={newCustomer}
+          submitLabel="Save and pick"
+          onSave={(values) => {
+            const carry = () => {
+              const phone = normalizePhone(values.phone) ?? '';
+              pick({ _id: '', name: values.name, phone, area: values.area, tags: [], khataBalance: 0, orderCount: 0, totalSpent: 0, createdAt: new Date().toISOString() }, close);
+              setValue('customerId', undefined);
+              setValue('newName', values.name);
+              setValue('newPhone', phone);
+            };
+            if (!can(useAuthStore.getState().me?.workplace, 'customers:manage')) return Promise.resolve(carry());
+            return api
+              .post('/customers', values)
+              .then((res) => {
+                getCache.update<Customer[]>(getCache.keyOf('/customers'), (current) => (current ? [res.data, ...current] : current));
+                pick(res.data, close);
+              })
+              .catch(async (err) => {
+                if (err.response?.status === 409) {
+                  const { data: found } = await api.get<Customer[]>('/customers', { params: { q: values.phone } });
+                  const existing = found.find((saved) => saved.phone === normalizePhone(values.phone));
+                  if (!existing) throw err;
+                  toast.info(`${existing.name} is already saved with this number, so they are picked`);
+                  pick(existing, close);
+                  return;
+                }
+                if (err.response) throw err;
+                carry();
+              });
+          }}
+          fields={(form) => <CustomerFields {...form} />}
+          component={({ open: addNew }) => (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted">Search by customer name or mobile number.</p>
+              <SearchMenu
+                value={search}
+                onChange={setSearch}
+                items={searching ? matches : (list ?? []).slice(0, MAX_MATCHES)}
+                getKey={(match) => match._id}
+                renderItem={(match) => <CustomerResult customer={match} query={byName ? query : ''} />}
+                onPick={(chosen) => pick(chosen, close)}
+                action={term && !taken ? {
+                  icon: UserPlus,
+                  label: matches.length ? `New customer “${typed}”` : `No match. Add “${typed}” as a new customer`,
+                  onSelect: addNew,
+                } : undefined}
+                loading={!matches.length && (searching ? askServer && searchingServer : loading && !list)}
+                empty={searching ? 'No matching customers' : 'No saved customers yet'}
+                label="Find customer by phone number or name"
+                placeholder="Phone number or name"
+              />
+            </div>
+          )}
         />
       )}
-    />
+    </ModalOverlay>
   );
 }
 
-export default function CustomerStep({ compact = false, ...props }: FormComponentProps & { picked?: Order['customer']; compact?: boolean }) {
-  return (
-    <section className="flex flex-col gap-2">
-      {!compact && (
-        <h2 className="text-heading text-ink">
-          Customer <span className="text-sm font-normal text-muted">· optional for walk-ins</span>
-        </h2>
-      )}
-      <Main {...props} compact={compact} />
-    </section>
-  );
+export default function CustomerStep({ picked, ...props }: FormComponentProps & { picked?: Order['customer'] }) {
+  return <Main {...props} picked={picked} />;
 }
