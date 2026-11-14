@@ -16,12 +16,13 @@ import CustomerStep from '../customer_step';
 export default function CartPanel({ taxByPaymentMethod, editing, showHeading, showLines = true, heading = 'Order', picked, ...props }: FormComponentProps & Pick<RestaurantSettings, 'taxByPaymentMethod'> & { editing?: boolean; showHeading: boolean; showLines?: boolean; heading?: string; picked?: Order['customer'] }) {
   return (
     // Scrolls inside the panel so Place order below it stays in reach.
-    <div id="order-details" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4">
-      <div className={`sticky top-0 z-20 -mx-5 flex min-h-14 items-center gap-3 border-b border-border bg-surface px-5 py-3 md:pt-5 ${showHeading ? 'justify-between' : 'justify-end'}`}>
+    <div id="order-details" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto border-x border-border">
+      <div className={`sticky top-0 z-20 flex min-h-14 items-center gap-3 border-b border-border bg-surface p-5 ${showHeading ? 'justify-between' : 'justify-end'}`}>
         {showHeading && <h2 className="text-heading text-ink">{heading}</h2>}
         <CustomerStep {...props} picked={picked} />
       </div>
-      {showLines && <CartLines {...props} />}
+      <div className="px-5 flex flex-col gap-4">
+        {showLines && <CartLines {...props} />}
       <OrderTypePicker {...props} />
       <ServiceChargeField {...props} />
       {/* A placed order is paid from the board, so editing leaves payment out. Without the right to take payments or
@@ -35,6 +36,7 @@ export default function CartPanel({ taxByPaymentMethod, editing, showHeading, sh
         <DiscountField {...props} />
       </Can>
       <OrderTotals {...props} taxByPaymentMethod={taxByPaymentMethod} />
+      </div>
     </div>
   );
 }

@@ -129,12 +129,15 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
 
       {xl ? (
         <>
-          <div className="fixed inset-y-0 end-0 z-30 flex w-[42.5rem] bg-surface">
-            <section aria-label="Order" className="flex min-h-0 w-80 shrink-0 flex-col overflow-y-auto border-e border-border px-4 py-5">
-              <div className="sticky top-0 z-20 -mx-4 -mt-5 mb-4 flex min-h-14 items-center border-b border-border bg-surface px-4 py-3 md:pt-5">
-                <h2 className="text-heading text-ink">Order</h2>
+          <div className="fixed inset-y-0 inset-e-0 z-30 flex w-170 bg-surface border-x border-border">
+            <section 
+              aria-label="Order"
+              className="flex min-h-0 w-80 shrink-0 flex-col overflow-y-auto"
+            >
+              <h2 className="text-heading p-5 border-b border-border text-ink">Order</h2>
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pt-5">
+                <CartLines {...props} centerEmpty />
               </div>
-              <CartLines {...props} centerEmpty />
             </section>
             <aside aria-label="Checkout" className="flex min-h-0 min-w-0 flex-1 flex-col">
               <CartPanel
@@ -222,11 +225,11 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
               ...worked,
               customer: data.customerId && data.customerId === order.customerId && order.customer
                 ? {
-                    ...order.customer,
-                    ...worked.customer,
-                    name: worked.customer?.name ?? order.customer.name,
-                    phone: worked.customer?.phone ?? order.customer.phone,
-                  }
+                  ...order.customer,
+                  ...worked.customer,
+                  name: worked.customer?.name ?? order.customer.name,
+                  phone: worked.customer?.phone ?? order.customer.phone,
+                }
                 : worked.customer,
             };
             const outbox = useOutboxStore.getState();

@@ -27,11 +27,11 @@ export default function Select({
 
   return (
     <FieldShell label={label} required={props.required} error={error}>
-      <span className="block relative">
+      <span className="flex relative w-full">
         <select
           aria-invalid={!!error}
           aria-required={props.required}
-          className={`${formInputBaseClasses} py-2 pe-10 appearance-none cursor-pointer ${className}`}
+          className={`${formInputBaseClasses} flex-1 py-2 pe-10 appearance-none cursor-pointer ${className}`}
           {...props}
         >
           {placeholder && (
