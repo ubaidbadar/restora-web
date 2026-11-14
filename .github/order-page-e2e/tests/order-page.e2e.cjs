@@ -213,7 +213,7 @@ test('responsive layout has no page overflow and category navigation matches the
     };
   });
 
-  if (testInfo.project.name.includes('desktop') || testInfo.project.name.includes('laptop')) {
+  if (testInfo.project.name.includes('desktop') || testInfo.project.name.includes('laptop') || testInfo.project.name.includes('lg-drawer')) {
     expect(metrics.flexWrap).toBe('wrap');
     expect(metrics.overflowX).toBe('visible');
   } else {
@@ -276,14 +276,32 @@ test('customer picker is a separate searchable modal and selection collapses to 
   await expect(customerDialog).toHaveCount(0);
 });
 
-test('service charge is visible by default and recalculates the checkout total', async ({ app }) => {
+test('dine-in and pay-later are the defaults; service charge is immediately available', async ({ app }) => {
   const { page } = app;
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
+  await expect(checkout.getByRole('radio', { name: 'Dine-in' })).toBeChecked();
+  await expect(checkout.getByRole('radio', { name: 'Pay later' })).toBeChecked();
   await expect(checkout.getByLabel('Charge type')).toHaveValue('percentage');
+  await expect(checkout.getByRole('button', { name: 'Add service charge' })).toHaveCount(0);
   await checkout.getByLabel('Percentage (%)').fill('10');
   await expect(checkout.getByText('Service charge (10%)')).toBeVisible();
   await expect(checkout.getByText('Rs 1,100')).toBeVisible();
+});
+
+test('fixed service charge and payment-method tax recalculate without stale values', async ({ app }) => {
+  const { page } = app;
+  await addDish(page, 'Chicken Karahi');
+  const checkout = await openCheckout(page);
+  await checkout.getByLabel('Charge type').selectOption('fixed');
+  await checkout.getByLabel('Amount (Rs)').fill('75');
+  await expect(checkout.getByText('Service charge')).toBeVisible();
+  await expect(checkout.getByText('Rs 1,075')).toBeVisible();
+
+  await checkout.getByRole('radio', { name: 'Paid now' }).click();
+  await checkout.getByRole('radio', { name: 'Cash' }).click();
+  await expect(checkout.getByText('Tax (15%)')).toBeVisible();
+  await expect(checkout.getByText('Rs 1,225')).toBeVisible();
 });
 
 test('changing order type removes stale table and delivery-only fields from the submitted payload', async ({ app }) => {
@@ -293,10 +311,14 @@ test('changing order type removes stale table and delivery-only fields from the 
 
   await checkout.getByLabel('Table').fill('Table 8');
   await checkout.getByRole('radio', { name: 'Delivery' }).click();
+  await expect(checkout.getByRole('region', { name: 'Service charge' })).toHaveCount(0);
+  await expect(checkout.getByLabel('Delivery fee (Rs)')).toBeVisible();
   await checkout.getByLabel('Complete address').fill('House 5, Main Road');
   await checkout.getByLabel('Rider').fill('Ahmed');
   await checkout.getByLabel('Delivery fee (Rs)').fill('150');
   await checkout.getByRole('radio', { name: 'Takeaway' }).click();
+  await expect(checkout.getByRole('region', { name: 'Service charge' })).toHaveCount(0);
+  await expect(checkout.getByLabel('Delivery fee (Rs)')).toHaveCount(0);
 
   await checkout.getByRole('button', { name: 'Place order' }).click();
   await expect(page).toHaveURL(/\/orders$/);
@@ -308,6 +330,15 @@ test('changing order type removes stale table and delivery-only fields from the 
   expect(orderWrite.body.area).toBeUndefined();
   expect(orderWrite.body.address).toBeUndefined();
   expect(orderWrite.body.rider).toBeUndefined();
+});
+
+test('dine-in cannot be submitted until a table is selected', async ({ app }) => {
+  const { page, writes } = app;
+  await addDish(page, 'Chicken Karahi');
+  const checkout = await openCheckout(page);
+  await checkout.getByRole('button', { name: 'Place order' }).click();
+  await expect(checkout.getByText('Pick the table')).toBeVisible();
+  expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(0);
 });
 
 test('rapid double activation cannot create duplicate orders', async ({ app }, testInfo) => {
