@@ -20,7 +20,7 @@ export default function CustomerMatchCard({ customer, onClear }: CustomerMatchCa
       onClick={onClear}
       className="min-w-0 max-w-full gap-1 text-sm"
     >
-      <span className="max-w-48 truncate">
+      <span className="max-w-32 truncate sm:max-w-40">
         <bdi>{customer.name}</bdi>
       </span>
     </Button>

@@ -162,11 +162,11 @@ describe('New order (desktop)', () => {
     const actionRow = addCustomer.parentElement?.parentElement;
     expect(addCustomer.className).toContain('text-primary');
     expect(addCustomer.className).not.toContain('border-border-strong');
-    expect(addCustomer.parentElement?.className).toContain('ms-auto');
+    expect(addCustomer.parentElement?.className).toContain('col-start-2');
     expect(actionRow).toBe(addDiscount.parentElement?.parentElement);
-    expect(actionRow?.className).toContain('flex-wrap');
+    expect(actionRow?.className).toContain('grid-cols-[minmax(0,1fr)_auto]');
     expect(actionRow?.className).toContain('gap-3');
-    expect(addDiscount.parentElement?.className).toContain('has-[input]:basis-full');
+    expect(addDiscount.parentElement?.className).toContain('has-[input]:col-span-2');
     expect(heading.parentElement).not.toBe(actionRow);
     expect(heading.parentElement?.className).toContain('sticky top-0');
 
@@ -569,6 +569,23 @@ describe('New order (phone)', () => {
     fireEvent.click(within(picker).getByRole('button', { name: /^Raita/ }));
     fireEvent.click(within(picker).getByRole('button', { name: 'Add · Rs 600' }));
     expect(screen.getAllByText('Rs 600').length).toBeGreaterThan(0);
+  });
+
+  it('stacks delivery details and keeps quantity taps large in the mobile checkout', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(screen.getByRole('button', { name: 'Add Chicken Karahi' }));
+    fireEvent.click(screen.getByRole('button', { name: /View order/ }));
+    const dialog = sheet();
+    const stepper = within(dialog).getByRole('button', { name: 'One more Chicken Karahi' });
+    expect(stepper.className).toContain('size-11');
+
+    pick(/Delivery/);
+    const rider = within(dialog).getByLabelText('Rider');
+    const container = rider.closest('div.grid');
+    expect(container?.className).toContain('grid-cols-1');
+    expect(container?.className).toContain('sm:grid-cols-2');
+    expect(within(dialog).getByLabelText('Delivery fee (Rs)')).toBeTruthy();
   });
 
   it('keeps the order type and payment when the sheet is closed and opened again', async () => {

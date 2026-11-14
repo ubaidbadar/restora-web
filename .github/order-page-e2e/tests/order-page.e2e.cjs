@@ -277,6 +277,46 @@ test('responsive layout has no page overflow and category navigation matches the
   }
 });
 
+test('small phone checkout keeps fields, quantity buttons and the footer usable', async ({ app }, testInfo) => {
+  test.skip(!['chromium-phone', 'chromium-small-phone'].includes(testInfo.project.name));
+
+  const { page } = app;
+  await addDish(page, 'Chicken Karahi');
+  const checkout = await openCheckout(page);
+
+  for (const name of ['One less Chicken Karahi', 'One more Chicken Karahi']) {
+    const bounds = await checkout.getByRole('button', { name }).boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds.width).toBeGreaterThanOrEqual(44);
+    expect(bounds.height).toBeGreaterThanOrEqual(44);
+  }
+
+  await chooseRadio(page, checkout, 'Delivery');
+  const rider = checkout.getByLabel('Rider');
+  const deliveryFee = checkout.getByLabel('Delivery fee (Rs)');
+  const riderBounds = await rider.boundingBox();
+  const feeBounds = await deliveryFee.boundingBox();
+  expect(riderBounds).not.toBeNull();
+  expect(feeBounds).not.toBeNull();
+  expect(feeBounds.y).toBeGreaterThanOrEqual(riderBounds.y + riderBounds.height);
+  await deliveryFee.fill('100');
+
+  const content = checkout.locator('#order-details');
+  const scrollWidths = await content.evaluate((element) => ({
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }));
+  expect(scrollWidths.scrollWidth).toBeLessThanOrEqual(scrollWidths.clientWidth + 1);
+
+  const placeOrder = checkout.getByRole('button', { name: 'Place order' });
+  await expect(placeOrder).toBeInViewport();
+  const footer = await placeOrder.boundingBox();
+  const viewport = page.viewportSize();
+  expect(footer).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  expect(footer.y + footer.height).toBeLessThanOrEqual(viewport.height + 1);
+});
+
 test('category filters work across a large real-menu-shaped catalogue', async ({ app }) => {
   const { page } = app;
   await chooseRadio(page, page, 'Pizza');
@@ -395,7 +435,7 @@ test('fixed service charge and payment-method tax recalculate without stale valu
   const checkout = await openCheckout(page);
   await checkout.getByLabel('Charge type').selectOption('fixed');
   await checkout.getByLabel('Amount (Rs)').fill('75');
-  await expect(checkout.getByText('Service charge', { exact: true })).toBeVisible();
+  await expect(checkout.getByRole('heading', { name: 'Service charge' })).toBeVisible();
   await expect(checkout.getByText('Rs 1,075')).toBeVisible();
 
   await chooseRadio(page, checkout, 'Paid now');

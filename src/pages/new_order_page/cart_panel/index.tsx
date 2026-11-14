@@ -22,7 +22,7 @@ export default function CartPanel({ taxByPaymentMethod, editing, showHeading, sh
           <h2 className="text-heading text-ink">{heading}</h2>
         </div>
       )}
-      <div className="px-5 flex flex-col gap-4">
+      <div className="flex flex-col gap-4 px-5 pb-4">
         {showLines && <CartLines {...props} />}
       <OrderTypePicker {...props} />
       <ServiceChargeField {...props} />
@@ -33,13 +33,13 @@ export default function CartPanel({ taxByPaymentMethod, editing, showHeading, sh
           <PaymentPicker {...props} />
         </Can>
       )}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1 has-[input]:basis-full">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <div className="min-w-0 has-[input]:col-span-2">
           <Can permission="orders:discount">
             <DiscountField {...props} />
           </Can>
         </div>
-        <div className="ms-auto min-w-0">
+        <div className="col-start-2 min-w-0 justify-self-end">
           <CustomerStep {...props} picked={picked} />
         </div>
       </div>
