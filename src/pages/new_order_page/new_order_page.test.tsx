@@ -60,6 +60,17 @@ function setWidth(isWide: boolean) {
   resetBreakpoints();
 }
 
+function setTabletWidth() {
+  window.matchMedia = ((query: string) => ({
+    // A 768px tablet: above md, but below the lg drawer breakpoint.
+    matches: query === '(min-width: 40rem)' || query === '(min-width: 48rem)',
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  })) as unknown as typeof window.matchMedia;
+  resetBreakpoints();
+}
+
 function renderPage(element = <NewOrderPage />) {
   return render(
     <MemoryRouter initialEntries={['/orders/new']}>
@@ -491,6 +502,25 @@ describe('New order (desktop)', () => {
     expect(url).toBe('/orders/o5');
     expect(body).toMatchObject({ type: 'delivery', address: 'House 1', items: [{ itemId: 'd1', qty: 2 }] });
     expect(body.paymentStatus).toBeUndefined();
+  });
+});
+
+describe('New order (tablet)', () => {
+  beforeEach(() => setTabletWidth());
+
+  it('opens checkout as a bottom sheet instead of a centered modal at medium widths', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(screen.getByRole('button', { name: 'Add Chicken Karahi' }));
+    fireEvent.click(screen.getByRole('button', { name: /View order/ }));
+
+    const sheet = screen.getByRole('dialog', { name: 'Order' });
+    expect(sheet.className).toContain('max-h-[92dvh]');
+    expect(sheet.className).toContain('w-full');
+    expect(sheet.className).toContain('rounded-t-panel');
+    expect(sheet.className).not.toContain('sm:rounded-panel');
+    expect(sheet.parentElement?.className).toContain('justify-end');
+    expect(sheet.parentElement?.className).not.toContain('sm:items-center');
   });
 });
 

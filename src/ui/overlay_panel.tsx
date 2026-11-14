@@ -10,6 +10,11 @@ const placements = {
     enter: 'max-sm:starting:translate-y-full sm:starting:scale-97 sm:starting:opacity-0',
     exit: 'max-sm:translate-y-full sm:scale-97 sm:opacity-0',
   },
+  bottom: {
+    container: 'flex-col justify-end pt-[max(0.75rem,env(safe-area-inset-top))]',
+    enter: 'starting:translate-y-full',
+    exit: 'translate-y-full',
+  },
   right: { container: 'justify-end', enter: 'starting:translate-x-full', exit: 'translate-x-full' },
 };
 

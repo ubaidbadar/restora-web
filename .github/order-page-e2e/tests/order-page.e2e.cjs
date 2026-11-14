@@ -214,6 +214,33 @@ const test = base.extend({
   },
 });
 
+test('checkout is bottom-anchored on medium and smaller screens', async ({ app }, testInfo) => {
+  const supportedProfiles = [
+    'chromium-laptop-mouse',
+    'chromium-tablet',
+    'webkit-tablet',
+    'chromium-phone',
+    'chromium-small-phone',
+    'webkit-phone',
+  ];
+  test.skip(!supportedProfiles.includes(testInfo.project.name));
+
+  const { page } = app;
+  await addDish(page, 'Chicken Karahi');
+  await activate(page, page.getByRole('button', { name: 'View order' }));
+
+  const sheet = page.getByRole('dialog', { name: 'Order' });
+  await expect(sheet).toBeVisible();
+  const bounds = await sheet.boundingBox();
+  const viewport = page.viewportSize();
+  expect(bounds).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  expect(Math.abs(bounds.x)).toBeLessThanOrEqual(1);
+  expect(bounds.width).toBeGreaterThanOrEqual(viewport.width - 1);
+  expect(Math.abs(bounds.y + bounds.height - viewport.height)).toBeLessThanOrEqual(1);
+  expect(bounds.y).toBeGreaterThan(0);
+});
+
 test('responsive layout has no page overflow and category navigation matches the input device', async ({ app }, testInfo) => {
   const { page } = app;
   const dimensions = await page.evaluate(() => ({
