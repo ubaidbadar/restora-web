@@ -33,8 +33,6 @@ export default function MenuPickerBody({ menu, allItems, menuDensity, ...props }
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="-mb-1 text-heading text-ink">Menu</h2>
-      {/* On phones search and categories stay at the top while the dishes scroll under them. */}
       <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-2 bg-canvas px-4 py-2 sm:-mx-6 sm:px-6 md:static md:mx-0 md:gap-3 md:bg-transparent md:p-0">
         <SearchInput label="Search menu" initialValue="" delay={150} onSearch={(search) => setFilter((f) => ({ ...f, search }))} />
         <CategoryChips
