@@ -67,6 +67,10 @@ module.exports = defineConfig({
   webServer: {
     command: 'cd ../.. && corepack yarn build && corepack yarn preview --host 127.0.0.1 --port 3000',
     url: 'http://127.0.0.1:3000',
+    env: {
+      VITE_API_URL: 'https://dev.restora.live',
+      VITE_APP_URL: 'https://dev-app.restora.live',
+    },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
