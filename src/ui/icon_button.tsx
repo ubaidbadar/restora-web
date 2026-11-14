@@ -52,11 +52,13 @@ export default function IconButton<T extends ElementType = 'button'>({
   const isPending = loading || ((as === undefined || as === 'button') && pending);
   const isDisabled = disabled || isPending;
   const Component: ElementType = as || 'button';
+  const defaultType = as === undefined || as === 'button' ? 'button' : undefined;
   const iconSize = iconSizes[size];
 
   return (
     <Component
       className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
+      type={defaultType}
       disabled={isDisabled}
       aria-busy={isPending ? 'true' : undefined}
       {...props}

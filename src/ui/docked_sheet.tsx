@@ -17,15 +17,15 @@ interface DockedSheetProps {
 }
 
 /**
- * Phones and tablets keep the existing bottom sheet. Laptop-width screens use a drawer so the menu is not squeezed;
- * wide screens can keep order details in a right-hand column or open them in a drawer.
+ * Phones, tablets and compact laptop widths use a full-width bottom sheet. Larger laptop widths use a drawer so the
+ * menu is not squeezed; wide screens can keep order details in a right-hand column or open them in a drawer.
  */
 export default function DockedSheet({ label, component, children, className = '', mode = 'column' }: DockedSheetProps) {
   const { lg, xl } = useBreakpoint();
 
   if (!lg) {
     return (
-      <ModalOverlay title={label} flush component={component}>
+      <ModalOverlay title={label} flush presentation="bottom" component={component}>
         {children}
       </ModalOverlay>
     );

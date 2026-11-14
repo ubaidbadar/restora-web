@@ -54,6 +54,9 @@ Deploy the generated dist/ directory only to the matching environment. The Fireb
 | yarn build | Create the production dist/ build |
 | yarn preview | Preview the production build locally |
 | yarn verify | Run typecheck, lint, tests and build |
+| yarn qa:setup | One-time setup: install browser test tools and enable the pre-commit hook |
+| yarn qa:verify | Run all checks plus the full Chromium, Firefox and WebKit order-page suite before committing |
+| yarn qa:order | Build and run the full order-page browser suite |
 
 ## Project structure
 

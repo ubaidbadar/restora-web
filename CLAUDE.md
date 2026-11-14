@@ -63,5 +63,8 @@ Use Node >=22.12 and Yarn 1.22.22.
 - yarn test — Vitest suite.
 - yarn build — production build; VITE_API_URL is required.
 - yarn verify — typecheck, lint, tests and production build.
+- yarn qa:setup — one-time local Playwright/browser setup and pre-commit hook installation.
+- yarn qa:verify — complete pre-commit gate: yarn verify plus the full order-page browser matrix.
+- yarn qa:order — build and run the full order-page browser matrix.
 
 Copy .env.example to .env for local development. VITE_APP_URL and VITE_API_URL are public browser-build configuration; never put secrets in VITE_* variables.

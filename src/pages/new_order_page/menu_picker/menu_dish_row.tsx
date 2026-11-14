@@ -19,7 +19,7 @@ interface MenuDishRowProps {
   onQty: (key: string, qty: number) => void;
 }
 
-/** A tap adds a plain dish or opens its size and add-on choices; quantity changes stay beside the row. */
+/** A tap adds a plain dish or opens its size and add-on choices; quantity changes stay beside the row. Keep interactive rows in normal layout flow: WebKit can retain stale geometry when content-visibility:auto rows are revealed after scrolling (WebKit bug 321501). */
 export default function MenuDishRow({ dish, groups, contents, lines, onAdd, onQty }: MenuDishRowProps) {
   const hasOptions = dish.sizes.length > 1 || groups.length > 0;
   const qty = lines.reduce((sum, line) => sum + line.qty, 0);
@@ -36,7 +36,7 @@ export default function MenuDishRow({ dish, groups, contents, lines, onAdd, onQt
   );
 
   return (
-    <li className={`flex min-h-14 items-center gap-2 py-1.5 ps-3 pe-2 [content-visibility:auto] [contain-intrinsic-size:auto_3.5rem] ${qty ? 'bg-primary-soft/40' : ''}`}>
+    <li className={`flex min-h-14 items-center gap-2 py-1.5 ps-3 pe-2 ${qty ? 'bg-primary-soft/40' : ''}`}>
       {hasOptions
         ? <DishPicker dish={dish} groups={groups} contents={contents} onAdd={onAdd} component={({ open }) => trigger(open)} />
         : trigger(addDefault)}

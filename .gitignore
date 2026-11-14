@@ -8,3 +8,11 @@ dev-dist
 *.tsbuildinfo
 .env
 .firebase
+
+# Local Playwright harness and generated reports
+.github/order-page-e2e/node_modules/
+.github/order-page-e2e/playwright-report/
+.github/order-page-e2e/test-results/
+.github/authenticated-e2e/node_modules/
+.github/authenticated-e2e/playwright-report/
+.github/authenticated-e2e/test-results/

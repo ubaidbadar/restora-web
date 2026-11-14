@@ -109,23 +109,32 @@ const ME = {
   },
 };
 
+async function activate(page, locator) {
+  // Use a real touch gesture on coarse-pointer devices; mouse clicks can hide mobile tap regressions.
+  const touch = await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches);
+  if (touch) await locator.tap();
+  else await locator.click();
+}
+
 async function addDish(page, name) {
   const quickAdd = page.getByRole('button', { name: 'Add ' + name, exact: true });
   if (await quickAdd.count()) {
-    await quickAdd.click();
+    await activate(page, quickAdd);
     return;
   }
-  await page.getByRole('button').filter({ hasText: name }).first().click();
+  const dishButton = page.getByRole('button', { name: new RegExp('^' + name + '(?:\\s|$)') }).first();
+  await activate(page, dishButton);
 }
 
-async function chooseRadio(scope, name) {
-  await scope.getByRole('radio', { name, exact: true }).check({ force: true });
+async function chooseRadio(page, scope, name) {
+  // Activate the visible label, not the clipped sr-only radio input.
+  await activate(page, scope.getByText(name, { exact: true }));
 }
 
 async function openCheckout(page) {
   const desktopCheckout = page.getByRole('complementary', { name: 'Checkout' });
   if (await desktopCheckout.count() && await desktopCheckout.isVisible()) return desktopCheckout;
-  await page.getByRole('button', { name: 'View order' }).click();
+  await activate(page, page.getByRole('button', { name: 'View order' }));
   const sheet = page.getByRole('dialog', { name: 'Order' });
   await expect(sheet).toBeVisible();
   return sheet;
@@ -205,6 +214,33 @@ const test = base.extend({
   },
 });
 
+test('checkout is bottom-anchored on medium and smaller screens', async ({ app }, testInfo) => {
+  const supportedProfiles = [
+    'chromium-laptop-mouse',
+    'chromium-tablet',
+    'webkit-tablet',
+    'chromium-phone',
+    'chromium-small-phone',
+    'webkit-phone',
+  ];
+  test.skip(!supportedProfiles.includes(testInfo.project.name));
+
+  const { page } = app;
+  await addDish(page, 'Chicken Karahi');
+  await activate(page, page.getByRole('button', { name: 'View order' }));
+
+  const sheet = page.getByRole('dialog', { name: 'Order' });
+  await expect(sheet).toBeVisible();
+  const bounds = await sheet.boundingBox();
+  const viewport = page.viewportSize();
+  expect(bounds).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  expect(Math.abs(bounds.x)).toBeLessThanOrEqual(1);
+  expect(bounds.width).toBeGreaterThanOrEqual(viewport.width - 1);
+  expect(Math.abs(bounds.y + bounds.height - viewport.height)).toBeLessThanOrEqual(1);
+  expect(bounds.y).toBeGreaterThan(0);
+});
+
 test('responsive layout has no page overflow and category navigation matches the input device', async ({ app }, testInfo) => {
   const { page } = app;
   const dimensions = await page.evaluate(() => ({
@@ -243,7 +279,7 @@ test('responsive layout has no page overflow and category navigation matches the
 
 test('category filters work across a large real-menu-shaped catalogue', async ({ app }) => {
   const { page } = app;
-  await chooseRadio(page, 'Pizza');
+  await chooseRadio(page, page, 'Pizza');
   await expect(page.getByRole('button').filter({ hasText: 'Dish 25' }).first()).toBeVisible();
   await expect(page.getByRole('button').filter({ hasText: 'Chicken Karahi' })).toHaveCount(0);
 });
@@ -265,12 +301,12 @@ test('size and add-on picker calculates the selected dish price', async ({ app }
   await expect(biryani).toBeVisible();
   // iPad WebKit can still be settling content-visibility:auto after an automatic scroll.
   await page.waitForTimeout(150);
-  await biryani.click();
+  await activate(page, biryani);
   const dialog = page.getByRole('dialog', { name: 'Biryani' });
   await expect(dialog).toBeVisible();
-  await chooseRadio(dialog, 'Full · Rs 550');
-  await dialog.getByRole('button', { name: /Raita/ }).click();
-  await dialog.getByRole('button', { name: 'Add · Rs 600' }).click();
+  await chooseRadio(page, dialog, 'Full · Rs 550');
+  await activate(page, dialog.getByRole('button', { name: /Raita/ }));
+  await activate(page, dialog.getByRole('button', { name: 'Add · Rs 600' }));
   await expect(dialog).toHaveCount(0);
   await expect(page.getByText('Rs 600').first()).toBeVisible();
 });
@@ -280,7 +316,7 @@ test('quantity changes update the order line and checkout total', async ({ app }
   await addDish(page, 'Chicken Karahi');
   const plus = page.getByRole('button', { name: 'One more Chicken Karahi' });
   if (await plus.count()) {
-    await plus.click();
+    await activate(page, plus);
   } else {
     await addDish(page, 'Chicken Karahi');
   }
@@ -292,15 +328,15 @@ test('customer picker is a separate searchable modal and selection collapses to 
   const { page } = app;
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
-  await checkout.getByRole('button', { name: 'Add customer' }).click();
+  await activate(page, checkout.getByRole('button', { name: 'Add customer' }));
 
   const customerDialog = page.getByRole('dialog', { name: 'Select customer' });
   await expect(customerDialog).toBeVisible();
   await customerDialog.getByRole('combobox', { name: 'Find customer by phone number or name' }).fill('ali');
-  await customerDialog.getByRole('option', { name: /Ali Raza/ }).click();
+  await activate(page, customerDialog.getByRole('option', { name: /Ali Raza/ }));
   await expect(checkout.getByRole('button', { name: 'Remove Ali Raza' })).toBeVisible();
   await expect(customerDialog).toHaveCount(0);
-  await chooseRadio(checkout, 'Khata');
+  await chooseRadio(page, checkout, 'Khata');
   await expect(checkout.getByRole('radio', { name: 'Cash', exact: true })).toBeVisible();
   await expect(checkout.getByText(/Khata needs a saved customer/)).toHaveCount(0);
 });
@@ -309,12 +345,12 @@ test('saved customer delivery address is prefilled and remains editable', async 
   const { page } = app;
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
-  await checkout.getByRole('button', { name: 'Add customer' }).click();
+  await activate(page, checkout.getByRole('button', { name: 'Add customer' }));
 
   const customerDialog = page.getByRole('dialog', { name: 'Select customer' });
   await customerDialog.getByRole('combobox', { name: 'Find customer by phone number or name' }).fill('ali');
-  await customerDialog.getByRole('option', { name: /Ali Raza/ }).click();
-  await chooseRadio(checkout, 'Delivery');
+  await activate(page, customerDialog.getByRole('option', { name: /Ali Raza/ }));
+  await chooseRadio(page, checkout, 'Delivery');
 
   const address = checkout.getByLabel('Complete address');
   await expect(address).toHaveValue(/House 17/);
@@ -344,8 +380,8 @@ test('fixed service charge and payment-method tax recalculate without stale valu
   await expect(checkout.getByText('Service charge', { exact: true })).toBeVisible();
   await expect(checkout.getByText('Rs 1,075')).toBeVisible();
 
-  await chooseRadio(checkout, 'Paid now');
-  await chooseRadio(checkout, 'Cash');
+  await chooseRadio(page, checkout, 'Paid now');
+  await chooseRadio(page, checkout, 'Cash');
   await expect(checkout.getByText('Tax (15%)')).toBeVisible();
   await expect(checkout.getByText('Rs 1,225')).toBeVisible();
 });
@@ -356,17 +392,17 @@ test('changing order type removes stale table and delivery-only fields from the 
   const checkout = await openCheckout(page);
 
   await checkout.getByLabel('Table').selectOption('table-8');
-  await chooseRadio(checkout, 'Delivery');
+  await chooseRadio(page, checkout, 'Delivery');
   await expect(checkout.getByRole('region', { name: 'Service charge' })).toHaveCount(0);
   await expect(checkout.getByLabel('Delivery fee (Rs)')).toBeVisible();
   await checkout.getByLabel('Complete address').fill('House 5, Main Road');
   await checkout.getByLabel('Rider').fill('Ahmed');
   await checkout.getByLabel('Delivery fee (Rs)').fill('150');
-  await chooseRadio(checkout, 'Takeaway');
+  await chooseRadio(page, checkout, 'Takeaway');
   await expect(checkout.getByRole('region', { name: 'Service charge' })).toHaveCount(0);
   await expect(checkout.getByLabel('Delivery fee (Rs)')).toHaveCount(0);
 
-  await checkout.getByRole('button', { name: 'Place order' }).click();
+  await activate(page, checkout.getByRole('button', { name: 'Place order' }));
   await expect(page).toHaveURL(/\/orders$/);
   const orderWrite = writes.find((write) => write.method === 'POST' && write.path === '/orders');
   expect(orderWrite).toBeTruthy();
@@ -382,7 +418,7 @@ test('dine-in cannot be submitted until a table is selected', async ({ app }) =>
   const { page, writes } = app;
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
-  await checkout.getByRole('button', { name: 'Place order' }).click();
+  await activate(page, checkout.getByRole('button', { name: 'Place order' }));
   await expect(checkout.getByText('Pick the table')).toBeVisible();
   expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(0);
 });
@@ -392,9 +428,15 @@ test('rapid double activation cannot create duplicate orders', async ({ app }, t
   test.skip(!['chromium-desktop', 'chromium-phone'].includes(testInfo.project.name));
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
-  await chooseRadio(checkout, 'Takeaway');
+  await chooseRadio(page, checkout, 'Takeaway');
   const place = checkout.getByRole('button', { name: 'Place order' });
-  await place.dblclick({ timeout: 5_000 }).catch(() => {});
+  const touch = await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches);
+  if (touch) {
+    await activate(page, place);
+    await place.tap({ timeout: 1_000 }).catch(() => {});
+  } else {
+    await place.dblclick({ timeout: 5_000 }).catch(() => {});
+  }
   await expect(page).toHaveURL(/\/orders$/, { timeout: 15_000 });
   expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(1);
 });
@@ -457,7 +499,7 @@ test('menu, checkout and customer picker have no serious WCAG 2.2 A/AA axe viola
   const checkout = await openCheckout(page);
   await assertAccessible();
 
-  await checkout.getByRole('button', { name: 'Add customer' }).click();
+  await activate(page, checkout.getByRole('button', { name: 'Add customer' }));
   await expect(page.getByRole('dialog', { name: 'Select customer' })).toBeVisible();
   await assertAccessible();
 });
