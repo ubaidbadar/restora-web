@@ -1,11 +1,10 @@
-import { Route, Routes } from 'react-router';
+import { Lock } from 'lucide-react';
+import { matchRoutes, Navigate, useLocation, useRoutes } from 'react-router';
+import type { RouteObject } from 'react-router';
+import type RouteAccess from './types/route_access';
+import resolveRouteAccess from './utils/resolve_route_access';
+import replaceRouteElement from './utils/replace_route_element';
 import AppLayout from './hoc/app_layout';
-import GuestOnly from './hoc/guest_only';
-import RequireAuth from './hoc/require_auth';
-import RequirePermission from './hoc/require_permission';
-import RequireRestaurant from './hoc/require_restaurant';
-import RequireSetup from './hoc/require_setup';
-import RequireWeb from './hoc/require_web';
 import AccountsPage from './pages/accounts_page';
 import CustomerPage from './pages/customer_page';
 import CustomersImportPage from './pages/customers_import_page';
@@ -35,11 +34,152 @@ import VerifyEmailPage from './pages/verify_email_page';
 import WelcomePage from './pages/welcome_page';
 import useAuthStore from './store/auth_store';
 import BrandLoader from './ui/brand_loader';
+import EmptyState from './components/empty_state';
 import InstallPromotion from './components/install_promotion';
 
-/** Every page and who may open it. The server checks again on every request. */
+/**
+ * Route access lives beside the route it protects. Pathless routes group shared policy without
+ * adding wrapper components or independent auth/workplace subscriptions.
+ */
+const routes: RouteObject[] = [
+  // Public pages.
+  { path: 't/:code', element: <TableMenuPage /> },
+  { path: 'invite/:token', element: <InvitePage /> },
+  { path: 'verify-email', element: <VerifyEmailPage /> },
+  { path: 'reset-password', element: <ResetPasswordPage /> },
+  { path: 'pos', element: <PosPage /> },
+
+  // Sign-in pages are public unless this account is already signed in. ?add=1 deliberately allows account addition.
+  {
+    handle: { guestOnly: true } satisfies RouteAccess,
+    children: [
+      { path: 'login', element: <LoginPage /> },
+      { path: 'signup', element: <SignupPage /> },
+    ],
+  },
+
+  {
+    handle: { auth: true } satisfies RouteAccess,
+    children: [
+      {
+        handle: { web: true } satisfies RouteAccess,
+        children: [
+          { path: 'accounts', element: <AccountsPage /> },
+          { path: 'restaurants', element: <RestaurantsPage /> },
+          { path: 'onboarding', element: <OnboardingPage /> },
+          {
+            handle: { restaurant: true } satisfies RouteAccess,
+            children: [
+              {
+                path: 'welcome',
+                element: <WelcomePage />,
+                handle: { permission: 'settings:manage' } satisfies RouteAccess,
+              },
+              {
+                path: 'print/tables',
+                element: <PrintTablesPage />,
+                handle: { permission: 'tables:manage' } satisfies RouteAccess,
+              },
+            ],
+          },
+        ],
+      },
+
+      {
+        handle: { restaurant: true } satisfies RouteAccess,
+        children: [
+          {
+            handle: { setup: true } satisfies RouteAccess,
+            element: <AppLayout />,
+            children: [
+              {
+                index: true,
+                element: <DashboardPage />,
+                handle: { permission: 'reports:view', permissionRedirect: '/orders' } satisfies RouteAccess,
+              },
+              {
+                handle: { permission: 'orders:view' } satisfies RouteAccess,
+                children: [
+                  { path: 'orders', element: <OrdersPage /> },
+                  { path: 'whatsapp', element: <WhatsAppPage /> },
+                ],
+              },
+              {
+                path: 'orders/new',
+                element: <NewOrderPage />,
+                handle: { permission: 'orders:create' } satisfies RouteAccess,
+              },
+              {
+                path: 'orders/:id/edit',
+                element: <EditOrderPage />,
+                handle: { permission: 'orders:update' } satisfies RouteAccess,
+              },
+              {
+                path: 'reservations',
+                element: <ReservationsPage />,
+                handle: { permission: 'reservations:view' } satisfies RouteAccess,
+              },
+              {
+                path: 'tables',
+                element: <TablesPage />,
+                handle: { permission: 'tables:view' } satisfies RouteAccess,
+              },
+              {
+                path: 'menu',
+                element: <MenuPage />,
+                handle: { permission: 'menu:view' } satisfies RouteAccess,
+              },
+              {
+                handle: { permission: 'customers:view' } satisfies RouteAccess,
+                children: [
+                  { path: 'customers', element: <CustomersPage /> },
+                  { path: 'customers/:id', element: <CustomerPage /> },
+                  { path: 'khata', element: <KhataPage /> },
+                ],
+              },
+              {
+                path: 'customers/import',
+                element: <CustomersImportPage />,
+                handle: { permission: 'customers:import' } satisfies RouteAccess,
+              },
+              {
+                handle: { web: true } satisfies RouteAccess,
+                children: [
+                  { path: 'settings', element: <SettingsPage /> },
+                  { path: 'settings/:section', element: <SettingsPage /> },
+                ],
+              },
+              { path: 'more', element: <MorePage /> },
+              { path: '*', element: <NotFoundPage /> },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+];
+
+/** Resolves route access from one auth snapshot; the server remains the security boundary. */
 export default function App() {
-  const loading = useAuthStore((state) => state.me === undefined);
+  const auth = useAuthStore();
+  const { me, terminal } = auth;
+  const location = useLocation();
+  const loading = me === undefined;
+
+  const matches = matchRoutes(routes, location) ?? [];
+  const decision = resolveRouteAccess(
+    matches.map(({ route }) => route.handle as RouteAccess | undefined),
+    { me, terminal, pathname: location.pathname, search: location.search },
+  );
+  const deniedRoute = decision.type === 'forbidden' ? matches[decision.matchIndex]?.route : undefined;
+  const renderRoutes = deniedRoute
+    ? replaceRouteElement(
+        routes,
+        deniedRoute,
+        <EmptyState icon={Lock} titleAs="h1" title="Not for your role" text="Ask the owner or a manager if you need this page." />,
+      )
+    : routes;
+  const content = useRoutes(renderRoutes);
 
   return (
     <>
@@ -49,81 +189,10 @@ export default function App() {
         <div className="grid min-h-dvh place-items-center">
           <BrandLoader />
         </div>
+      ) : decision.type === 'redirect' ? (
+        <Navigate to={decision.to} replace />
       ) : (
-        <Routes>
-          {/* Open to anyone. */}
-          <Route path="t/:code" element={<TableMenuPage />} />
-          <Route path="invite/:token" element={<InvitePage />} />
-          <Route path="verify-email" element={<VerifyEmailPage />} />
-          <Route path="reset-password" element={<ResetPasswordPage />} />
-          <Route path="pos" element={<PosPage />} />
-
-          <Route element={<GuestOnly />}>
-            <Route path="login" element={<LoginPage />} />
-            <Route path="signup" element={<SignupPage />} />
-          </Route>
-
-          <Route element={<RequireAuth />}>
-            <Route element={<RequireWeb />}>
-              <Route path="accounts" element={<AccountsPage />} />
-              <Route path="restaurants" element={<RestaurantsPage />} />
-              <Route path="onboarding" element={<OnboardingPage />} />
-              <Route element={<RequireRestaurant />}>
-                <Route element={<RequirePermission permission="settings:manage" />}>
-                  <Route path="welcome" element={<WelcomePage />} />
-                </Route>
-                <Route element={<RequirePermission permission="tables:manage" />}>
-                  <Route path="print/tables" element={<PrintTablesPage />} />
-                </Route>
-              </Route>
-            </Route>
-
-            <Route element={<RequireRestaurant />}>
-              <Route element={<RequireSetup />}>
-                <Route element={<AppLayout />}>
-                  <Route element={<RequirePermission permission="reports:view" redirect="/orders" />}>
-                    <Route index element={<DashboardPage />} />
-                  </Route>
-                  <Route element={<RequirePermission permission="orders:view" />}>
-                    <Route path="orders" element={<OrdersPage />} />
-                  </Route>
-                  <Route element={<RequirePermission permission="orders:view" />}>
-                    <Route path="whatsapp" element={<WhatsAppPage />} />
-                  </Route>
-                  <Route element={<RequirePermission permission="orders:create" />}>
-                    <Route path="orders/new" element={<NewOrderPage />} />
-                  </Route>
-                  <Route element={<RequirePermission permission="orders:update" />}>
-                    <Route path="orders/:id/edit" element={<EditOrderPage />} />
-                  </Route>
-                  <Route element={<RequirePermission permission="reservations:view" />}>
-                    <Route path="reservations" element={<ReservationsPage />} />
-                  </Route>
-                  <Route element={<RequirePermission permission="tables:view" />}>
-                    <Route path="tables" element={<TablesPage />} />
-                  </Route>
-                  <Route element={<RequirePermission permission="menu:view" />}>
-                    <Route path="menu" element={<MenuPage />} />
-                  </Route>
-                  <Route element={<RequirePermission permission="customers:view" />}>
-                    <Route path="customers" element={<CustomersPage />} />
-                    <Route path="customers/:id" element={<CustomerPage />} />
-                    <Route path="khata" element={<KhataPage />} />
-                  </Route>
-                  <Route element={<RequirePermission permission="customers:import" />}>
-                    <Route path="customers/import" element={<CustomersImportPage />} />
-                  </Route>
-                  <Route element={<RequireWeb />}>
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="settings/:section" element={<SettingsPage />} />
-                  </Route>
-                  <Route path="more" element={<MorePage />} />
-                  <Route path="*" element={<NotFoundPage />} />
-                </Route>
-              </Route>
-            </Route>
-          </Route>
-        </Routes>
+        content
       )}
     </>
   );

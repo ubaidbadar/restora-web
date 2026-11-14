@@ -90,13 +90,11 @@ must reconcile missed events. Before adding any request, check whether the data 
   Page-only zod schemas go in `schema.ts` (or `<name>_schema.ts` when there are several).
 - `components/`: UI used by two or more components (including `can.tsx`, `load_failed.tsx`, `skeleton_list.tsx`, `skeleton_grid.tsx`, the switchers).
 - `ui/`: design-system primitives (button, input, select, textarea, checkbox, radio, toggle, modal, drawer, tabs, `form/`).
-- `hoc/`: genuine wrapping UI components such as `withOverlay` and `app_layout/`. The current tree also contains
-  legacy `Require*` route wrappers; do not add more. The current startup loading gate is in `app.tsx`; do not mount
-  a second `BootGate` around it. Consolidate startup gating only as part of a deliberate migration.
-- Route access is owned by `src/app.tsx`. Do not stack per-condition route wrappers or create a guard component for
-  each access condition. The existing `Require*` wrappers are migration debt until the route refactor is implemented;
-  preserve them in unrelated changes. During that refactor, resolve route requirements from one auth/workplace snapshot
-  in `App`, use pure `can(workplace, permission)` for route permissions, and preserve current redirects and guest/POS/setup behavior.
+- `hoc/`: genuine wrapping UI components such as `withOverlay` and the authenticated `app_layout/`. Route access is
+  not an HOC: keep it declarative in `src/app.tsx` route metadata. Do not add route-guard HOCs or a second startup gate.
+- Route access is resolved in `App` from one auth-store snapshot and the matched routes' `handle` metadata. Use pure
+  `can(workplace, permission)` from `@shared/can` for permissions. Keep the denied state at the matched route so its
+  parent layout remains mounted; keep redirects and public/guest/POS/setup behavior covered by tests.
 - `hooks/`: reusable hooks, including `useGet` for screen-owned API reads and the named store hooks (`useWorkplace`,
   `useRestaurantSettings`, `useCan`, `useNavLinks`). Direct API reads are reserved for the documented bootstrap,
   live-update and explicit background/imperative workflows.
@@ -194,23 +192,21 @@ must reconcile missed events. Before adding any request, check whether the data 
 - Payments and khata are online only: they change what customers owe.
 
 ## Routing and route access
-- `src/app.tsx` is the single source of truth for route definitions and route-level access policy.
-- Do not stack nested `<Route element={<RequireAuth />}/>`, `<RequireWeb />`, `<RequireRestaurant />`,
-  `<RequireSetup />` or `<RequirePermission />` wrappers. Do not create a separate guard component for each access
-  condition.
-- The current route tree still uses legacy `Require*` wrappers. Do not add to that pattern or remove those wrappers
-  during unrelated work. Replace them only in a deliberate routing migration, with behavior tests and a review of every
-  existing route.
-- In the centralized implementation, read the auth/workplace snapshot once in `App` for route decisions. Do not let
-  individual route guards subscribe to `useWorkplace()` or `useCan()`. Derive the workplace from the `me` snapshot or
-  call the workplace hook once in `App`; use pure `can(workplace, permission)` from `@shared/can` for route permissions.
-- Keep access requirements declarative beside the route definitions and resolve them through one policy path. Do not
-  maintain a second path-to-permission table that can drift from the routes.
-- Preserve current behavior during the migration: safe `next` redirects, the guest `?add=1` exception, locked POS
-  terminal handling, web/POS mode restrictions, restaurant selection, onboarding/setup redirects, permission-denied
-  redirects and not-allowed states, public table/invitation/auth routes, and the not-found route.
-- Route checks are client navigation and UI gating only. The backend remains authoritative and must enforce every
-  permission and tenant boundary.
+- `src/app.tsx` is the single source of truth for route definitions and route-level access policy. Attach typed
+  `RouteAccess` metadata to route objects through `handle`; pathless route groups inherit shared requirements without
+  rendering wrapper components.
+- `App` reads the auth store once, matches the current location against that same route tree, and passes the matched
+  policies to the pure `resolveRouteAccess` helper. Do not create per-route guard components or subscribe to
+  `useWorkplace()`/`useCan()` for route decisions.
+- `resolveRouteAccess` uses the matched route order so nested requirements retain their intended precedence. It uses
+  the current `me` snapshot and pure `can(workplace, permission)` from `@shared/can`; it never calls the API.
+- Permission-denied pages replace only the matched route element, preserving its parent layout (for example, the
+  authenticated app shell). Redirect-only permissions keep their configured destination.
+- Preserve safe `next` redirects, the guest `?add=1` exception, locked POS terminal handling, web/POS mode
+  restrictions, restaurant selection, owner setup redirects, permission redirects and not-allowed states, public
+  table/invitation/auth routes, and the not-found route. Add or update resolver tests when route policy changes.
+- The backend remains authoritative and must enforce every permission and tenant boundary; client route checks are
+  navigation and UI gating only.
 - Page components may still use `useWorkplace()`, `useRestaurantSettings()` or `useCan()` when they need that data
   for their own UI or business logic. The single-snapshot rule applies to route-level decisions, not page behavior.
 
@@ -288,5 +284,5 @@ Every field follows the pattern of `ui/input.tsx` and `ui/select.tsx`:
 - Before finishing: `yarn typecheck`, `yarn lint`, `yarn test` and `yarn build` pass, and a search finds none of: `get()` after a
   write, `useGet` inside rows, the same URL loaded twice on one screen, `me` in an answer the client could work out,
   `useAuthStore((state) => state.me?.workplace…)` in a component, route-level `useWorkplace()`/`useCan()` calls in
-  separate guard components, newly added nested per-condition `Require*` wrappers, one-line wrapper functions, helper
+  separate route-guard components or duplicate path-to-permission tables, one-line wrapper functions, helper
   files that only one file uses, and fake production/demo fallback records.
