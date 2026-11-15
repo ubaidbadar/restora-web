@@ -374,6 +374,41 @@ describe('New order (desktop)', () => {
     expect(mocked.post.mock.calls[0]![1]).toMatchObject({ customerId: 'cu1' });
   });
 
+  it('saving a new customer does not submit the parent order', async () => {
+    const customer = {
+      _id: 'cu-new',
+      name: 'New Customer',
+      phone: '+923217654321',
+      tags: [],
+      khataBalance: 0,
+      orderCount: 0,
+      totalSpent: 0,
+      createdAt: '2026-11-16',
+    };
+    mocked.post.mockImplementation(async (url: string, body: Record<string, unknown>) => ({
+      data: url === '/customers' ? customer : { _id: 'srv-new-order', dailyToken: 73, ...body },
+    }));
+
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+    fireEvent.change(customerSearch(), { target: { value: '0321 7654321' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Add “0321-7654321” as a new customer/ }));
+    fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'New Customer' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Save and pick' }));
+
+    expect(await screen.findByRole('button', { name: 'Remove New Customer' })).toBeTruthy();
+    expect(mocked.post).toHaveBeenCalledTimes(1);
+    expect(mocked.post.mock.calls[0]![0]).toBe('/customers');
+    expect(screen.queryByText('Orders board')).toBeNull();
+
+    placeOrder();
+    await screen.findByText('Orders board');
+    expect(mocked.post).toHaveBeenCalledTimes(2);
+    expect(mocked.post.mock.calls[1]![0]).toBe('/orders');
+    expect(mocked.post.mock.calls[1]![1]).toMatchObject({ customerId: 'cu-new', newName: 'New Customer' });
+  });
+
   it('a number nobody has opens the new customer form with it filled in', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
