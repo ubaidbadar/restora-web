@@ -91,7 +91,7 @@ export default function DishesTab({ menu, onUpdate }: MenuTabProps) {
           <DishRow
             dish={dish}
             menu={menu}
-            priority={priorities.get(dish._id)?.priority ?? 1}
+            priority={priorities.get(dish._id) ?? 1}
             onSaved={save}
             onMenuSaved={(items) => onUpdate({ items })}
             onDeleted={() => onUpdate({ items: menu.items.filter((item) => item._id !== dish._id) })}

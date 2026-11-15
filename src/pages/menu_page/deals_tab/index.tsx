@@ -84,7 +84,7 @@ export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
         renderRow={(deal) => <DealRow
           deal={deal}
           menu={menu}
-          priority={priorities.get(deal._id)?.priority ?? 1}
+          priority={priorities.get(deal._id) ?? 1}
           onSaved={save}
           onMenuSaved={(items) => onUpdate({ items })}
           onDeleted={() => onUpdate({ items: menu.items.filter((item) => item._id !== deal._id) })}

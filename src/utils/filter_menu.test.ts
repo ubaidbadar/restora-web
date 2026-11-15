@@ -54,7 +54,7 @@ describe('menu item priorities', () => {
     const legacyMenu = { ...menu, items: legacyItems };
     expect(filterMenu(legacyMenu, '', ALL_CATEGORIES).map((dish) => dish._id)).toEqual(['first', 'second']);
     const priorities = menuItemPriorities(legacyItems);
-    expect(priorities.get('first')).toEqual({ priority: 1, count: 2 });
-    expect(priorities.get('second')).toEqual({ priority: 2, count: 2 });
+    expect(priorities.get('first')).toBe(1);
+    expect(priorities.get('second')).toBe(2);
   });
 });

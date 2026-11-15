@@ -24,6 +24,7 @@ describe('dishSchema', () => {
     const data = {
       name: 'Mutton Karahi',
       categoryId: 'cat_123',
+      priority: 1,
       sizes: [{ name: '', price: '2200' }],
       addonGroupIds: [],
       hidden: false,
@@ -37,6 +38,7 @@ describe('dishSchema', () => {
     const data = {
       name: 'Beef Boti',
       categoryId: 'cat_123',
+      priority: 1,
       photo: null,
       sizes: [{ name: '', price: '800' }],
       addonGroupIds: [],
