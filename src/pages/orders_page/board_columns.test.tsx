@@ -147,7 +147,7 @@ describe('Orders board', () => {
     render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
     fireEvent.click(await screen.findByLabelText('Mark order as complete'));
-    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\b/ }));
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/orders/a/payment', { paymentMethod: 'cash' }));
     await waitFor(() => expect(api.request).toHaveBeenCalledWith({
@@ -165,7 +165,7 @@ describe('Orders board', () => {
     render(<MemoryRouter><BoardColumns orders={ORDERS} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
     fireEvent.click(await screen.findByLabelText('Mark order as complete'));
-    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\b/ }));
 
     await waitFor(() => expect(api.post).toHaveBeenCalledOnce());
     expect(api.request).not.toHaveBeenCalled();
@@ -186,7 +186,7 @@ describe('Orders board', () => {
     render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
     fireEvent.click(await screen.findByLabelText('Mark order as complete'));
-    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\b/ }));
 
     await waitFor(() => expect(api.request).toHaveBeenCalledOnce());
     expect(useOutboxStore.getState().items).toHaveLength(0);
@@ -203,7 +203,7 @@ describe('Orders board', () => {
     render(<MemoryRouter><BoardColumns orders={ORDERS} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
     fireEvent.click(await screen.findByLabelText('Mark order as complete'));
-    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\b/ }));
 
     await waitFor(() => expect(api.request).toHaveBeenCalledTimes(2));
     expect(useOutboxStore.getState().items).toHaveLength(1);
@@ -225,7 +225,7 @@ describe('Orders board', () => {
     render(<MemoryRouter><BoardColumns orders={ORDERS} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
     fireEvent.click(await screen.findByLabelText('Mark order as complete'));
-    const cash = screen.getByRole('button', { name: /^Cash\\b/ });
+    const cash = screen.getByRole('button', { name: /^Cash\b/ });
     fireEvent.click(cash);
 
     expect(cash).toBeDisabled();
