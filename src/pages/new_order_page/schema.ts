@@ -7,7 +7,7 @@ import PAYMENT_STATUSES from '../../constants/payment_statuses';
 
 /**
  * A cart line (types/cart_item). The server calculates the menu price from the ids; `price` is sent only when staff
- * explicitly override it for this order. `menuPrice` stays client-side for offline previews and edit comparisons.
+ * explicitly override it for this order. `menuPrice` and `savedPrice` stay client-side for previews and deliberate edit comparisons.
  */
 const orderItem = z.object({
   itemId: z.string(),
