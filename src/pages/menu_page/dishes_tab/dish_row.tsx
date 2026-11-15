@@ -62,7 +62,7 @@ export default function DishRow({ dish, menu, priority, onSaved, onMenuSaved, on
           schema={dishSchema}
           defaultValues={dishFormValues(dish, priority)}
           onSave={(values) => api.patch(`/menu/items/${dish._id}`, values).then((res) => onMenuSaved(res.data.items))}
-          fields={(form) => <DishFields menu={menu} {...form} />}
+          fields={(form) => <DishFields menu={menu} itemId={dish._id} {...form} />}
           component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${dish.name}`} onClick={open} />}
         />
         <AlertModal

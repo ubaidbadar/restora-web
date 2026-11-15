@@ -70,7 +70,7 @@ export default function DishesTab({ menu, onUpdate }: MenuTabProps) {
           <FormDrawer
             title="Add dish"
             schema={dishSchema}
-            defaultValues={{ categoryId: category === ALL_CATEGORIES ? '' : category, priority: menu.items.length + 1, sizes: [{ name: '', price: '' }], addonGroupIds: [], hidden: false, photo: undefined }}
+            defaultValues={{ categoryId: category === ALL_CATEGORIES ? '' : category, priority: category === ALL_CATEGORIES ? 1 : menu.items.filter((item) => item.categoryId === category).length + 1, sizes: [{ name: '', price: '' }], addonGroupIds: [], hidden: false, photo: undefined }}
             onSave={(values) => api.post('/menu/items', values).then((res) => onUpdate({ items: res.data.items }))}
             fields={(form) => <DishFields menu={menu} {...form} />}
             component={({ open }) => (

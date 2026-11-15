@@ -12,10 +12,14 @@ import SizeRows from './size_rows';
 
 interface DishFieldsProps extends FormComponentProps {
   menu: Menu;
+  itemId?: string;
 }
 
-export default function DishFields({ menu, ...form }: DishFieldsProps) {
-  const { register, errors } = form;
+export default function DishFields({ menu, itemId, ...form }: DishFieldsProps) {
+  const { register, errors, watch, setValue } = form;
+  const categoryId = String(watch('categoryId') ?? '');
+  const priorityLimit = menu.items.filter((item) => item.categoryId === categoryId && item._id !== itemId).length + 1;
+  const categoryField = register('categoryId');
   return (
     <>
       <DishPhotoField {...form} />
@@ -25,10 +29,14 @@ export default function DishFields({ menu, ...form }: DishFieldsProps) {
         required
         placeholder="Pick a category"
         options={menu.categories.map((category) => ({ value: category._id, label: category.name }))}
-        {...register('categoryId')}
+        {...categoryField}
+        onChange={(event) => {
+          void categoryField.onChange(event);
+          setValue('priority', menu.items.filter((item) => item.categoryId === event.target.value && item._id !== itemId).length + 1, { shouldDirty: true, shouldValidate: true });
+        }}
         error={fieldError(errors, 'categoryId')}
       />
-      <Input label="Display priority" type="number" min={1} max={10000} step={1} required {...register('priority')} error={fieldError(errors, 'priority')} />
+      <Input label="Display priority" type="number" min={1} max={priorityLimit} step={1} required {...register('priority')} error={fieldError(errors, 'priority')} />
       <p className="-mt-2 text-sm text-muted">Lower numbers appear first within this category.</p>
       <SizeRows {...form} />
       {menu.addonGroups.length > 0 && (

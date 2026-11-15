@@ -77,7 +77,7 @@ export default function DealRow({ deal, menu, priority, onSaved, onMenuSaved, on
           schema={dealSchema}
           defaultValues={dealFormValues(deal, priority)}
           onSave={(values) => api.patch(`/menu/items/${deal._id}`, values).then((res) => onMenuSaved(res.data.items))}
-          fields={(form) => <DealFields menu={menu} {...form} />}
+          fields={(form) => <DealFields menu={menu} itemId={deal._id} {...form} />}
           component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${deal.name}`} onClick={open} />}
         />
         <AlertModal

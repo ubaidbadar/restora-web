@@ -50,7 +50,7 @@ export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
             schema={dealSchema}
             defaultValues={{
               categoryId: defaultCategoryId,
-              priority: menu.items.length + 1,
+              priority: menu.items.filter((item) => item.categoryId === defaultCategoryId).length + 1,
               price: '',
               includes: [{ itemId: '', sizeId: '', qty: '1' }],
               addonGroupIds: [],

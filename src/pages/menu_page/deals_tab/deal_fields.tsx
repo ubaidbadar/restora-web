@@ -23,11 +23,15 @@ const DAYS = [
 
 interface DealFieldsProps extends FormComponentProps {
   menu: Menu;
+  itemId?: string;
 }
 
 /** A deal: name, category and price, the dishes in it, choices (add-on groups such as the drink), and when it is sold. */
-export default function DealFields({ menu, ...form }: DealFieldsProps) {
-  const { register, errors } = form;
+export default function DealFields({ menu, itemId, ...form }: DealFieldsProps) {
+  const { register, errors, watch, setValue } = form;
+  const categoryId = String(watch('categoryId') ?? '');
+  const priorityLimit = menu.items.filter((item) => item.categoryId === categoryId && item._id !== itemId).length + 1;
+  const categoryField = register('categoryId');
   return (
     <>
       <DishPhotoField {...form} />
@@ -37,10 +41,14 @@ export default function DealFields({ menu, ...form }: DealFieldsProps) {
         required
         placeholder="Pick a category"
         options={menu.categories.map((category) => ({ value: category._id, label: category.name }))}
-        {...register('categoryId')}
+        {...categoryField}
+        onChange={(event) => {
+          void categoryField.onChange(event);
+          setValue('priority', menu.items.filter((item) => item.categoryId === event.target.value && item._id !== itemId).length + 1, { shouldDirty: true, shouldValidate: true });
+        }}
         error={fieldError(errors, 'categoryId')}
       />
-      <Input label="Display priority" type="number" min={1} max={10000} step={1} required {...register('priority')} error={fieldError(errors, 'priority')} />
+      <Input label="Display priority" type="number" min={1} max={priorityLimit} step={1} required {...register('priority')} error={fieldError(errors, 'priority')} />
       <p className="-mt-2 text-sm text-muted">Lower numbers appear first within this category.</p>
       <Input label="Deal price (Rs)" required inputMode="numeric" {...register('price')} error={fieldError(errors, 'price')} />
       <DealPartRows dishes={menu.items.filter((item) => !item.includes?.length)} {...form} />
