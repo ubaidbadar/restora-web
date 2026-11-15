@@ -82,6 +82,10 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
       onOrderUpdated?.(updated);
       if (completionWarning) {
         toast.warning(completionWarning);
+      } else if (markComplete && canComplete && paymentStatus === 'khata') {
+        toast.success(`Order #${order.dailyToken} added to khata and marked complete`);
+      } else if (markComplete && canComplete) {
+        toast.success(`Order #${order.dailyToken} paid by ${PAYMENT_LABELS[method]} and marked complete`);
       } else if (paymentStatus === 'khata') {
         toast.success(`Order #${order.dailyToken} added to khata`);
       } else {
