@@ -221,7 +221,7 @@ describe('Orders board', () => {
     render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
     fireEvent.click(await screen.findByLabelText('Mark order as complete'));
-    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\b/ }));
 
     await waitFor(() => expect(useOutboxStore.getState().items).toHaveLength(1));
     expect(api.request).not.toHaveBeenCalled();
