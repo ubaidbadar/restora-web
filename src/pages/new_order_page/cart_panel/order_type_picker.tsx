@@ -20,7 +20,9 @@ export default function OrderTypePicker({ tables, tablesLoading, editing, ...pro
   const customerId = useWatch({ control: props.control, name: 'customerId' });
   const customerPhone = useWatch({ control: props.control, name: 'newPhone' });
   const selectedTableId = useWatch({ control: props.control, name: 'tableId' });
-  const defaultTableId = selectedTableId === undefined ? table || (editing ? '' : tables.find((item) => !item.archived)?._id ?? '') : selectedTableId;
+  const firstTableId = tables.find((item) => !item.archived)?._id ?? '';
+  const requestedTableId = tables.some((item) => item._id === table && !item.archived) ? table : '';
+  const defaultTableId = selectedTableId === undefined ? requestedTableId || (editing ? '' : firstTableId) : selectedTableId;
 
   return (
     <section aria-label="Order type" className="flex flex-col gap-3">
