@@ -7,6 +7,6 @@ export default function nextOrderStatus(order: Pick<Order, 'status' | 'type'>): 
   if (order.status === 'new') return 'preparing';
   if (order.status === 'preparing') return 'ready';
   if (order.status === 'ready') return order.type === 'delivery' ? 'out_for_delivery' : 'completed';
-  if (order.status === 'out_for_delivery') return 'completed';
+  if (order.status === 'out_for_delivery') return order.type === 'delivery' ? 'completed' : null;
   return null;
 }
