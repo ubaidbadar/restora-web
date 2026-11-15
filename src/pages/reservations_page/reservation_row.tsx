@@ -11,12 +11,14 @@ interface ReservationRowProps {
   reservation: Reservation;
   tables: Table[];
   tablesLoading: boolean;
+  tablesError?: string;
+  retryTables: () => void;
   onSaved: (reservation: Reservation) => void;
 }
 
 const badges = { pending: 'warning', confirmed: 'success', seated: 'neutral', cancelled: 'error' } as const;
 
-export default function ReservationRow({ reservation, tables, tablesLoading, onSaved }: ReservationRowProps) {
+export default function ReservationRow({ reservation, tables, tablesLoading, tablesError, retryTables, onSaved }: ReservationRowProps) {
   const name = reservation.customer?.name ?? 'Guest';
   const open = reservation.status === 'pending' || reservation.status === 'confirmed';
 
@@ -35,7 +37,7 @@ export default function ReservationRow({ reservation, tables, tablesLoading, onS
       </div>
       {open && (
         <Can permission="reservations:manage">
-          <ReservationActions reservation={reservation} tables={tables} tablesLoading={tablesLoading} onSaved={onSaved} />
+          <ReservationActions reservation={reservation} tables={tables} tablesLoading={tablesLoading} tablesError={tablesError} retryTables={retryTables} onSaved={onSaved} />
         </Can>
       )}
     </li>
