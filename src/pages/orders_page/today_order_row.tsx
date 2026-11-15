@@ -32,7 +32,7 @@ export default function TodayOrderRow({ order, onOrderUpdated }: TodayOrderRowPr
     method: 'post',
     url: `/orders/${order._id}/cancel`,
     body,
-    done: `Order #${order.dailyToken} cancelled`,
+    done: order.status === 'pending' ? `Order #${order.dailyToken} turned down` : `Order #${order.dailyToken} cancelled`,
     onOrderUpdated,
   });
 
