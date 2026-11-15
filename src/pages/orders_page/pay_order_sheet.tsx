@@ -40,14 +40,14 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
   const totalBy = (method: (typeof PAYMENT_METHODS)[number]) =>
     calcTotals(order.items, order.discount, taxByPaymentMethod[method] ?? 0, order.deliveryFee, order.type === 'dine_in' ? order.serviceChargeType : undefined, order.serviceChargeValue ?? 0).total;
 
-  const queueCompletion = () => {
+  const queueCompletion = (sync = true) => {
     queueOrderChange({
       order,
       method: 'patch',
       url: `/orders/${order._id}`,
       body: { status: 'completed' },
     });
-    void syncOutbox();
+    if (sync) void syncOutbox();
   };
 
   const recordPayment = async (method: (typeof PAYMENT_METHODS)[number], paymentStatus: 'paid' | 'khata' = 'paid') => {
@@ -60,8 +60,8 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
 
       if (markComplete && canComplete) {
         if (!useOutboxStore.getState().online) {
-          queueCompletion();
-          completionWarning = `Payment recorded. Order #${order.dailyToken} will be marked complete when the internet returns.`;
+          queueCompletion(false);
+          completionWarning = `Payment recorded. Completion for order #${order.dailyToken} is queued and will sync automatically.`;
         } else {
           try {
             const { data: completed } = await api.request({
@@ -76,7 +76,7 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
               : undefined;
             if (!status || status === 408 || status === 425 || status === 429 || status >= 500) {
               queueCompletion();
-              completionWarning = `Payment recorded. Order #${order.dailyToken} will be marked complete when the internet returns.`;
+              completionWarning = `Payment recorded. Completion for order #${order.dailyToken} is queued and will sync automatically.`;
             } else {
               completionWarning = `Payment recorded, but order #${order.dailyToken} could not be marked complete: ${getAxiosMessage(err)}`;
             }
