@@ -53,6 +53,22 @@ describe('Orders list view', () => {
     expect(screen.getByRole('menuitem', { name: 'Cancel order' })).toBeTruthy();
   });
 
+  it('queues completion from the list menu when the device is offline', () => {
+    useOutboxStore.setState({ online: false, items: [] });
+
+    render(<MemoryRouter><TodayList orders={[ORDER]} onOrderUpdated={vi.fn()} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'More for order 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Mark as complete' }));
+
+    expect(api.request).not.toHaveBeenCalled();
+    expect(useOutboxStore.getState().items).toHaveLength(1);
+    expect(useOutboxStore.getState().items[0]).toMatchObject({
+      method: 'patch',
+      url: '/orders/o1',
+      body: { status: 'completed' },
+    });
+  });
+
   it('marks the order complete from its list-row menu', async () => {
     const completed = { ...ORDER, status: 'completed' as const };
     const onOrderUpdated = vi.fn();
