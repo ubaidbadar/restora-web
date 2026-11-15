@@ -296,6 +296,9 @@ describe('New order (desktop)', () => {
     await screen.findByText('Orders board');
     const body = mocked.put.mock.calls[0]![1];
     expect(body.items[0]).toMatchObject({ itemId: 'd1', price: 1000 });
+    expect(body.items[0].menuPrice).toBeUndefined();
+    expect(body.items[0].savedPrice).toBeUndefined();
+    expect(body.items[0].priceOverridden).toBeUndefined();
   });
 
   it('keeps a manual price override in the offline order and its sync payload', async () => {
