@@ -15,7 +15,7 @@ vi.mock('../../utils/offline_db', () => ({ default: { get: vi.fn(async () => und
 const ORDER = {
   _id: 'o1',
   dailyToken: 1,
-  status: 'preparing',
+  status: 'ready',
   type: 'takeaway',
   items: [{ itemId: 'dish-1', name: 'Chicken Karahi', qty: 2, price: 285, addonIds: [] }],
   subtotal: 570,
