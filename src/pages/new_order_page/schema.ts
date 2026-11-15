@@ -16,6 +16,7 @@ const orderItem = z.object({
   addons: z.array(z.object({ name: z.string(), price: z.number() })).optional(),
   price: z.number().finite().min(0),
   menuPrice: z.number().finite().min(0).optional(),
+  priceOverridden: z.boolean().optional(),
   sizeId: z.string().optional(),
   addonIds: z.array(z.string()),
   note: z.string().optional(),
