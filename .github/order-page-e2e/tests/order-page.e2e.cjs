@@ -490,7 +490,7 @@ test('dine-in defaults to the first active table and can be placed without one',
   await expect(table).toHaveValue('table-1');
   await table.selectOption('');
   await activate(page, checkout.getByRole('button', { name: 'Place order' }));
-  await expect(page).toHaveURL(/\\/orders$/);
+  await expect(page).toHaveURL(/\/orders$/);
 
   const orderWrite = writes.find((write) => write.method === 'POST' && write.path === '/orders');
   expect(orderWrite).toBeTruthy();
