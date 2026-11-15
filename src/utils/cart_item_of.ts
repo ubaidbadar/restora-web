@@ -3,7 +3,7 @@ import type CartItem from '../types/cart_item';
 import type MenuItem from '../types/menu_item';
 import type MenuSize from '../types/menu_size';
 
-/** One cart line for a dish as picked. The price here is only for showing; the server works out the real one. */
+/** One cart line for a dish as picked, with its menu-price snapshot and no custom price override. */
 export default function cartItemOf(dish: MenuItem, size: MenuSize, addons: AddonOption[] = [], note = ''): CartItem {
   const addonIds = addons.map((addon) => addon._id).sort();
   const trimmed = note.trim();
