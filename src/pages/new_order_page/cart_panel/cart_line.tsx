@@ -14,7 +14,7 @@ interface CartLineProps {
 export default function CartLine({ line, onQty, onPrice }: CartLineProps) {
   const details = lineDetails(line);
   const menuPrice = line.menuPrice ?? line.price;
-  const priceOverridden = line.price !== menuPrice;
+  const priceOverridden = line.priceOverridden ?? (line.price !== menuPrice);
 
   return (
     <li className="flex items-center justify-between gap-2 overflow-hidden py-2">
@@ -36,7 +36,10 @@ export default function CartLine({ line, onQty, onPrice }: CartLineProps) {
           />
           {priceOverridden && <span className="text-xs text-muted">Menu price {formatRs(menuPrice)}</span>}
         </div>
-        <span className="mt-1 block text-sm tabular-nums text-muted">Line total {formatRs(line.price * line.qty)}</span>
+        <span className="mt-1 flex items-baseline gap-1 text-sm tabular-nums text-muted">
+          <span className="text-xs">Line total</span>
+          <span>{formatRs(line.price * line.qty)}</span>
+        </span>
       </div>
       <QtyStepper itemId={line.key} name={line.name} qty={line.qty} onChange={onQty} />
     </li>
