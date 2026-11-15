@@ -275,6 +275,29 @@ describe('New order (desktop)', () => {
     expect(body.items[0].menuPrice).toBeUndefined();
   });
 
+  it('submits a deliberate reset to the saved menu price when editing an order', async () => {
+    mocked.put.mockResolvedValue({ data: { _id: 'o-reset', dailyToken: 10 } });
+    const order = {
+      _id: 'o-reset', dailyToken: 10, type: 'takeaway',
+      items: [{ itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '', addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, qty: 1 }],
+      discount: 0, deliveryFee: 0, status: 'preparing', paymentStatus: 'unpaid', createdAt: '',
+    } as unknown as Order;
+    const items: CartItem[] = [{
+      key: 'd1|s1||price:850', itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '',
+      addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, savedPrice: 850, qty: 1,
+    }];
+    renderPage(<NewOrderPage editing={{ order, items }} />);
+    await screen.findByText('Edit order #10');
+
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Unit price for Chicken Karahi' }), { target: { value: '1000' } });
+    expect(screen.queryByText('Menu price Rs 1,000')).toBeNull();
+
+    placeOrder();
+    await screen.findByText('Orders board');
+    const body = mocked.put.mock.calls[0]![1];
+    expect(body.items[0]).toMatchObject({ itemId: 'd1', price: 1000 });
+  });
+
   it('keeps a manual price override in the offline order and its sync payload', async () => {
     useOutboxStore.setState({ online: false });
     renderPage();
@@ -300,7 +323,7 @@ describe('New order (desktop)', () => {
     } as unknown as Order;
     const items: CartItem[] = [{
       key: 'd1|s1|', itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '',
-      addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, qty: 1,
+      addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, savedPrice: 850, qty: 1,
     }];
     renderPage(<NewOrderPage editing={{ order, items }} />);
     await screen.findByText('Edit order #9');
