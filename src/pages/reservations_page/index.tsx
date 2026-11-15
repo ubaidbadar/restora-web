@@ -21,7 +21,7 @@ import LoadFailed from '../../components/load_failed';
 /** One day's table bookings at the working branch, in time order. The day is the request's own `date` param. */
 export default function ReservationsPage() {
   const { data, loading, error, options, get, update } = useGet<Reservation[]>('/reservations', { params: { date: dayKey() } });
-  const { data: tables = [], loading: tablesLoading } = useGet<Table[]>('/tables');
+  const { data: tables = [], loading: tablesLoading, error: tablesError, get: retryTables } = useGet<Table[]>('/tables');
   const list = data ?? [];
   const day: string = options.params.date;
   const setDay = (date: string) => get({ params: { date } });
@@ -54,7 +54,7 @@ export default function ReservationsPage() {
                   if (values.date !== day) setDay(values.date);
                 })
             }
-            fields={(form) => <ReservationFields {...form} tables={tables} tablesLoading={tablesLoading} />}
+            fields={(form) => <ReservationFields {...form} tables={tables} tablesLoading={tablesLoading} tablesError={tablesError} retryTables={retryTables} />}
             component={({ open }) => <AddButton onClick={open}>Add reservation</AddButton>}
           />
         </Can>
@@ -64,7 +64,7 @@ export default function ReservationsPage() {
       {!loading && reservations.length === 0 && <EmptyState icon={CalendarDays} title="No reservations this day" text="Add one when a guest calls to book a table." />}
       <ul className="flex flex-col gap-2.5">
         {!loading && reservations.map((reservation) => (
-          <ReservationRow key={reservation._id} reservation={reservation} tables={tables} tablesLoading={tablesLoading} onSaved={(saved) => update((current) => current?.map((item) => (item._id === saved._id ? saved : item)))} />
+          <ReservationRow key={reservation._id} reservation={reservation} tables={tables} tablesLoading={tablesLoading} tablesError={tablesError} retryTables={retryTables} onSaved={(saved) => update((current) => current?.map((item) => (item._id === saved._id ? saved : item)))} />
         ))}
       </ul>
     </>
