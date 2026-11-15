@@ -53,6 +53,31 @@ describe('Orders list view', () => {
     expect(screen.getByRole('menuitem', { name: 'Cancel order' })).toBeTruthy();
   });
 
+  it('keeps row actions separate from opening details', () => {
+    render(<MemoryRouter><TodayList orders={[ORDER]} onOrderUpdated={vi.fn()} /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'More for order 1' }));
+    expect(screen.getByRole('menu')).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: 'Order #1' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Details' }));
+    expect(screen.getByRole('dialog', { name: 'Order #1' })).toBeTruthy();
+  });
+
+  it('offers Turn down for an unaccepted table order instead of completion or payment', () => {
+    const pending = { ...ORDER, status: 'pending' as const };
+    render(<MemoryRouter><TodayList orders={[pending]} onOrderUpdated={vi.fn()} /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'More for order 1' }));
+
+    expect(screen.getByRole('menuitem', { name: 'Turn down' })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Mark as complete' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Cancel order' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Turn down' }));
+    expect(screen.getByRole('dialog', { name: 'Turn down order #1?' })).toBeTruthy();
+  });
+
   it('queues completion from the list menu when the device is offline', () => {
     useOutboxStore.setState({ online: false, items: [] });
 
