@@ -121,6 +121,7 @@ describe('Orders board', () => {
     fireEvent.click(screen.getByRole('radio', { name: /Done/ }));
     expect(tokensShown()).toEqual(['#5']);
     expect(screen.getByText('Unpaid')).toBeTruthy();
+    expect(screen.queryByLabelText('Mark order as complete')).toBeNull();
 
     const payButton = screen.getByRole('button', { name: 'Record payment for order 5' });
     expect(payButton).toBeTruthy();
@@ -131,6 +132,28 @@ describe('Orders board', () => {
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/orders/e/payment', { paymentMethod: 'cash' }));
     expect(onOrderUpdated).toHaveBeenCalledWith({ ...ORDERS[4], paymentStatus: 'paid', paymentMethod: 'cash' });
+  });
+
+  it('can mark an order complete while recording its payment', async () => {
+    setWide(false);
+    const paid = { ...ORDERS[0]!, paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
+    const completed = { ...paid, status: 'completed' as const };
+    const onOrderUpdated = vi.fn();
+    vi.mocked(api.post).mockResolvedValue({ data: paid });
+    vi.mocked(api.request).mockResolvedValue({ data: completed });
+
+    render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
+    fireEvent.click(await screen.findByLabelText('Mark order as complete'));
+    fireEvent.click(screen.getByRole('button', { name: /Cash/ }));
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/orders/a/payment', { paymentMethod: 'cash' }));
+    await waitFor(() => expect(api.request).toHaveBeenCalledWith({
+      method: 'patch',
+      url: '/orders/a',
+      data: { status: 'completed' },
+    }));
+    expect(onOrderUpdated).toHaveBeenCalledWith(completed);
   });
 
   it('does not show pay button for completed orders that are already paid', () => {
