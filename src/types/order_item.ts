@@ -12,6 +12,8 @@ export default interface OrderItem {
   note?: string;
   /** Server-calculated menu price per unit when this order was saved; absent on older orders. */
   menuPrice?: number;
+  /** Explicitly set by staff when this order line uses a custom price. */
+  priceOverridden?: boolean;
   /** Final per-unit price charged for this order line. */
   price: number;
   qty: number;
