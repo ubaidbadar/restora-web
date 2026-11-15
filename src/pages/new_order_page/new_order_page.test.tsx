@@ -215,6 +215,19 @@ describe('New order (desktop)', () => {
     expect(screen.queryByRole('list', { name: 'Items in this order' })).toBeNull();
   });
 
+  it('keeps unit prices read-only for staff without discount permission', async () => {
+    const me = sampleMe();
+    me.workplace!.permissions = me.workplace!.permissions.filter((permission) => permission !== 'orders:discount');
+    useAuthStore.getState().setMe(me);
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+
+    const cart = screen.getByRole('list', { name: 'Items in this order' });
+    expect(within(cart).queryByRole('spinbutton', { name: 'Unit price for Chicken Karahi' })).toBeNull();
+    expect(within(cart).getByText('Rs 1,000')).toBeTruthy();
+  });
+
   it('shows the correct menu category on every order line, including dishes with options', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
