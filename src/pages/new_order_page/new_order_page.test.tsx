@@ -225,6 +225,7 @@ describe('New order (desktop)', () => {
     expect(screen.getByText('Menu price Rs 1,000')).toBeTruthy();
     expect(screen.getAllByText('Rs 850').length).toBeGreaterThan(0);
     expect(MENU.items[0]!.sizes[0]!.price).toBe(1000);
+    pick(/^Takeaway$/);
 
     placeOrder();
     await screen.findByText('Orders board');
