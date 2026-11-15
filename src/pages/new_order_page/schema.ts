@@ -6,8 +6,8 @@ import ORDER_TYPES from '../../constants/order_types';
 import PAYMENT_STATUSES from '../../constants/payment_statuses';
 
 /**
- * A cart line (types/cart_item). The server calculates the menu price from the ids; `price` is sent only when staff
- * explicitly override it for this order. `menuPrice` and `savedPrice` stay client-side for previews and deliberate edit comparisons.
+ * A cart line (types/cart_item). The server calculates the menu price from the ids; `price` is sent only for an explicit line-price change by staff
+ * . `menuPrice` and `savedPrice` stay client-side for previews and deliberate edit comparisons.
  */
 const orderItem = z.object({
   itemId: z.string(),
