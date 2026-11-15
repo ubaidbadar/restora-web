@@ -17,6 +17,7 @@ const orderItem = z.object({
   price: z.number().finite().min(0),
   menuPrice: z.number().finite().min(0).optional(),
   priceOverridden: z.boolean().optional(),
+  savedPrice: z.number().finite().min(0).optional(),
   sizeId: z.string().optional(),
   addonIds: z.array(z.string()),
   note: z.string().optional(),
