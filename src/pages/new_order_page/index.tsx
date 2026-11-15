@@ -218,7 +218,7 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             itemId, sizeId, addonIds, note, qty,
             ...(priceOverridden ? { price } : {}),
           }));
-          const payload = { ...data, items };
+          const payload: FieldValues = { ...data, items };
           // Editing: payment is left out (it is recorded from the board).
           if (order) {
             const { paymentStatus: _status, paymentMethod: _method, ...changes } = payload;
