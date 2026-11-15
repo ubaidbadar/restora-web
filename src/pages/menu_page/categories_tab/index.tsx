@@ -3,7 +3,6 @@ import Can from '../../../components/can';
 import EmptyState from '../../../components/empty_state';
 import FormDrawer from '../../../components/form_drawer';
 import SectionCard from '../../../components/section_card';
-import type MenuCategory from '../../../types/menu_category';
 import Button from '../../../ui/button';
 import api from '../../../config/api';
 import type MenuTabProps from '../menu_tab_props';
