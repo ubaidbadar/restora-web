@@ -5,6 +5,8 @@ import type PhotoSizes from './photo_sizes';
 export default interface MenuItem {
   _id: string;
   categoryId: string;
+  /** Position within its category; older records may not have been assigned one yet. */
+  sortOrder?: number;
   name: string;
   description?: string;
   /** Photo URL, when one was uploaded. */

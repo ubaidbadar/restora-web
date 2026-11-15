@@ -16,6 +16,8 @@ import type MenuTabProps from '../menu_tab_props';
 import DealFields from './deal_fields';
 import DealRow from './deal_row';
 import dealSchema from './deal_schema';
+import menuItemPriorities from '../../../utils/menu_item_priorities';
+import saveMenuItemPriority from '../save_menu_item_priority';
 
 /** Deals: dishes sold together at one price ("Karahi + 2 naan + drink"). They sit in a category like any dish. */
 export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
@@ -25,6 +27,7 @@ export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
   const setTab = (value: string) => setParams((prev) => withParam(prev, 'tab', value, 'dishes'), { replace: true });
   const shown = filterMenu({ ...menu, items: menu.items.filter((item) => (item.includes?.length ?? 0) > 0) }, search, ALL_CATEGORIES);
   const save = (deal: MenuItem) => onUpdate({ items: upsertById(menu.items, deal) });
+  const priorities = menuItemPriorities(menu.items);
   const dishes = menu.items.filter((item) => !item.includes?.length);
 
   if (!menu.categories.length || !dishes.length) {
@@ -77,7 +80,15 @@ export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
         label="Deals"
         items={shown}
         rowHeight={80}
-        renderRow={(deal) => <DealRow deal={deal} menu={menu} onSaved={save} onDeleted={() => onUpdate({ items: menu.items.filter((item) => item._id !== deal._id) })} />}
+        renderRow={(deal) => <DealRow
+          deal={deal}
+          menu={menu}
+          priority={priorities.get(deal._id)?.priority ?? 1}
+          priorityLimit={priorities.get(deal._id)?.count ?? 1}
+          onPrioritySave={(priority) => saveMenuItemPriority(deal._id, priority, { menu, onUpdate })}
+          onSaved={save}
+          onDeleted={() => onUpdate({ items: menu.items.filter((item) => item._id !== deal._id) })}
+        />}
       />
     </div>
   );

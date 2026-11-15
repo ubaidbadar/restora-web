@@ -20,6 +20,8 @@ import getAxiosMessage from '../../../utils/get_axios_message';
 import toast from '../../../utils/toast';
 import DishRow from './dish_row';
 import dishSchema from './dish_schema';
+import menuItemPriorities from '../../../utils/menu_item_priorities';
+import saveMenuItemPriority from '../save_menu_item_priority';
 
 /** Every dish, narrowed by the search text and category kept in the URL. */
 export default function DishesTab({ menu, onUpdate }: MenuTabProps) {
@@ -33,6 +35,7 @@ export default function DishesTab({ menu, onUpdate }: MenuTabProps) {
   // Deals have their own tab.
   const shown = filterMenu({ ...menu, items: menu.items.filter((item) => !item.includes?.length) }, search, category);
   const save = (dish: MenuItem) => onUpdate({ items: upsertById(menu.items, dish) });
+  const priorities = menuItemPriorities(menu.items);
 
   if (!menu.categories.length) {
     return (
@@ -86,7 +89,15 @@ export default function DishesTab({ menu, onUpdate }: MenuTabProps) {
         items={shown}
         rowHeight={80}
         renderRow={(dish) => (
-          <DishRow dish={dish} menu={menu} onSaved={save} onDeleted={() => onUpdate({ items: menu.items.filter((item) => item._id !== dish._id) })} />
+          <DishRow
+            dish={dish}
+            menu={menu}
+            priority={priorities.get(dish._id)?.priority ?? 1}
+            priorityLimit={priorities.get(dish._id)?.count ?? 1}
+            onPrioritySave={(priority) => saveMenuItemPriority(dish._id, priority, { menu, onUpdate })}
+            onSaved={save}
+            onDeleted={() => onUpdate({ items: menu.items.filter((item) => item._id !== dish._id) })}
+          />
         )}
       />
     </div>
