@@ -394,8 +394,9 @@ describe('New order (desktop)', () => {
     fireEvent.click(dishTile('Chicken Karahi'));
     fireEvent.change(customerSearch(), { target: { value: '0321 7654321' } });
     fireEvent.click(await screen.findByRole('option', { name: /Add “0321-7654321” as a new customer/ }));
-    fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'New Customer' } });
-    fireEvent.click(await screen.findByRole('button', { name: 'Save and pick' }));
+    const customerDrawer = await screen.findByRole('dialog', { name: 'New customer' });
+    fireEvent.change(within(customerDrawer).getByLabelText(/Name/), { target: { value: 'New Customer' } });
+    fireEvent.click(within(customerDrawer).getByRole('button', { name: 'Save and pick' }));
 
     expect(await screen.findByRole('button', { name: 'Remove New Customer' })).toBeTruthy();
     expect(mocked.post).toHaveBeenCalledTimes(1);
