@@ -40,7 +40,7 @@ function cartOf(order: Order, menu: Menu): CartItem[] {
     // Keep separately priced lines distinct; the same item at the same price can still share a quantity.
     const key = priceOverridden ? `${cart.key}|price:${line.price}` : cart.key;
     const same = lines.get(key);
-    lines.set(key, { ...cart, key, menuPrice, price: line.price, priceOverridden, qty: (same?.qty ?? 0) + line.qty });
+    lines.set(key, { ...cart, key, menuPrice, price: line.price, priceOverridden, savedPrice: line.price, qty: (same?.qty ?? 0) + line.qty });
   });
   return [...lines.values()];
 }
