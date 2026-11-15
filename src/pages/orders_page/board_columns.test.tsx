@@ -158,6 +158,22 @@ describe('Orders board', () => {
     expect(onOrderUpdated).toHaveBeenCalledWith(completed);
   });
 
+  it('records payment without completing the order unless the checkbox is selected', async () => {
+    setWide(false);
+    const paid = { ...ORDERS[0]!, paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
+    const onOrderUpdated = vi.fn();
+    vi.mocked(api.post).mockResolvedValue({ data: paid });
+
+    render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
+    expect(screen.getByLabelText('Mark order as complete')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/orders/a/payment', { paymentMethod: 'cash' }));
+    expect(api.request).not.toHaveBeenCalled();
+    expect(onOrderUpdated).toHaveBeenCalledWith(paid);
+  });
+
   it('does not send a completion request when recording payment fails', async () => {
     setWide(false);
     vi.mocked(api.post).mockRejectedValue(new Error('Payment request failed'));
