@@ -13,8 +13,7 @@ export default function Form({ component, onSubmit, defaultValues, schema, ...pr
   });
   const [status, setStatus] = useState<FormStatus>({});
 
-  const submit = async (data: FieldValues, event?: BaseSyntheticEvent) => {
-    event?.stopPropagation();
+  const submit = async (data: FieldValues) => {
     if (status.loading || !onSubmit) return;
 
     setStatus({ loading: true });
@@ -40,6 +39,10 @@ export default function Form({ component, onSubmit, defaultValues, schema, ...pr
   };
 
   const handleFormSubmit = (event?: BaseSyntheticEvent) => {
+    // Portal forms (e.g. a customer drawer inside checkout) still bubble through the React tree.
+    // Stop here, before react-hook-form validates or invokes either form's submit callback.
+    event?.stopPropagation();
+
     // Record which named submit button was used, e.g. <button name="intent" value="draft">.
     const submitter = (event?.nativeEvent as SubmitEvent | undefined)?.submitter;
     if ((submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement) && submitter.name) {
