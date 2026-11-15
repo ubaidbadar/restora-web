@@ -140,10 +140,26 @@ async function openCheckout(page) {
   return sheet;
 }
 
+async function createOrderAndShowList(page) {
+  await addDish(page, 'Chicken Karahi');
+  const checkout = await openCheckout(page);
+  await chooseRadio(page, checkout, 'Takeaway');
+  await activate(page, checkout.getByRole('button', { name: 'Place order' }));
+  await expect(page).toHaveURL(/\\/orders$/);
+  await expect(page.getByRole('heading', { name: 'Orders', exact: true })).toBeVisible();
+
+  await activate(page, page.getByRole('button', { name: 'Filter' }));
+  const filter = page.getByRole('dialog', { name: 'Filter orders' });
+  await activate(page, filter.getByText('List', { exact: true }));
+  await activate(page, filter.getByRole('button', { name: 'Show orders' }));
+  await expect(page.getByRole('list', { name: 'Orders' })).toBeVisible();
+}
+
 const test = base.extend({
   app: async ({ page }, use) => {
     const pageErrors = [];
     const writes = [];
+    const orders = [];
 
     page.on('pageerror', (error) => pageErrors.push(error.message));
     await page.route('**/api/v1/**', async (route) => {
@@ -159,7 +175,8 @@ const test = base.extend({
         if (path === '/me') return route.fulfill({ json: ME });
         if (path === '/menu') return route.fulfill({ json: MENU });
         if (path === '/tables') return route.fulfill({ json: TABLES });
-        if (path === '/orders' || path === '/tables/floor' || path === '/whatsapp/conversations') {
+        if (path === '/orders') return route.fulfill({ json: orders });
+        if (path === '/tables/floor' || path === '/whatsapp/conversations') {
           return route.fulfill({ json: [] });
         }
         if (path === '/customers') {
@@ -187,7 +204,77 @@ const test = base.extend({
       if (method === 'POST' && path === '/orders') {
         // Slow the response slightly so the submit pending/duplicate-click guard is exercised.
         await new Promise((resolve) => setTimeout(resolve, 300));
-        return route.fulfill({ json: { _id: 'order-e2e', dailyToken: 101, ...body } });
+        const items = body.items.map((item) => {
+          const menuItem = MENU_ITEMS.find((candidate) => candidate._id === item.itemId);
+          const size = menuItem?.sizes.find((candidate) => candidate._id === item.sizeId) ?? menuItem?.sizes[0];
+          const addons = (item.addonIds ?? []).map((id) => {
+            const option = MENU.addonGroups.flatMap((group) => group.options).find((candidate) => candidate._id === id);
+            return option ? { name: option.name, price: option.price } : null;
+          }).filter(Boolean);
+          return {
+            itemId: item.itemId,
+            name: menuItem?.name ?? 'Unknown dish',
+            sizeId: item.sizeId,
+            sizeName: size?.name || undefined,
+            addonIds: item.addonIds ?? [],
+            addons,
+            note: item.note || undefined,
+            price: (size?.price ?? 0) + addons.reduce((sum, addon) => sum + addon.price, 0),
+            qty: item.qty,
+          };
+        });
+        const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+        const created = {
+          _id: 'order-e2e',
+          dailyToken: 101,
+          branchId: ME.workplace.branch._id,
+          status: 'new',
+          type: body.type,
+          items,
+          subtotal,
+          discount: body.discount ?? 0,
+          taxRate: 0,
+          tax: 0,
+          deliveryFee: body.deliveryFee ?? 0,
+          serviceChargeType: body.serviceChargeType,
+          serviceChargeValue: body.serviceChargeValue ?? 0,
+          serviceCharge: 0,
+          total: subtotal - (body.discount ?? 0) + (body.deliveryFee ?? 0),
+          paymentStatus: body.paymentStatus ?? 'unpaid',
+          paymentMethod: body.paymentMethod,
+          customerId: body.customerId ?? undefined,
+          tableId: body.tableId ?? undefined,
+          tableName: body.tableName ?? undefined,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        orders.push(created);
+        return route.fulfill({ json: created });
+      }
+      const orderId = path.match(/^\\/orders\\/([^/]+)$/)?.[1];
+      if (method === 'PATCH' && orderId) {
+        const index = orders.findIndex((order) => order._id === orderId);
+        if (index < 0) return route.fulfill({ status: 404, json: { message: 'Order not found' } });
+        orders[index] = { ...orders[index], ...body, updatedAt: new Date().toISOString() };
+        return route.fulfill({ json: orders[index] });
+      }
+      const paymentOrderId = path.match(/^\\/orders\\/([^/]+)\\/payment$/)?.[1];
+      if (method === 'POST' && paymentOrderId) {
+        const index = orders.findIndex((order) => order._id === paymentOrderId);
+        if (index < 0) return route.fulfill({ status: 404, json: { message: 'Order not found' } });
+        const rate = ME.workplace.settings.taxByPaymentMethod[body.paymentMethod] ?? 0;
+        const taxable = orders[index].subtotal - orders[index].discount + orders[index].deliveryFee + orders[index].serviceCharge;
+        const tax = Math.round(taxable * rate) / 100;
+        orders[index] = {
+          ...orders[index],
+          paymentMethod: body.paymentMethod,
+          paymentStatus: body.paymentStatus ?? 'paid',
+          taxRate: rate,
+          tax,
+          total: taxable + tax,
+          updatedAt: new Date().toISOString(),
+        };
+        return route.fulfill({ json: orders[index] });
       }
       if (method === 'POST' && path === '/customers') {
         return route.fulfill({
@@ -432,6 +519,63 @@ test('saving a new customer in checkout does not place the order', async ({ app 
   await activate(page, checkout.getByRole('button', { name: 'Place order' }));
   await expect(page).toHaveURL(/\/orders$/);
   expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(1);
+});
+
+test('orders list exposes the board actions and completes an order from its row menu', async ({ app }) => {
+  const { page, writes } = app;
+  await createOrderAndShowList(page);
+
+  const row = page.getByRole('listitem').filter({ hasText: '#101' });
+  await expect(row).toBeVisible();
+  await activate(page, row.getByRole('button', { name: 'More for order 101' }));
+
+  const menu = page.getByRole('menu');
+  for (const name of ['Details', 'Print kitchen slip', 'Print receipt', 'Mark as complete', 'Edit order', 'Cancel order']) {
+    await expect(menu.getByRole('menuitem', { name })).toBeVisible();
+  }
+
+  await activate(page, menu.getByRole('menuitem', { name: 'Mark as complete' }));
+  await expect(row.getByText('Done', { exact: true })).toBeVisible();
+  expect(writes.filter((write) => write.method === 'PATCH' && write.path === '/orders/order-e2e')).toHaveLength(1);
+
+  const dimensions = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+    body: document.body.scrollWidth,
+  }));
+  expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport + 1);
+  expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport + 1);
+});
+
+test('payment sheet can mark an unpaid list-view order complete in the same flow', async ({ app }) => {
+  const { page, writes } = app;
+  await createOrderAndShowList(page);
+
+  const row = page.getByRole('listitem').filter({ hasText: '#101' });
+  await activate(page, row.getByRole('button', { name: 'More for order 101' }));
+  await activate(page, page.getByRole('menuitem', { name: 'Details' }));
+
+  const details = page.getByRole('dialog', { name: 'Order #101' });
+  await expect(details).toBeVisible();
+  await activate(page, details.getByRole('button', { name: 'Record payment for order 101' }));
+
+  const payment = page.getByRole('dialog', { name: 'Order #101' }).last();
+  await expect(payment.getByLabel('Mark order as complete')).toBeVisible();
+  await payment.getByLabel('Mark order as complete').check();
+  await activate(page, payment.getByRole('button', { name: /^Cash\\b/ }));
+
+  await expect(row.getByText('Done', { exact: true })).toBeVisible();
+  await expect(row.getByText('Paid', { exact: true })).toBeVisible();
+  expect(writes).toContainEqual({
+    method: 'POST',
+    path: '/orders/order-e2e/payment',
+    body: { paymentMethod: 'cash' },
+  });
+  expect(writes).toContainEqual({
+    method: 'PATCH',
+    path: '/orders/order-e2e',
+    body: { status: 'completed' },
+  });
 });
 
 test('saved customer delivery address is prefilled and remains editable', async ({ app }) => {
