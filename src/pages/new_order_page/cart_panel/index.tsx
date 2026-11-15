@@ -15,7 +15,7 @@ import CustomerStep from '../customer_step';
 /**
  * Checkout fields. The desktop order lines live in the adjacent column; smaller screens keep them above checkout here.
  */
-export default function CartPanel({ taxByPaymentMethod, tables, tablesLoading, editing, showHeading, showLines = true, heading = 'Order', picked, ...props }: FormComponentProps & Pick<RestaurantSettings, 'taxByPaymentMethod'> & { tables: Table[]; tablesLoading: boolean; editing?: boolean; showHeading: boolean; showLines?: boolean; heading?: string; picked?: Order['customer'] }) {
+export default function CartPanel({ taxByPaymentMethod, tables, tablesLoading, tablesError, retryTables, editing, showHeading, showLines = true, heading = 'Order', picked, ...props }: FormComponentProps & Pick<RestaurantSettings, 'taxByPaymentMethod'> & { tables: Table[]; tablesLoading: boolean; tablesError?: string; retryTables: () => void; editing?: boolean; showHeading: boolean; showLines?: boolean; heading?: string; picked?: Order['customer'] }) {
   const canDiscount = useCan('orders:discount');
 
   return (
@@ -28,7 +28,7 @@ export default function CartPanel({ taxByPaymentMethod, tables, tablesLoading, e
       )}
       <div className="flex flex-col gap-4 px-5 pb-4">
         {showLines && <CartLines {...props} />}
-      <OrderTypePicker {...props} tables={tables} tablesLoading={tablesLoading} editing={editing} />
+      <OrderTypePicker {...props} tables={tables} tablesLoading={tablesLoading} tablesError={tablesError} retryTables={retryTables} editing={editing} />
       <ServiceChargeField {...props} />
       {/* A placed order is paid from the board, so editing leaves payment out. Without the right to take payments or
           give discounts (a waiter), the order goes in as Pay later, at full price. */}
