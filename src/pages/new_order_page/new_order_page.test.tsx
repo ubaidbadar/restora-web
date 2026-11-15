@@ -228,7 +228,8 @@ describe('New order (desktop)', () => {
     expect(within(cart).getByText('Rs 1,000')).toBeTruthy();
   });
 
-  it('shows the correct menu category on every order line, including dishes with options', async () => {
+  it('shows the correct menu category on every order line without sending UI metadata to the API', async () => {
+    mocked.post.mockResolvedValue({ data: { _id: 'srv-category', dailyToken: 81 } });
     renderPage();
     await screen.findByText('Chicken Karahi');
     fireEvent.click(dishTile('Chicken Karahi'));
@@ -244,6 +245,12 @@ describe('New order (desktop)', () => {
     expect(lines).toHaveLength(2);
     expect(within(lines[0]!).getByText('Karahi', { exact: true })).toBeTruthy();
     expect(within(lines[1]!).getByText('Rice & Biryani', { exact: true })).toBeTruthy();
+
+    pick(/^Takeaway$/);
+    placeOrder();
+    await screen.findByText('Orders board');
+    const body = mocked.post.mock.calls[0]![1];
+    expect(body.items.every((item: Record<string, unknown>) => !('categoryName' in item))).toBe(true);
   });
 
   it('allows a per-order unit price override without changing the menu price', async () => {
