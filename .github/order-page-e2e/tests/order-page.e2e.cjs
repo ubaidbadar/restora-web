@@ -145,7 +145,7 @@ async function createOrderAndShowList(page) {
   const checkout = await openCheckout(page);
   await chooseRadio(page, checkout, 'Takeaway');
   await activate(page, checkout.getByRole('button', { name: 'Place order' }));
-  await expect(page).toHaveURL(/\\/orders$/);
+  await expect(page).toHaveURL(/\/orders$/);
   await expect(page.getByRole('heading', { name: 'Orders', exact: true })).toBeVisible();
 
   await activate(page, page.getByRole('button', { name: 'Filter' }));
@@ -251,14 +251,14 @@ const test = base.extend({
         orders.push(created);
         return route.fulfill({ json: created });
       }
-      const orderId = path.match(/^\\/orders\\/([^/]+)$/)?.[1];
+      const orderId = path.match(/^\/orders\/([^/]+)$/)?.[1];
       if (method === 'PATCH' && orderId) {
         const index = orders.findIndex((order) => order._id === orderId);
         if (index < 0) return route.fulfill({ status: 404, json: { message: 'Order not found' } });
         orders[index] = { ...orders[index], ...body, updatedAt: new Date().toISOString() };
         return route.fulfill({ json: orders[index] });
       }
-      const paymentOrderId = path.match(/^\\/orders\\/([^/]+)\\/payment$/)?.[1];
+      const paymentOrderId = path.match(/^\/orders\/([^/]+)\/payment$/)?.[1];
       if (method === 'POST' && paymentOrderId) {
         const index = orders.findIndex((order) => order._id === paymentOrderId);
         if (index < 0) return route.fulfill({ status: 404, json: { message: 'Order not found' } });
@@ -562,7 +562,7 @@ test('payment sheet can mark an unpaid list-view order complete in the same flow
   const payment = page.getByRole('dialog', { name: 'Order #101' }).last();
   await expect(payment.getByLabel('Mark order as complete')).toBeVisible();
   await payment.getByLabel('Mark order as complete').check();
-  await activate(page, payment.getByRole('button', { name: /^Cash\\b/ }));
+  await activate(page, payment.getByRole('button', { name: /^Cash\b/ }));
 
   await expect(row.getByText('Done', { exact: true })).toBeVisible();
   await expect(row.getByText('Paid', { exact: true })).toBeVisible();
