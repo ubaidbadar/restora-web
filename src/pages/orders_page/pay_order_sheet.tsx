@@ -16,6 +16,7 @@ import useWorkplace from '../../hooks/useWorkplace';
 import getAxiosMessage from '../../utils/get_axios_message';
 import useOutboxStore from '../../store/outbox_store';
 import syncOutbox from '../../utils/sync_outbox';
+import queueOrderChange from '../../utils/queue_order_change';
 
 interface PayOrderSheetProps {
   order: Order;
@@ -39,13 +40,11 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
     calcTotals(order.items, order.discount, taxByPaymentMethod[method] ?? 0, order.deliveryFee, order.type === 'dine_in' ? order.serviceChargeType : undefined, order.serviceChargeValue ?? 0).total;
 
   const queueCompletion = () => {
-    useOutboxStore.getState().add({
-      id: `${order._id}-${Date.now().toString(36)}`,
+    queueOrderChange({
+      order,
       method: 'patch',
       url: `/orders/${order._id}`,
       body: { status: 'completed' },
-      label: `Order #${order.dailyToken}`,
-      createdAt: new Date().toISOString(),
     });
     void syncOutbox();
   };
