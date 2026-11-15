@@ -56,6 +56,7 @@ export default function TodayOrderRow({ order, onOrderUpdated }: TodayOrderRowPr
                 onMarkComplete={handleComplete}
                 onCancel={askCancel}
                 showCompletionAction
+                showPendingCancellation
               />
             </div>
           )}
