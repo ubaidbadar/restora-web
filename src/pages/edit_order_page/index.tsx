@@ -35,10 +35,11 @@ function cartOf(order: Order, menu: Menu): CartItem[] {
       : options.filter((option) => line.addons?.some((addon) => addon.name === option.name));
     const cart = cartItemOf(dish, size, addons, line.note);
     const menuPrice = line.menuPrice ?? line.price;
+    const priceOverridden = line.priceOverridden ?? (line.price !== menuPrice);
     // Keep separately priced lines distinct; the same item at the same price can still share a quantity.
-    const key = line.price !== menuPrice ? `${cart.key}|price:${line.price}` : cart.key;
+    const key = priceOverridden ? `${cart.key}|price:${line.price}` : cart.key;
     const same = lines.get(key);
-    lines.set(key, { ...cart, key, menuPrice, price: line.price, qty: (same?.qty ?? 0) + line.qty });
+    lines.set(key, { ...cart, key, menuPrice, price: line.price, priceOverridden, qty: (same?.qty ?? 0) + line.qty });
   });
   return [...lines.values()];
 }
