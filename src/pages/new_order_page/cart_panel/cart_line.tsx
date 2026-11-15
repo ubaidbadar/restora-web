@@ -20,6 +20,7 @@ export default function CartLine({ line, onQty, onPrice }: CartLineProps) {
     <li className="flex items-center justify-between gap-2 overflow-hidden py-2">
       <div className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium text-ink"><bdi>{line.name}</bdi></span>
+        {line.categoryName && <span className="mt-0.5 block truncate text-xs text-muted">{line.categoryName}</span>}
         {details && <span className="block truncate text-sm text-body">{details}</span>}
         {line.note && <span dir="auto" className="block truncate text-sm text-muted italic">“{line.note}”</span>}
         <div className="mt-1 flex flex-wrap items-center gap-2">
