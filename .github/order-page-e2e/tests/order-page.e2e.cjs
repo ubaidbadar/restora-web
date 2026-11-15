@@ -93,7 +93,7 @@ const ME = {
     isPrimaryOwner: true,
     hasPin: false,
     permissions: [
-      'orders:view', 'orders:create', 'orders:update', 'orders:payment', 'orders:discount',
+      'orders:view', 'orders:create', 'orders:update', 'orders:payment', 'orders:discount', 'orders:cancel',
       'tables:view', 'customers:view', 'customers:manage', 'menu:view', 'devices:manage',
     ],
     branch: { _id: 'branch-e2e', name: 'Main' },
