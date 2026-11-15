@@ -33,7 +33,8 @@ function cartOf(order: Order, menu: Menu): CartItem[] {
     const addons = line.addonIds
       ? options.filter((option) => line.addonIds!.includes(option._id))
       : options.filter((option) => line.addons?.some((addon) => addon.name === option.name));
-    const cart = cartItemOf(dish, size, addons, line.note);
+    const categoryName = menu.categories.find((category) => category._id === dish.categoryId)?.name;
+    const cart = cartItemOf(dish, size, addons, line.note, categoryName);
     const menuPrice = line.menuPrice ?? line.price;
     const priceOverridden = line.priceOverridden ?? (line.price !== menuPrice);
     // Keep separately priced lines distinct; the same item at the same price can still share a quantity.
