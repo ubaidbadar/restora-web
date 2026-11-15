@@ -425,12 +425,12 @@ test('saving a new customer in checkout does not place the order', async ({ app 
 
   await expect(customerDrawer).toHaveCount(0);
   await expect(checkout.getByRole('button', { name: 'Remove New Customer' })).toBeVisible();
-  await expect(page).toHaveURL(/\\/orders\\/new$/);
+  await expect(page).toHaveURL(/\/orders\/new$/);
   expect(writes.filter((write) => write.method === 'POST' && write.path === '/customers')).toHaveLength(1);
   expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(0);
 
   await activate(page, checkout.getByRole('button', { name: 'Place order' }));
-  await expect(page).toHaveURL(/\\/orders$/);
+  await expect(page).toHaveURL(/\/orders$/);
   expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(1);
 });
 
