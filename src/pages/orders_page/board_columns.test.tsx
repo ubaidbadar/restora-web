@@ -209,6 +209,30 @@ describe('Orders board', () => {
     expect(onOrderUpdated).toHaveBeenCalledWith(paid);
   });
 
+  it('queues completion without a network retry if connectivity drops after payment succeeds', async () => {
+    setWide(false);
+    const paid = { ...ORDERS[0]!, paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
+    const onOrderUpdated = vi.fn();
+    vi.mocked(api.post).mockImplementation(async () => {
+      useOutboxStore.setState({ online: false });
+      return { data: paid };
+    });
+
+    render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
+    fireEvent.click(await screen.findByLabelText('Mark order as complete'));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+
+    await waitFor(() => expect(useOutboxStore.getState().items).toHaveLength(1));
+    expect(api.request).not.toHaveBeenCalled();
+    expect(useOutboxStore.getState().items[0]).toMatchObject({
+      method: 'patch',
+      url: '/orders/a',
+      body: { status: 'completed' },
+    });
+    expect(onOrderUpdated).toHaveBeenCalledWith(paid);
+  });
+
   it('queues a transient server failure when completion follows a successful payment', async () => {
     setWide(false);
     const paid = { ...ORDERS[0]!, paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
