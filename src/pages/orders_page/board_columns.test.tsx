@@ -167,7 +167,7 @@ describe('Orders board', () => {
     render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
     expect(screen.getByLabelText('Mark order as complete')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\b/ }));
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/orders/a/payment', { paymentMethod: 'cash' }));
     expect(api.request).not.toHaveBeenCalled();
