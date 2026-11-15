@@ -1,5 +1,6 @@
 import { useWatch } from 'react-hook-form';
 import type FormComponentProps from '../../../types/form_component_props';
+import useCan from '../../../hooks/useCan';
 import type CartItem from '../../../types/cart_item';
 import fieldError from '../../../utils/field_error';
 import setQty from '../../../utils/set_qty';
@@ -13,6 +14,7 @@ interface CartLinesProps extends FormComponentProps {
 /** The lines in the cart. Reads `items` from the form and writes quantity changes back with setValue. */
 export default function CartLines({ control, setValue, errors, centerEmpty = false, className }: CartLinesProps) {
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
+  const canChangePrice = useCan('orders:discount');
   const error = fieldError(errors, 'items');
 
   if (items.length === 0) {
@@ -31,6 +33,7 @@ export default function CartLines({ control, setValue, errors, centerEmpty = fal
         <CartLine
           key={line.key}
           line={line}
+          canChangePrice={canChangePrice}
           onQty={(key, qty) => setValue('items', setQty(items, key, qty), { shouldDirty: true })}
           onPrice={(key, price) => setValue('items', items.map((item) => item.key === key ? { ...item, price, priceOverridden: price !== (item.menuPrice ?? item.price) } : item), { shouldDirty: true })}
         />
