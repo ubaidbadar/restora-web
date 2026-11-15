@@ -80,6 +80,7 @@ describe('Orders list view', () => {
 
   it('submits the cancellation reason when a pending list order is turned down', async () => {
     const pending = { ...ORDER, status: 'pending' as const };
+    vi.mocked(api.request).mockResolvedValue({ data: { ...pending, status: 'cancelled' } });
     render(<MemoryRouter><TodayList orders={[pending]} onOrderUpdated={vi.fn()} /></MemoryRouter>);
 
     fireEvent.click(screen.getByRole('button', { name: 'More for order 1' }));
