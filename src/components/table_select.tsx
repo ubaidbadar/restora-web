@@ -33,7 +33,7 @@ export default function TableSelect({ tables, loading = false, error, onRetry, r
     return (
       <div role="alert" className="flex items-center justify-between gap-3 rounded-control border border-border bg-surface p-3">
         <p className="min-w-0 text-sm text-muted">Couldn't load tables. You can still continue without a table.</p>
-        {onRetry && <Button type="button" variant="outline" size="sm" icon={RotateCcw} onClick={onRetry}>Try again</Button>}
+        {onRetry && <Button type="button" variant="outline" size="sm" icon={RotateCcw} onClick={() => onRetry()}>Try again</Button>}
       </div>
     );
   }
