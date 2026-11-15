@@ -45,7 +45,7 @@ export default function OrderActionsMenu({ order, onShowDetails, onMarkComplete,
         { label: 'Details', icon: FileText, onClick: onShowDetails },
         { label: 'Print kitchen slip', icon: ChefHat, onClick: () => printSlip(order, 'kitchen') },
         { label: 'Print receipt', icon: Receipt, onClick: () => printSlip(order, 'receipt') },
-        ...(canMove && active && !pending && (showCompletionAction || next !== 'completed') ? [{ label: 'Mark as complete', icon: CheckCircle2, onClick: onMarkComplete }] : []),
+        ...(canMove && active && !pending && next !== null && (showCompletionAction || next !== 'completed') ? [{ label: 'Mark as complete', icon: CheckCircle2, onClick: onMarkComplete }] : []),
         ...(editable ? [{ label: 'Edit order', icon: Pencil, onClick: () => navigate(`/orders/${order._id}/edit`) }] : []),
         ...(canCancel && active && (!pending || showPendingCancellation) ? [{ label: pending ? 'Turn down' : 'Cancel order', icon: X, danger: true, onClick: onCancel }] : []),
       ]}
