@@ -1,5 +1,7 @@
+import { RotateCcw } from 'lucide-react';
 import type Table from '../types/table';
 import Skeleton from '../ui/skeleton';
+import Button from '../ui/button';
 import type FormComponentProps from '../types/form_component_props';
 import Input from '../ui/input';
 import Select from '../ui/select';
@@ -8,6 +10,8 @@ import fieldError from '../utils/field_error';
 interface TableSelectProps extends Pick<FormComponentProps, 'register' | 'errors'> {
   tables: Table[];
   loading?: boolean;
+  error?: string;
+  onRetry?: () => void;
   required?: boolean;
   /** Without tables set up in the branch, a dine-in order can still name its table in a text box. */
   allowTyped?: boolean;
@@ -16,12 +20,20 @@ interface TableSelectProps extends Pick<FormComponentProps, 'register' | 'errors
 }
 
 /** A field for choosing one of the branch's active tables, or leaving the order unassigned. */
-export default function TableSelect({ tables, loading = false, register, errors, required = false, allowTyped = false, defaultTableId = '' }: TableSelectProps) {
+export default function TableSelect({ tables, loading = false, error, onRetry, register, errors, required = false, allowTyped = false, defaultTableId = '' }: TableSelectProps) {
   if (loading) {
     return (
       <div role="status" aria-label="Loading tables" className="flex flex-col gap-2">
         <Skeleton className="h-4 w-12" />
         <Skeleton className="h-control w-full rounded-control" />
+      </div>
+    );
+  }
+  if (error && !tables.length) {
+    return (
+      <div role="alert" className="flex items-center justify-between gap-3 rounded-control border border-border bg-surface p-3">
+        <p className="min-w-0 text-sm text-muted">Couldn't load tables. You can still continue without a table.</p>
+        {onRetry && <Button type="button" variant="outline" size="sm" icon={RotateCcw} onClick={onRetry}>Try again</Button>}
       </div>
     );
   }
