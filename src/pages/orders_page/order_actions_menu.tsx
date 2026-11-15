@@ -15,10 +15,12 @@ interface OrderActionsMenuProps {
   onCancel: () => void;
   /** The list has no primary status button, so keep completion available in its menu too. */
   showCompletionAction?: boolean;
+  /** The list has no primary Turn down button for an unaccepted table order. */
+  showPendingCancellation?: boolean;
 }
 
 /** The same available order actions wherever an order is shown. */
-export default function OrderActionsMenu({ order, onShowDetails, onMarkComplete, onCancel, showCompletionAction = false }: OrderActionsMenuProps) {
+export default function OrderActionsMenu({ order, onShowDetails, onMarkComplete, onCancel, showCompletionAction = false, showPendingCancellation = false }: OrderActionsMenuProps) {
   const navigate = useNavigate();
   const workplace = useWorkplace();
   const canMove = can(workplace, 'orders:update');
@@ -45,7 +47,7 @@ export default function OrderActionsMenu({ order, onShowDetails, onMarkComplete,
         { label: 'Print receipt', icon: Receipt, onClick: () => printSlip(order, 'receipt') },
         ...(canMove && active && !pending && (showCompletionAction || next !== 'completed') ? [{ label: 'Mark as complete', icon: CheckCircle2, onClick: onMarkComplete }] : []),
         ...(editable ? [{ label: 'Edit order', icon: Pencil, onClick: () => navigate(`/orders/${order._id}/edit`) }] : []),
-        ...(canCancel && active && !pending ? [{ label: 'Cancel order', icon: X, danger: true, onClick: onCancel }] : []),
+        ...(canCancel && active && (!pending || showPendingCancellation) ? [{ label: pending ? 'Turn down' : 'Cancel order', icon: X, danger: true, onClick: onCancel }] : []),
       ]}
     />
   );
