@@ -7,7 +7,6 @@ import type MenuSize from '../types/menu_size';
 export default function cartItemOf(dish: MenuItem, size: MenuSize, addons: AddonOption[] = [], note = ''): CartItem {
   const addonIds = addons.map((addon) => addon._id).sort();
   const trimmed = note.trim();
-  const menuPrice = size.price + addons.reduce((sum, addon) => sum + addon.price, 0);
   return {
     key: [dish._id, size._id, ...addonIds, trimmed].join('|'),
     itemId: dish._id,
@@ -17,9 +16,7 @@ export default function cartItemOf(dish: MenuItem, size: MenuSize, addons: Addon
     addonIds,
     ...(addons.length && { addons: addons.map(({ name, price }) => ({ name, price })) }),
     ...(trimmed && { note: trimmed }),
-    menuPrice,
-    priceOverridden: false,
-    price: menuPrice,
+    price: size.price + addons.reduce((sum, addon) => sum + addon.price, 0),
     qty: 1,
   };
 }

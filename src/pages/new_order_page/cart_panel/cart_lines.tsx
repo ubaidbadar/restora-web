@@ -28,12 +28,7 @@ export default function CartLines({ control, setValue, errors, centerEmpty = fal
   return (
     <ul aria-label="Items in this order" className={className || 'divide-y divide-border'}>
       {items.map((line) => (
-        <CartLine
-          key={line.key}
-          line={line}
-          onQty={(key, qty) => setValue('items', setQty(items, key, qty), { shouldDirty: true })}
-          onPrice={(key, price) => setValue('items', items.map((item) => item.key === key ? { ...item, price, priceOverridden: price !== (item.menuPrice ?? item.price) } : item), { shouldDirty: true })}
-        />
+        <CartLine key={line.key} line={line} onQty={(key, qty) => setValue('items', setQty(items, key, qty), { shouldDirty: true })} />
       ))}
     </ul>
   );

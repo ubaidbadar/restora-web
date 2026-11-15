@@ -8,7 +8,6 @@ import getCache from '../../store/get_cache';
 import useAuthStore from '../../store/auth_store';
 import useOutboxStore from '../../store/outbox_store';
 import sampleMe from '../../test/sample_me';
-import type CartItem from '../../types/cart_item';
 import type Customer from '../../types/customer';
 import type Menu from '../../types/menu';
 import type Order from '../../types/order';
@@ -210,64 +209,6 @@ describe('New order (desktop)', () => {
     fireEvent.click(within(cart).getByRole('button', { name: 'One less Chicken Karahi' }));
     fireEvent.click(within(cart).getByRole('button', { name: 'One less Chicken Karahi' }));
     expect(screen.queryByRole('list', { name: 'Items in this order' })).toBeNull();
-  });
-
-  it('allows a per-order unit price override without changing the menu price', async () => {
-    mocked.post.mockResolvedValue({ data: { _id: 'srv-price', dailyToken: 80 } });
-    renderPage();
-    await screen.findByText('Chicken Karahi');
-    fireEvent.click(dishTile('Chicken Karahi'));
-
-    const price = screen.getByRole('spinbutton', { name: 'Unit price for Chicken Karahi' }) as HTMLInputElement;
-    expect(price.value).toBe('1000');
-    fireEvent.change(price, { target: { value: '850' } });
-
-    expect(screen.getByText('Menu price Rs 1,000')).toBeTruthy();
-    expect(screen.getAllByText('Rs 850').length).toBeGreaterThan(0);
-    expect(MENU.items[0]!.sizes[0]!.price).toBe(1000);
-
-    placeOrder();
-    await screen.findByText('Orders board');
-    const body = mocked.post.mock.calls[0]![1];
-    expect(body.items[0]).toMatchObject({ itemId: 'd1', sizeId: 's1', addonIds: [], qty: 1, price: 850 });
-    expect(body.items[0].menuPrice).toBeUndefined();
-  });
-
-  it('keeps a manual price override in the offline order and its sync payload', async () => {
-    useOutboxStore.setState({ online: false });
-    renderPage();
-    await screen.findByText('Chicken Karahi');
-    fireEvent.click(dishTile('Chicken Karahi'));
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Unit price for Chicken Karahi' }), { target: { value: '850' } });
-    pick(/^Takeaway$/);
-
-    placeOrder();
-    await screen.findByText('Orders board');
-    const [item] = useOutboxStore.getState().items;
-    expect((item!.body as { items: { price?: number }[] }).items[0]!.price).toBe(850);
-    expect((item!.preview as Order).items[0]).toMatchObject({ price: 850, menuPrice: 1000 });
-    expect((item!.preview as Order).total).toBe(850);
-  });
-
-  it('keeps a saved manual price override when editing an order', async () => {
-    mocked.put.mockResolvedValue({ data: { _id: 'o-price', dailyToken: 9 } });
-    const order = {
-      _id: 'o-price', dailyToken: 9, type: 'takeaway',
-      items: [{ itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '', addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, qty: 1 }],
-      discount: 0, deliveryFee: 0, status: 'preparing', paymentStatus: 'unpaid', createdAt: '',
-    } as unknown as Order;
-    const items: CartItem[] = [{
-      key: 'd1|s1|', itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '',
-      addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, qty: 1,
-    }];
-    renderPage(<NewOrderPage editing={{ order, items }} />);
-    await screen.findByText('Edit order #9');
-    expect((screen.getByRole('spinbutton', { name: 'Unit price for Chicken Karahi' }) as HTMLInputElement).value).toBe('850');
-
-    placeOrder();
-    await screen.findByText('Orders board');
-    const body = mocked.put.mock.calls[0]![1];
-    expect(body.items[0]).toMatchObject({ itemId: 'd1', price: 850 });
   });
 
   it('opens size and add-on choices by tapping a dish that has options', async () => {
