@@ -1,6 +1,6 @@
 import can from '@shared/can';
-import useAuthStore from '../../store/auth_store';
 import type Order from '../../types/order';
+import useWorkplace from '../../hooks/useWorkplace';
 import type OrderCancellation from '../../types/order_cancellation';
 import changeOrder from '../../utils/change_order';
 import CancelOrder from './cancel_order';
@@ -15,7 +15,7 @@ interface TodayOrderRowProps {
 
 /** A row of today's list: tap the row for details or use its menu for the same actions as the board. */
 export default function TodayOrderRow({ order, onOrderUpdated }: TodayOrderRowProps) {
-  const canPay = can(useAuthStore((state) => state.me?.workplace), 'orders:payment');
+  const canPay = can(useWorkplace(), 'orders:payment');
   const itemCount = order.items.reduce((sum, item) => sum + item.qty, 0);
 
   const handleComplete = () => changeOrder({
