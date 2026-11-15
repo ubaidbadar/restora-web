@@ -27,11 +27,14 @@ vi.mock('../../utils/offline_db', () => ({ default: { get: vi.fn(async () => und
 const mocked = api as unknown as ReturnType<typeof vi.fn> & { post: ReturnType<typeof vi.fn>; put: ReturnType<typeof vi.fn>; request: ReturnType<typeof vi.fn> };
 
 const MENU: Menu = {
-  categories: [{ _id: 'c1', name: 'Karahi', sortOrder: 0 }],
+  categories: [
+    { _id: 'c1', name: 'Karahi', sortOrder: 0 },
+    { _id: 'c2', name: 'Rice & Biryani', sortOrder: 1 },
+  ],
   addonGroups: [{ _id: 'g1', name: 'Raita', min: 0, max: 1, options: [{ _id: 'o1', name: 'Raita', price: 50 }] }],
   items: [
     { _id: 'd1', categoryId: 'c1', name: 'Chicken Karahi', sizes: [{ _id: 's1', name: '', price: 1000 }], addonGroupIds: [], includes: [], days: [], from: '', to: '', soldOut: false, hidden: false },
-    { _id: 'd2', categoryId: 'c1', name: 'Biryani', sizes: [{ _id: 's2', name: 'Half', price: 300 }, { _id: 's3', name: 'Full', price: 550 }], addonGroupIds: ['g1'], includes: [], days: [], from: '', to: '', soldOut: false, hidden: false },
+    { _id: 'd2', categoryId: 'c2', name: 'Biryani', sizes: [{ _id: 's2', name: 'Half', price: 300 }, { _id: 's3', name: 'Full', price: 550 }], addonGroupIds: ['g1'], includes: [], days: [], from: '', to: '', soldOut: false, hidden: false },
   ],
 };
 const CUSTOMERS: Customer[] = [
@@ -210,6 +213,24 @@ describe('New order (desktop)', () => {
     fireEvent.click(within(cart).getByRole('button', { name: 'One less Chicken Karahi' }));
     fireEvent.click(within(cart).getByRole('button', { name: 'One less Chicken Karahi' }));
     expect(screen.queryByRole('list', { name: 'Items in this order' })).toBeNull();
+  });
+
+  it('shows the correct menu category on every order line, including dishes with options', async () => {
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+    fireEvent.click(dishTile('Biryani'));
+
+    const picker = screen.getByRole('dialog', { name: 'Biryani' });
+    fireEvent.click(within(picker).getByRole('radio', { name: /Full · Rs 550/ }));
+    fireEvent.click(within(picker).getByRole('button', { name: /Raita/ }));
+    fireEvent.click(within(picker).getByRole('button', { name: 'Add · Rs 600' }));
+
+    const cart = screen.getByRole('list', { name: 'Items in this order' });
+    const lines = within(cart).getAllByRole('listitem');
+    expect(lines).toHaveLength(2);
+    expect(within(lines[0]!).getByText('Karahi', { exact: true })).toBeTruthy();
+    expect(within(lines[1]!).getByText('Rice & Biryani', { exact: true })).toBeTruthy();
   });
 
   it('allows a per-order unit price override without changing the menu price', async () => {
