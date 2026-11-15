@@ -11,7 +11,7 @@ import DeliveryFields from './delivery_fields';
 
 const TYPES = ORDER_TYPES.map((value) => ({ value, label: ORDER_TYPE_LABELS[value] }));
 
-/** Order type, plus the table or delivery fields it needs. Re-renders only when the type changes. */
+/** Order type, plus its table or delivery fields. Watches only the values needed to preserve the current selection. */
 export default function OrderTypePicker({ tables, tablesLoading, editing, ...props }: FormComponentProps & { tables: Table[]; tablesLoading: boolean; editing?: boolean }) {
   // New orders start as dine-in; ?table=<id> additionally preselects that table.
   const table = useSearchParams()[0].get('table') ?? '';
