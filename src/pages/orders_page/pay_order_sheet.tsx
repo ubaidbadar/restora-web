@@ -69,7 +69,7 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
             });
             updated = completed;
           } catch (err) {
-            if (!err.response) {
+            if (typeof err !== 'object' || err === null || !('response' in err) || !err.response) {
               queueCompletion();
               completionWarning = `Payment recorded. Order #${order.dailyToken} will be marked complete when the internet returns.`;
             } else {
