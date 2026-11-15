@@ -12,7 +12,7 @@ import DeliveryFields from './delivery_fields';
 const TYPES = ORDER_TYPES.map((value) => ({ value, label: ORDER_TYPE_LABELS[value] }));
 
 /** Order type, plus its table or delivery fields. Watches only the values needed to preserve the current selection. */
-export default function OrderTypePicker({ tables, tablesLoading, editing, ...props }: FormComponentProps & { tables: Table[]; tablesLoading: boolean; editing?: boolean }) {
+export default function OrderTypePicker({ tables, tablesLoading, tablesError, retryTables, editing, ...props }: FormComponentProps & { tables: Table[]; tablesLoading: boolean; tablesError?: string; retryTables: () => void; editing?: boolean }) {
   // New orders start as dine-in; ?table=<id> additionally preselects that table.
   const table = useSearchParams()[0].get('table') ?? '';
   const start = 'dine_in';
@@ -30,7 +30,7 @@ export default function OrderTypePicker({ tables, tablesLoading, editing, ...pro
           edited order starts with its own type. */}
       <Tabs register={props.register} name="type" label="Order type" options={TYPES} value={type} fill showLabel />
       {type === 'takeaway' && !customerId && !customerPhone && <Input label="Name (optional)" dir="auto" {...props.register('newName')} />}
-      {type === 'dine_in' && <TableSelect register={props.register} errors={props.errors} tables={tables} loading={tablesLoading} allowTyped defaultTableId={defaultTableId} />}
+      {type === 'dine_in' && <TableSelect register={props.register} errors={props.errors} tables={tables} loading={tablesLoading} error={tablesError} onRetry={retryTables} allowTyped defaultTableId={defaultTableId} />}
       {type === 'delivery' && <DeliveryFields {...props} />}
     </section>
   );
