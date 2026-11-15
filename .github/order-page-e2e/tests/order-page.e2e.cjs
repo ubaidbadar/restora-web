@@ -562,7 +562,7 @@ test('payment sheet can mark an unpaid list-view order complete in the same flow
   const payment = page.getByRole('dialog', { name: 'Order #101' }).last();
   await expect(payment.getByLabel('Mark order as complete')).toBeVisible();
   await payment.getByLabel('Mark order as complete').check();
-  await activate(page, payment.getByRole('button', { name: /^Cash\b/ }));
+  await activate(page, payment.getByRole('button', { name: /^Cash/ }));
 
   await expect(row.getByText('Done', { exact: true })).toBeVisible();
   await expect(row.getByText('Paid', { exact: true })).toBeVisible();
