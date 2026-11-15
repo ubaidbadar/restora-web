@@ -214,9 +214,9 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
         onKeyDown={(e) => keepEnterInInputs(e)}
         onSubmit={({ data, onSuccess, onError }) => {
           // The menu price is only a snapshot. Send a final price to the server only when this line was overridden.
-          const items = (data.items as CartItem[]).map(({ itemId, sizeId, addonIds, note, qty, price, priceOverridden }) => ({
+          const items = (data.items as CartItem[]).map(({ itemId, sizeId, addonIds, note, qty, price, priceOverridden, savedPrice }) => ({
             itemId, sizeId, addonIds, note, qty,
-            ...(priceOverridden ? { price } : {}),
+            ...(priceOverridden || (savedPrice !== undefined && price !== savedPrice) ? { price } : {}),
           }));
           const payload = { ...data, items };
           // Editing: payment is left out (it is recorded from the board).
