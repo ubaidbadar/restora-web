@@ -7,6 +7,7 @@ import DishPicker from './dish_picker';
 
 interface MenuItemTileProps {
   dish: MenuItem;
+  categoryName?: string;
   groups: AddonGroup[];
   /** What is in a deal; '' for a dish. */
   contents: string;
@@ -20,12 +21,12 @@ interface MenuItemTileProps {
 const tileButton = 'flex min-h-28 w-full flex-1 cursor-pointer flex-col items-start rounded-card p-3 text-start -outline-offset-2';
 
 /** A tap adds a plain dish or opens its size and add-on choices; the selected quantity stays visible on the tile. */
-export default function MenuItemTile({ dish, groups, contents, lines, onAdd }: MenuItemTileProps) {
+export default function MenuItemTile({ dish, categoryName, groups, contents, lines, onAdd }: MenuItemTileProps) {
   const hasOptions = dish.sizes.length > 1 || groups.length > 0;
   const qty = lines.reduce((sum, line) => sum + line.qty, 0);
   const defaultSize = dish.sizes[0]!;
   const defaultAddons = groups.flatMap((group) => (group.min > 0 && group.options.length > 0 ? [group.options[0]!] : []));
-  const handleAddDefault = () => onAdd(cartItemOf(dish, defaultSize, defaultAddons));
+  const handleAddDefault = () => onAdd(cartItemOf(dish, defaultSize, defaultAddons, '', categoryName));
 
   const trigger = (onClick: () => void) => (
     <button type="button" onClick={onClick} title={contents || undefined} className={tileButton}>
@@ -45,7 +46,7 @@ export default function MenuItemTile({ dish, groups, contents, lines, onAdd }: M
   return (
     <li className={`relative flex min-h-28 flex-col rounded-card bg-surface shadow-card transition-shadow ${qty ? 'ring-2 ring-primary' : 'hover:shadow-lg'}`}>
       {hasOptions
-        ? <DishPicker dish={dish} groups={groups} contents={contents} onAdd={onAdd} component={({ open }) => trigger(open)} />
+        ? <DishPicker dish={dish} categoryName={categoryName} groups={groups} contents={contents} onAdd={onAdd} component={({ open }) => trigger(open)} />
         : trigger(handleAddDefault)}
     </li>
   );
