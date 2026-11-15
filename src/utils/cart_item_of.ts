@@ -18,6 +18,7 @@ export default function cartItemOf(dish: MenuItem, size: MenuSize, addons: Addon
     ...(addons.length && { addons: addons.map(({ name, price }) => ({ name, price })) }),
     ...(trimmed && { note: trimmed }),
     menuPrice,
+    priceOverridden: false,
     price: menuPrice,
     qty: 1,
   };
