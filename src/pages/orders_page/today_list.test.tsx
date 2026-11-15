@@ -86,6 +86,7 @@ describe('Orders list view', () => {
     fireEvent.click(screen.getByRole('button', { name: 'More for order 1' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Turn down' }));
     fireEvent.click(screen.getByLabelText('Other'));
+    fireEvent.change(screen.getByLabelText(/^Note/), { target: { value: 'Guest changed their mind' } });
     fireEvent.click(screen.getByRole('button', { name: 'Turn down' }));
 
     await waitFor(() => expect(api.request).toHaveBeenCalledWith(expect.objectContaining({
