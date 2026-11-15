@@ -13,10 +13,12 @@ interface OrderActionsMenuProps {
   onShowDetails: () => void;
   onMarkComplete: () => void;
   onCancel: () => void;
+  /** The list has no primary status button, so keep completion available in its menu too. */
+  showCompletionAction?: boolean;
 }
 
 /** The same available order actions wherever an order is shown. */
-export default function OrderActionsMenu({ order, onShowDetails, onMarkComplete, onCancel }: OrderActionsMenuProps) {
+export default function OrderActionsMenu({ order, onShowDetails, onMarkComplete, onCancel, showCompletionAction = false }: OrderActionsMenuProps) {
   const navigate = useNavigate();
   const workplace = useWorkplace();
   const canMove = can(workplace, 'orders:update');
@@ -41,7 +43,7 @@ export default function OrderActionsMenu({ order, onShowDetails, onMarkComplete,
         { label: 'Details', icon: FileText, onClick: onShowDetails },
         { label: 'Print kitchen slip', icon: ChefHat, onClick: () => printSlip(order, 'kitchen') },
         { label: 'Print receipt', icon: Receipt, onClick: () => printSlip(order, 'receipt') },
-        ...(canMove && active && !pending && next !== 'completed' ? [{ label: 'Mark as complete', icon: CheckCircle2, onClick: onMarkComplete }] : []),
+        ...(canMove && active && !pending && (showCompletionAction || next !== 'completed') ? [{ label: 'Mark as complete', icon: CheckCircle2, onClick: onMarkComplete }] : []),
         ...(editable ? [{ label: 'Edit order', icon: Pencil, onClick: () => navigate(`/orders/${order._id}/edit`) }] : []),
         ...(canCancel && active && !pending ? [{ label: 'Cancel order', icon: X, danger: true, onClick: onCancel }] : []),
       ]}
