@@ -253,12 +253,12 @@ describe('New order (desktop)', () => {
     mocked.put.mockResolvedValue({ data: { _id: 'o-price', dailyToken: 9 } });
     const order = {
       _id: 'o-price', dailyToken: 9, type: 'takeaway',
-      items: [{ itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '', addonIds: [], price: 850, menuPrice: 1000, qty: 1 }],
+      items: [{ itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '', addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, qty: 1 }],
       discount: 0, deliveryFee: 0, status: 'preparing', paymentStatus: 'unpaid', createdAt: '',
     } as unknown as Order;
     const items: CartItem[] = [{
       key: 'd1|s1|', itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '',
-      addonIds: [], price: 850, menuPrice: 1000, qty: 1,
+      addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, qty: 1,
     }];
     renderPage(<NewOrderPage editing={{ order, items }} />);
     await screen.findByText('Edit order #9');
