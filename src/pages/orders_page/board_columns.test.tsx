@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetBreakpoints } from '../../hooks/useBreakpoint';
 import useAuthStore from '../../store/auth_store';
 import sampleMe from '../../test/sample_me';
+import useOutboxStore from '../../store/outbox_store';
 import type Order from '../../types/order';
 import api from '../../config/api';
 import BoardColumns from './board_columns';
@@ -27,6 +28,7 @@ beforeEach(() => {
   vi.mocked(api.request).mockReset();
   vi.mocked(api.post).mockReset();
   useAuthStore.getState().setMe(sampleMe());
+  useOutboxStore.setState({ online: true, items: [] });
   // jsdom has no scrolling; the status tabs bring the picked one into view.
   Element.prototype.scrollIntoView = vi.fn();
 });
@@ -145,7 +147,7 @@ describe('Orders board', () => {
     render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
     fireEvent.click(await screen.findByLabelText('Mark order as complete'));
-    fireEvent.click(screen.getByRole('button', { name: /Cash/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/orders/a/payment', { paymentMethod: 'cash' }));
     await waitFor(() => expect(api.request).toHaveBeenCalledWith({
@@ -154,6 +156,85 @@ describe('Orders board', () => {
       data: { status: 'completed' },
     }));
     expect(onOrderUpdated).toHaveBeenCalledWith(completed);
+  });
+
+  it('does not send a completion request when recording payment fails', async () => {
+    setWide(false);
+    vi.mocked(api.post).mockRejectedValue(new Error('Payment request failed'));
+
+    render(<MemoryRouter><BoardColumns orders={ORDERS} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
+    fireEvent.click(await screen.findByLabelText('Mark order as complete'));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledOnce());
+    expect(api.request).not.toHaveBeenCalled();
+    expect(useOutboxStore.getState().items).toHaveLength(0);
+  });
+
+  it('does not queue a forbidden completion after payment; it keeps the paid order result', async () => {
+    setWide(false);
+    const paid = { ...ORDERS[0]!, paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
+    const forbidden = Object.assign(new Error('Forbidden'), {
+      isAxiosError: true,
+      response: { status: 403, data: { message: 'You cannot update orders' } },
+    });
+    const onOrderUpdated = vi.fn();
+    vi.mocked(api.post).mockResolvedValue({ data: paid });
+    vi.mocked(api.request).mockRejectedValue(forbidden);
+
+    render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
+    fireEvent.click(await screen.findByLabelText('Mark order as complete'));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+
+    await waitFor(() => expect(api.request).toHaveBeenCalledOnce());
+    expect(useOutboxStore.getState().items).toHaveLength(0);
+    expect(onOrderUpdated).toHaveBeenCalledWith(paid);
+  });
+
+  it('queues a transient server failure when completion follows a successful payment', async () => {
+    setWide(false);
+    const paid = { ...ORDERS[0]!, paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
+    const temporaryFailure = { response: { status: 503, data: { message: 'Temporarily unavailable' } } };
+    vi.mocked(api.post).mockResolvedValue({ data: paid });
+    vi.mocked(api.request).mockRejectedValue(temporaryFailure);
+
+    render(<MemoryRouter><BoardColumns orders={ORDERS} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
+    fireEvent.click(await screen.findByLabelText('Mark order as complete'));
+    fireEvent.click(screen.getByRole('button', { name: /^Cash\\b/ }));
+
+    await waitFor(() => expect(api.request).toHaveBeenCalledTimes(2));
+    expect(useOutboxStore.getState().items).toHaveLength(1);
+    expect(useOutboxStore.getState().items[0]).toMatchObject({
+      method: 'patch',
+      url: '/orders/a',
+      body: { status: 'completed' },
+    });
+    expect(useOutboxStore.getState().items[0]?.syncIssue).toBeUndefined();
+  });
+
+  it('prevents a second payment submission while the first request is pending', async () => {
+    setWide(false);
+    const paid = { ...ORDERS[0]!, paymentStatus: 'paid' as const, paymentMethod: 'cash' as const };
+    let resolvePayment!: (value: Awaited<ReturnType<typeof api.post>>) => void;
+    vi.mocked(api.post).mockImplementation(() => new Promise((resolve) => { resolvePayment = resolve; }));
+    vi.mocked(api.request).mockResolvedValue({ data: { ...paid, status: 'completed' } });
+
+    render(<MemoryRouter><BoardColumns orders={ORDERS} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Record payment for order 1' }));
+    fireEvent.click(await screen.findByLabelText('Mark order as complete'));
+    const cash = screen.getByRole('button', { name: /^Cash\\b/ });
+    fireEvent.click(cash);
+
+    expect(cash).toBeDisabled();
+    fireEvent.click(cash);
+    expect(api.post).toHaveBeenCalledOnce();
+
+    resolvePayment({ data: paid } as Awaited<ReturnType<typeof api.post>>);
+    await waitFor(() => expect(api.request).toHaveBeenCalledOnce());
+    expect(api.post).toHaveBeenCalledOnce();
   });
 
   it('does not show pay button for completed orders that are already paid', () => {
