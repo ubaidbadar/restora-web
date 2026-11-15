@@ -10,7 +10,7 @@ interface CartLinesProps extends FormComponentProps {
   className?: string;
 }
 
-/** The lines in the cart. Reads `items` from the form and writes quantity changes back with setValue. */
+/** The lines in the cart. Reads `items` from the form and writes quantity and per-order price changes back. */
 export default function CartLines({ control, setValue, errors, centerEmpty = false, className }: CartLinesProps) {
   const items: CartItem[] = useWatch({ control, name: 'items' }) ?? [];
   const error = fieldError(errors, 'items');
