@@ -39,7 +39,7 @@ export default function TodayOrderRow({ order, onOrderUpdated }: TodayOrderRowPr
   return (
     <OrderDetailsDrawer
       order={order}
-      payable={canPay && order.status !== 'cancelled' && order.paymentStatus === 'unpaid' && !order.pendingSync}
+      payable={canPay && order.status !== 'cancelled' && order.status !== 'pending' && order.paymentStatus === 'unpaid' && !order.pendingSync}
       onOrderUpdated={onOrderUpdated}
       trigger={(showDetails) => (
         <CancelOrder
@@ -55,6 +55,7 @@ export default function TodayOrderRow({ order, onOrderUpdated }: TodayOrderRowPr
                 onShowDetails={showDetails}
                 onMarkComplete={handleComplete}
                 onCancel={askCancel}
+                showCompletionAction
               />
             </div>
           )}
