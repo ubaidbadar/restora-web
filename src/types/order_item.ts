@@ -1,4 +1,4 @@
-/** One line of a placed order. Names and prices were copied from the menu; `price` is size + add-ons, for one. */
+/** One line of a placed order. `price` is the final per-unit price; `menuPrice` is the menu price snapshot. */
 export default interface OrderItem {
   itemId: string;
   name: string;
@@ -10,6 +10,11 @@ export default interface OrderItem {
   /** A deal: the dishes in one deal, as they were when ordered. */
   includes?: { name: string; sizeName?: string; qty: number }[];
   note?: string;
+  /** Server-calculated menu price per unit when this order was saved; absent on older orders. */
+  menuPrice?: number;
+  /** Explicitly set by staff when this order line uses a custom price. */
+  priceOverridden?: boolean;
+  /** Final per-unit price charged for this order line. */
   price: number;
   qty: number;
 }

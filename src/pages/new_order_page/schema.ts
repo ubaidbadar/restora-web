@@ -6,15 +6,17 @@ import ORDER_TYPES from '../../constants/order_types';
 import PAYMENT_STATUSES from '../../constants/payment_statuses';
 
 /**
- * A cart line (types/cart_item). The server prices it from the ids alone; the name and price it showed are kept too, so
- * an order taken offline can show on the board until it syncs (the server ignores them).
+ * A cart line (types/cart_item). The server calculates the menu price from the ids; `price` is sent only when staff
+ * explicitly override it for this order. `menuPrice` stays client-side for offline previews and edit comparisons.
  */
 const orderItem = z.object({
   itemId: z.string(),
   name: z.string(),
   sizeName: z.string().optional(),
   addons: z.array(z.object({ name: z.string(), price: z.number() })).optional(),
-  price: z.number(),
+  price: z.number().finite().min(0),
+  menuPrice: z.number().finite().min(0).optional(),
+  priceOverridden: z.boolean().optional(),
   sizeId: z.string().optional(),
   addonIds: z.array(z.string()),
   note: z.string().optional(),
