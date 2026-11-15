@@ -322,7 +322,7 @@ describe('New order (desktop)', () => {
       discount: 0, deliveryFee: 0, status: 'preparing', paymentStatus: 'unpaid', createdAt: '',
     } as unknown as Order;
     const items: CartItem[] = [{
-      key: 'd1|s1|', itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '',
+      key: 'd1|s1||price:850', itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '',
       addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, savedPrice: 850, qty: 1,
     }];
     renderPage(<NewOrderPage editing={{ order, items }} />);
