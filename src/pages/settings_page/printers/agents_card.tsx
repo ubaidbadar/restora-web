@@ -1,4 +1,5 @@
-import { Download, Plus } from "lucide-react";
+import { useEffect } from "react";
+import { Download, Plus, RefreshCw } from "lucide-react";
 import FormDrawer from "../../../components/form_drawer";
 import SectionCard from "../../../components/section_card";
 import SkeletonList from "../../../components/skeleton_list";
@@ -34,6 +35,29 @@ export default function AgentsCard({
     get,
     update,
   } = useGet<PrintAgent[]>("/print-agents");
+  // Agent inventory changes outside this page. Reconcile while it is visible,
+  // including after returning to the PWA or recovering the connection.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible" && navigator.onLine) get();
+    };
+    const timer = window.setInterval(refresh, 5_000);
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("online", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("online", refresh);
+    };
+  }, [get]);
+
+  const refreshButton = (
+    <Button type="button" variant="outline" icon={RefreshCw} onClick={() => get()}>
+      Refresh list
+    </Button>
+  );
   const replace = (saved: PrintAgent) =>
     update((current) =>
       current?.map((item) => (item._id === saved._id ? saved : item)),
@@ -50,6 +74,7 @@ export default function AgentsCard({
     return (
       <div className="flex flex-col gap-4">
         {thisPc}
+        <div>{refreshButton}</div>
         <SetupCard
           embedded={embedded}
           agent={agents[0]}
@@ -66,10 +91,11 @@ export default function AgentsCard({
       {thisPc}
       <SectionCard
         title="PCs and printers"
-        description="Name each printer and say what it prints. Kitchen slips can go to one printer per category."
+        description="The list updates automatically. Name each printer and say what it prints. Kitchen slips can go to one printer per category."
         flush
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {refreshButton}
             {!embedded && (
               <Button
                 as="a"
