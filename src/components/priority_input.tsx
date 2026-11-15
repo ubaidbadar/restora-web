@@ -13,7 +13,7 @@ export default function PriorityInput({ value, max, label, onSave }: PriorityInp
   const [saving, setSaving] = useState(false);
 
   return (
-    <div className="w-14 shrink-0">
+    <div className="w-10 shrink-0">
       <Input
         key={`${value}:${max}`}
         type="number"
@@ -23,7 +23,7 @@ export default function PriorityInput({ value, max, label, onSave }: PriorityInp
         defaultValue={value}
         aria-label={`Priority for ${label}`}
         title={`Priority for ${label}`}
-        className="px-1 text-center tabular-nums"
+        className="px-0.5 text-center tabular-nums"
         disabled={saving}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
