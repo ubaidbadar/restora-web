@@ -324,7 +324,7 @@ test('category filters work across a large real-menu-shaped catalogue', async ({
   await expect(page.getByRole('button').filter({ hasText: 'Chicken Karahi' })).toHaveCount(0);
 });
 
-test('each order line shows its own menu category without causing cart overflow', async ({ app }) => {
+test('each order line shows its own menu category without causing cart overflow', async ({ app }, testInfo) => {
   const { page } = app;
   await addDish(page, 'Chicken Karahi');
   await addDish(page, 'Biryani');
@@ -340,6 +340,7 @@ test('each order line shows its own menu category without causing cart overflow'
   const biryani = cart.getByRole('listitem').filter({ hasText: 'Biryani' });
   await expect(chicken.getByText('Karahi', { exact: true })).toBeVisible();
   await expect(biryani.getByText('Rice', { exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('order-lines-with-categories.png'), fullPage: true });
 
   const dimensions = await cart.evaluate((element) => ({
     scrollWidth: element.scrollWidth,
