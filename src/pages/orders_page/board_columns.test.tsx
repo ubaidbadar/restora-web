@@ -228,7 +228,7 @@ describe('Orders board', () => {
     const cash = screen.getByRole('button', { name: /^Cash\b/ });
     fireEvent.click(cash);
 
-    expect(cash).toBeDisabled();
+    expect(cash.disabled).toBe(true);
     fireEvent.click(cash);
     expect(api.post).toHaveBeenCalledOnce();
 
