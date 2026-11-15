@@ -17,12 +17,8 @@ export default function menuItemPriorities(items: MenuItem[]): Map<string, MenuI
 
   const priorities = new Map<string, MenuItemPriority>();
   for (const categoryItems of grouped.values()) {
-    categoryItems.sort(
-      (a, b) =>
-        (a.sortOrder ?? 0) - (b.sortOrder ?? 0) ||
-        a.name.localeCompare(b.name) ||
-        a._id.localeCompare(b._id)
-    );
+    // The API returns display order; stable sorting preserves legacy order for equal priorities.
+    categoryItems.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
     categoryItems.forEach((item, index) => {
       priorities.set(item._id, { priority: index + 1, count: categoryItems.length });
     });

@@ -8,11 +8,13 @@ export default function filterMenu({ categories, items }: Pick<Menu, 'categories
   const order = new Map(categories.map((category, index) => [category._id, index]));
   const categoryName = new Map(categories.map((category) => [category._id, category.name]));
   return items
-    .filter((item) => categoryId === ALL_CATEGORIES || item.categoryId === categoryId)
-    .filter((item) => !wanted || `${item.name} ${categoryName.get(item.categoryId) ?? ''}`.toLowerCase().includes(wanted))
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => categoryId === ALL_CATEGORIES || item.categoryId === categoryId)
+    .filter(({ item }) => !wanted || `${item.name} ${categoryName.get(item.categoryId) ?? ''}`.toLowerCase().includes(wanted))
     .sort((a, b) =>
-      (order.get(a.categoryId) ?? 0) - (order.get(b.categoryId) ?? 0) ||
-      (a.sortOrder ?? 0) - (b.sortOrder ?? 0) ||
-      a.name.localeCompare(b.name)
-    );
+      (order.get(a.item.categoryId) ?? 0) - (order.get(b.item.categoryId) ?? 0) ||
+      (a.item.sortOrder ?? 0) - (b.item.sortOrder ?? 0) ||
+      a.index - b.index
+    )
+    .map(({ item }) => item);
 }

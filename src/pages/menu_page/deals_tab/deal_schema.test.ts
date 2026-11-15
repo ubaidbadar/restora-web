@@ -6,6 +6,7 @@ import type MenuItem from '../../../types/menu_item';
 const form = {
   name: 'Deal 1',
   categoryId: 'cat_1',
+  priority: 2,
   price: '1999',
   includes: [
     { itemId: 'karahi', sizeId: 'half', qty: '1' },
@@ -23,6 +24,7 @@ describe('dealSchema', () => {
     expect(dealSchema.parse(form)).toEqual({
       name: 'Deal 1',
       categoryId: 'cat_1',
+      priority: 2,
       description: '',
       sizes: [{ name: '', price: 1999 }],
       includes: [
@@ -35,6 +37,11 @@ describe('dealSchema', () => {
       to: '16:00',
       hidden: false,
     });
+  });
+
+  it('rejects zero and fractional display priorities', () => {
+    expect(dealSchema.safeParse({ ...form, priority: 0 }).success).toBe(false);
+    expect(dealSchema.safeParse({ ...form, priority: 1.5 }).success).toBe(false);
   });
 
   it('needs a dish, a price, and both times or neither', () => {
@@ -58,8 +65,9 @@ describe('dealSchema', () => {
       soldOut: false,
       hidden: false,
     };
-    const parsed = dealSchema.parse(dealFormValues(deal));
+    const parsed = dealSchema.parse(dealFormValues(deal, 4));
     expect(parsed.sizes).toEqual([{ _id: 'price_1', name: '', price: 1999 }]);
+    expect(parsed.priority).toBe(4);
     expect(parsed.includes).toEqual([{ itemId: 'naan', sizeId: undefined, qty: 2 }]);
   });
 });

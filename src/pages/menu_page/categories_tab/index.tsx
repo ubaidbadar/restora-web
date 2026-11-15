@@ -6,9 +6,6 @@ import SectionCard from '../../../components/section_card';
 import type MenuCategory from '../../../types/menu_category';
 import Button from '../../../ui/button';
 import api from '../../../config/api';
-import getAxiosMessage from '../../../utils/get_axios_message';
-import toast from '../../../utils/toast';
-import upsertById from '../../../utils/upsert_by_id';
 import type MenuTabProps from '../menu_tab_props';
 import CategoryFields from './category_fields';
 import CategoryRow from './category_row';
@@ -17,7 +14,6 @@ import categorySchema from './category_schema';
 /** The menu's sections in the order guests and staff see them. Set their display position with a number. */
 export default function CategoriesTab({ menu, onUpdate }: MenuTabProps) {
   const { categories } = menu;
-  const save = (category: MenuCategory) => onUpdate({ categories: upsertById(categories, category) });
 
   return (
     <SectionCard
@@ -29,8 +25,9 @@ export default function CategoriesTab({ menu, onUpdate }: MenuTabProps) {
           <FormDrawer
             title="Add category"
             schema={categorySchema}
-            onSave={(values) => api.post('/menu/categories', { name: values.name }).then((res) => save(res.data))}
-            fields={(form) => <CategoryFields {...form} />}
+            defaultValues={{ name: '', priority: categories.length + 1 }}
+            onSave={(values) => api.post('/menu/categories', values).then((res) => onUpdate({ categories: res.data.categories }))}
+            fields={(form) => <CategoryFields maxPriority={categories.length + 1} {...form} />}
             component={({ open }) => (
               <Button icon={Plus} onClick={open}>
                 Add category
@@ -53,16 +50,7 @@ export default function CategoriesTab({ menu, onUpdate }: MenuTabProps) {
               dishes={menu.items.filter((item) => item.categoryId === category._id).length}
               priority={index + 1}
               priorityLimit={categories.length}
-              onPrioritySave={(priority) =>
-                api
-                  .patch(`/menu/categories/${category._id}/priority`, { priority })
-                  .then((res) => onUpdate({ categories: res.data }))
-                  .catch((err) => {
-                    toast.error(getAxiosMessage(err));
-                    throw err;
-                  })
-              }
-              onSaved={save}
+              onSaved={(updated) => onUpdate({ categories: updated })}
               onDeleted={() => onUpdate({ categories: categories.filter((entry) => entry._id !== category._id) })}
             />
           ))}

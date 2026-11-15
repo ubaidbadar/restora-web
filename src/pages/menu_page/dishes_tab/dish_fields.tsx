@@ -28,6 +28,8 @@ export default function DishFields({ menu, ...form }: DishFieldsProps) {
         {...register('categoryId')}
         error={fieldError(errors, 'categoryId')}
       />
+      <Input label="Display priority" type="number" min={1} max={10000} step={1} required {...register('priority')} error={fieldError(errors, 'priority')} />
+      <p className="-mt-2 text-sm text-muted">Lower numbers appear first within this category.</p>
       <SizeRows {...form} />
       {menu.addonGroups.length > 0 && (
         <fieldset className="flex flex-col gap-2">

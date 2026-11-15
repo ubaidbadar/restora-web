@@ -19,6 +19,7 @@ const dealSchema = z
   .object({
     name: requiredText('Enter the deal name').pipe(z.string().max(80)),
     categoryId: requiredText('Pick a category'),
+    priority: z.coerce.number().int().min(1, 'Priority must be at least 1').max(10000),
     photo: z.string().nullish(),
     description: z.string().trim().max(200).default(''),
     sizeId: z.string().optional(),

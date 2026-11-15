@@ -15,19 +15,17 @@ import DishThumb from './dish_thumb';
 import dishFormValues from './dish_form_values';
 import dishSchema from './dish_schema';
 import StockToggle from './stock_toggle';
-import PriorityInput from '../../../components/priority_input';
 
 interface DishRowProps {
   dish: MenuItem;
   menu: Menu;
   priority: number;
-  priorityLimit: number;
-  onPrioritySave: (priority: number) => Promise<void>;
   onSaved: (dish: MenuItem) => void;
+  onMenuSaved: (items: MenuItem[]) => void;
   onDeleted: () => void;
 }
 
-export default function DishRow({ dish, menu, priority, priorityLimit, onPrioritySave, onSaved, onDeleted }: DishRowProps) {
+export default function DishRow({ dish, menu, priority, onSaved, onMenuSaved, onDeleted }: DishRowProps) {
   const category = menu.categories.find((entry) => entry._id === dish.categoryId)?.name;
   const groups = menu.addonGroups.filter((group) => dish.addonGroupIds.includes(group._id)).map((group) => group.name);
   const remove = () => {
@@ -59,12 +57,11 @@ export default function DishRow({ dish, menu, priority, priorityLimit, onPriorit
       </div>
       {!dish.hidden && <StockToggle dish={dish} onSaved={onSaved} />}
       <Can permission="menu:update">
-        <PriorityInput value={priority} max={priorityLimit} label={dish.name} onSave={onPrioritySave} />
         <FormDrawer
           title="Edit dish"
           schema={dishSchema}
-          defaultValues={dishFormValues(dish)}
-          onSave={(values) => api.patch(`/menu/items/${dish._id}`, values).then((res) => onSaved(res.data))}
+          defaultValues={dishFormValues(dish, priority)}
+          onSave={(values) => api.patch(`/menu/items/${dish._id}`, values).then((res) => onMenuSaved(res.data.items))}
           fields={(form) => <DishFields menu={menu} {...form} />}
           component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${dish.name}`} onClick={open} />}
         />

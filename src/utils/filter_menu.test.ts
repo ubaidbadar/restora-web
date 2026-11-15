@@ -46,4 +46,15 @@ describe('menu item priorities', () => {
     expect(priorities.get('noodles')).toEqual({ priority: 2, count: 2 });
     expect(priorities.get('water')).toEqual({ priority: 1, count: 1 });
   });
+  it('preserves the API order when legacy records share the same default priority', () => {
+    const legacyItems = [
+      item('first', 'mains', 'Zinger Burger', 0),
+      item('second', 'mains', 'Aloo Paratha', 0),
+    ];
+    const legacyMenu = { ...menu, items: legacyItems };
+    expect(filterMenu(legacyMenu, '', ALL_CATEGORIES).map((dish) => dish._id)).toEqual(['first', 'second']);
+    const priorities = menuItemPriorities(legacyItems);
+    expect(priorities.get('first')).toEqual({ priority: 1, count: 2 });
+    expect(priorities.get('second')).toEqual({ priority: 2, count: 2 });
+  });
 });

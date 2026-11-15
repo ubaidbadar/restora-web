@@ -16,7 +16,6 @@ import toast from '../../../utils/toast';
 import DishPhoto from '../dishes_tab/dish_photo';
 import DishThumb from '../dishes_tab/dish_thumb';
 import StockToggle from '../dishes_tab/stock_toggle';
-import PriorityInput from '../../../components/priority_input';
 import DealFields from './deal_fields';
 import dealFormValues from './deal_form_values';
 import dealSchema from './deal_schema';
@@ -25,14 +24,13 @@ interface DealRowProps {
   deal: MenuItem;
   menu: Menu;
   priority: number;
-  priorityLimit: number;
-  onPrioritySave: (priority: number) => Promise<void>;
   onSaved: (deal: MenuItem) => void;
+  onMenuSaved: (items: MenuItem[]) => void;
   onDeleted: () => void;
 }
 
 /** A deal: its price, what is in it, when it is sold, and whether it can be ordered now. */
-export default function DealRow({ deal, menu, priority, priorityLimit, onPrioritySave, onSaved, onDeleted }: DealRowProps) {
+export default function DealRow({ deal, menu, priority, onSaved, onMenuSaved, onDeleted }: DealRowProps) {
   const partSoldOut = menu.items.find((item) => deal.includes.some((part) => part.itemId === item._id) && item.soldOut);
   const hours = saleHours(deal);
   const groups = menu.addonGroups.filter((group) => deal.addonGroupIds.includes(group._id)).map((group) => group.name);
@@ -74,12 +72,11 @@ export default function DealRow({ deal, menu, priority, priorityLimit, onPriorit
       </div>
       {!deal.hidden && <StockToggle dish={deal} onSaved={onSaved} />}
       <Can permission="menu:update">
-        <PriorityInput value={priority} max={priorityLimit} label={deal.name} onSave={onPrioritySave} />
         <FormDrawer
           title="Edit deal"
           schema={dealSchema}
-          defaultValues={dealFormValues(deal)}
-          onSave={(values) => api.patch(`/menu/items/${deal._id}`, values).then((res) => onSaved(res.data))}
+          defaultValues={dealFormValues(deal, priority)}
+          onSave={(values) => api.patch(`/menu/items/${deal._id}`, values).then((res) => onMenuSaved(res.data.items))}
           fields={(form) => <DealFields menu={menu} {...form} />}
           component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${deal.name}`} onClick={open} />}
         />
