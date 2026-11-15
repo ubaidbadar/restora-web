@@ -32,7 +32,7 @@ export default function CartLines({ control, setValue, errors, centerEmpty = fal
           key={line.key}
           line={line}
           onQty={(key, qty) => setValue('items', setQty(items, key, qty), { shouldDirty: true })}
-          onPrice={(key, price) => setValue('items', items.map((item) => item.key === key ? { ...item, price } : item), { shouldDirty: true })}
+          onPrice={(key, price) => setValue('items', items.map((item) => item.key === key ? { ...item, price, priceOverridden: price !== (item.menuPrice ?? item.price) } : item), { shouldDirty: true })}
         />
       ))}
     </ul>
