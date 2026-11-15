@@ -24,6 +24,8 @@ function setWide(wide: boolean) {
 const tokensShown = () => screen.queryAllByText(/#\d+$/).map((element) => element.textContent!.replace('Token ', ''));
 
 beforeEach(() => {
+  vi.mocked(api.request).mockReset();
+  vi.mocked(api.post).mockReset();
   useAuthStore.getState().setMe(sampleMe());
   // jsdom has no scrolling; the status tabs bring the picked one into view.
   Element.prototype.scrollIntoView = vi.fn();
