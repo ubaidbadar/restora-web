@@ -409,6 +409,31 @@ test('customer picker is a separate searchable modal and selection collapses to 
   await expect(checkout.getByText(/Khata needs a saved customer/)).toHaveCount(0);
 });
 
+test('saving a new customer in checkout does not place the order', async ({ app }) => {
+  const { page, writes } = app;
+  await addDish(page, 'Chicken Karahi');
+  const checkout = await openCheckout(page);
+
+  await activate(page, checkout.getByRole('button', { name: 'Add customer' }));
+  const customerDialog = page.getByRole('dialog', { name: 'Select customer' });
+  await customerDialog.getByRole('combobox', { name: 'Find customer by phone number or name' }).fill('0321 7654321');
+  await activate(page, customerDialog.getByRole('option', { name: /Add “0321-7654321” as a new customer/ }));
+
+  const customerDrawer = page.getByRole('dialog', { name: 'New customer' });
+  await customerDrawer.getByLabel('Name').fill('New Customer');
+  await activate(page, customerDrawer.getByRole('button', { name: 'Save and pick' }));
+
+  await expect(customerDrawer).toHaveCount(0);
+  await expect(checkout.getByRole('button', { name: 'Remove New Customer' })).toBeVisible();
+  await expect(page).toHaveURL(/\\/orders\\/new$/);
+  expect(writes.filter((write) => write.method === 'POST' && write.path === '/customers')).toHaveLength(1);
+  expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(0);
+
+  await activate(page, checkout.getByRole('button', { name: 'Place order' }));
+  await expect(page).toHaveURL(/\\/orders$/);
+  expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(1);
+});
+
 test('saved customer delivery address is prefilled and remains editable', async ({ app }) => {
   const { page } = app;
   await addDish(page, 'Chicken Karahi');
