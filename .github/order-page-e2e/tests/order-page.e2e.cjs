@@ -534,6 +534,17 @@ test('orders list exposes the board actions and completes an order from its row 
     await expect(menu.getByRole('menuitem', { name })).toBeVisible();
   }
 
+  const viewport = page.viewportSize();
+  const menuBounds = await menu.boundingBox();
+  const triggerBounds = await row.getByRole('button', { name: 'More for order 101' }).boundingBox();
+  if (!viewport || !menuBounds || !triggerBounds) throw new Error('The order actions menu or trigger has no visible bounds');
+  expect(triggerBounds.width).toBeGreaterThanOrEqual(40);
+  expect(triggerBounds.height).toBeGreaterThanOrEqual(40);
+  expect(menuBounds.x).toBeGreaterThanOrEqual(0);
+  expect(menuBounds.y).toBeGreaterThanOrEqual(0);
+  expect(menuBounds.x + menuBounds.width).toBeLessThanOrEqual(viewport.width + 1);
+  expect(menuBounds.y + menuBounds.height).toBeLessThanOrEqual(viewport.height + 1);
+
   await activate(page, menu.getByRole('menuitem', { name: 'Mark as complete' }));
   await expect(row.getByText('Done', { exact: true })).toBeVisible();
   expect(writes.filter((write) => write.method === 'PATCH' && write.path === '/orders/order-e2e')).toHaveLength(1);
@@ -545,6 +556,26 @@ test('orders list exposes the board actions and completes an order from its row 
   }));
   expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport + 1);
   expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport + 1);
+});
+
+test('orders list action menu supports keyboard navigation and restores focus', async ({ app }) => {
+  const { page } = app;
+  await createOrderAndShowList(page);
+
+  const trigger = page.getByRole('button', { name: 'More for order 101' });
+  await trigger.focus();
+  await trigger.press('ArrowDown');
+
+  const menu = page.getByRole('menu');
+  const details = menu.getByRole('menuitem', { name: 'Details' });
+  await expect(details).toBeFocused();
+
+  await page.keyboard.press('ArrowDown');
+  await expect(menu.getByRole('menuitem', { name: 'Print kitchen slip' })).toBeFocused();
+
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await expect(trigger).toBeFocused();
 });
 
 test('payment sheet can mark an unpaid list-view order complete in the same flow', async ({ app }) => {
@@ -561,6 +592,13 @@ test('payment sheet can mark an unpaid list-view order complete in the same flow
 
   const payment = page.getByRole('dialog', { name: 'Order #101' }).last();
   await expect(payment.getByLabel('Mark order as complete')).toBeVisible();
+  const viewport = page.viewportSize();
+  const paymentBounds = await payment.boundingBox();
+  if (!viewport || !paymentBounds) throw new Error('The payment sheet has no visible bounds');
+  expect(paymentBounds.x).toBeGreaterThanOrEqual(0);
+  expect(paymentBounds.y).toBeGreaterThanOrEqual(0);
+  expect(paymentBounds.x + paymentBounds.width).toBeLessThanOrEqual(viewport.width + 1);
+  expect(paymentBounds.y + paymentBounds.height).toBeLessThanOrEqual(viewport.height + 1);
   await payment.getByLabel('Mark order as complete').check();
   await activate(page, payment.getByRole('button', { name: /^Cash/ }));
 
