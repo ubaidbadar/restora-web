@@ -10,5 +10,9 @@ export default function filterMenu({ categories, items }: Pick<Menu, 'categories
   return items
     .filter((item) => categoryId === ALL_CATEGORIES || item.categoryId === categoryId)
     .filter((item) => !wanted || `${item.name} ${categoryName.get(item.categoryId) ?? ''}`.toLowerCase().includes(wanted))
-    .sort((a, b) => (order.get(a.categoryId) ?? 0) - (order.get(b.categoryId) ?? 0) || a.name.localeCompare(b.name));
+    .sort((a, b) =>
+      (order.get(a.categoryId) ?? 0) - (order.get(b.categoryId) ?? 0) ||
+      (a.sortOrder ?? 0) - (b.sortOrder ?? 0) ||
+      a.name.localeCompare(b.name)
+    );
 }

@@ -1,9 +1,10 @@
-import { ArrowDown, ArrowUp, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import Can from '../../../components/can';
 import FormDrawer from '../../../components/form_drawer';
 import type MenuCategory from '../../../types/menu_category';
 import AlertModal from '../../../ui/alert_modal/modal';
 import IconButton from '../../../ui/icon_button';
+import PriorityInput from '../../../components/priority_input';
 import api from '../../../config/api';
 import getAxiosMessage from '../../../utils/get_axios_message';
 import toast from '../../../utils/toast';
@@ -14,14 +15,14 @@ interface CategoryRowProps {
   category: MenuCategory;
   /** How many dishes are in it. */
   dishes: number;
-  first: boolean;
-  last: boolean;
-  onMove: (step: -1 | 1) => void;
+  priority: number;
+  priorityLimit: number;
+  onPrioritySave: (priority: number) => Promise<void>;
   onSaved: (category: MenuCategory) => void;
   onDeleted: () => void;
 }
 
-export default function CategoryRow({ category, dishes, first, last, onMove, onSaved, onDeleted }: CategoryRowProps) {
+export default function CategoryRow({ category, dishes, priority, priorityLimit, onPrioritySave, onSaved, onDeleted }: CategoryRowProps) {
   const remove = () => {
     if (dishes) {
       toast.error(`${category.name} still has dishes`);
@@ -44,9 +45,8 @@ export default function CategoryRow({ category, dishes, first, last, onMove, onS
           {dishes} {dishes === 1 ? 'dish' : 'dishes'}
         </p>
       </div>
-      <IconButton icon={ArrowUp} aria-label={`Move ${category.name} up`} disabled={first} onClick={() => onMove(-1)} />
-      <IconButton icon={ArrowDown} aria-label={`Move ${category.name} down`} disabled={last} onClick={() => onMove(1)} />
       <Can permission="menu:update">
+        <PriorityInput value={priority} max={priorityLimit} label={category.name} onSave={onPrioritySave} />
         <FormDrawer
           title="Edit category"
           schema={categorySchema}

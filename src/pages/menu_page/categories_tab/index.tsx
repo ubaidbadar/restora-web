@@ -14,22 +14,10 @@ import CategoryFields from './category_fields';
 import CategoryRow from './category_row';
 import categorySchema from './category_schema';
 
-/** The menu's sections in the order guests and staff see them. Move with the arrows; a category can go once it is empty. */
+/** The menu's sections in the order guests and staff see them. Set their display position with a number. */
 export default function CategoriesTab({ menu, onUpdate }: MenuTabProps) {
   const { categories } = menu;
   const save = (category: MenuCategory) => onUpdate({ categories: upsertById(categories, category) });
-
-  // Saves the new order: each category whose place changed gets its place as `sortOrder`.
-  const move = (index: number, step: -1 | 1) => {
-    const next = [...categories];
-    const [moved] = next.splice(index, 1);
-    next.splice(index + step, 0, moved!);
-    const ordered = next.map((category, sortOrder) => ({ ...category, sortOrder }));
-    const changed = ordered.filter((_, place) => next[place]!.sortOrder !== place);
-    Promise.all(changed.map((category) => api.patch(`/menu/categories/${category._id}`, { sortOrder: category.sortOrder })))
-      .then(() => onUpdate({ categories: ordered }))
-      .catch((err) => toast.error(getAxiosMessage(err)));
-  };
 
   return (
     <SectionCard
@@ -41,7 +29,7 @@ export default function CategoriesTab({ menu, onUpdate }: MenuTabProps) {
           <FormDrawer
             title="Add category"
             schema={categorySchema}
-            onSave={(values) => api.post('/menu/categories', { name: values.name, sortOrder: categories.length }).then((res) => save(res.data))}
+            onSave={(values) => api.post('/menu/categories', { name: values.name }).then((res) => save(res.data))}
             fields={(form) => <CategoryFields {...form} />}
             component={({ open }) => (
               <Button icon={Plus} onClick={open}>
@@ -63,9 +51,17 @@ export default function CategoriesTab({ menu, onUpdate }: MenuTabProps) {
               key={category._id}
               category={category}
               dishes={menu.items.filter((item) => item.categoryId === category._id).length}
-              first={index === 0}
-              last={index === categories.length - 1}
-              onMove={(step) => move(index, step)}
+              priority={index + 1}
+              priorityLimit={categories.length}
+              onPrioritySave={(priority) =>
+                api
+                  .patch(`/menu/categories/${category._id}/priority`, { priority })
+                  .then((res) => onUpdate({ categories: res.data }))
+                  .catch((err) => {
+                    toast.error(getAxiosMessage(err));
+                    throw err;
+                  })
+              }
               onSaved={save}
               onDeleted={() => onUpdate({ categories: categories.filter((entry) => entry._id !== category._id) })}
             />
