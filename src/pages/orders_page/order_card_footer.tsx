@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
 import can from '@shared/can';
 import useWorkplace from '../../hooks/useWorkplace';
-import { ArrowRight, ChefHat, FileText, MoreHorizontal, Pencil, Receipt, X } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChefHat, FileText, MoreHorizontal, Pencil, Receipt, X } from 'lucide-react';
 import api from '../../config/api';
 import STATUS_LABELS from '../../constants/status_labels';
 import type Order from '../../types/order';
@@ -85,6 +85,7 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
   };
 
   const handleAdvance = () => next && change('patch', `/orders/${order._id}`, { status: next }, pending ? `Order #${token} accepted` : `Order #${token} moved to ${STATUS_LABELS[next]}`);
+  const handleComplete = () => change('patch', `/orders/${order._id}`, { status: 'completed' }, `Order #${token} marked complete`);
   const handleCancel = (body: Pick<OrderCancellation, 'reason' | 'note'>) => change('post', `/orders/${order._id}/cancel`, body, pending ? `Order #${token} turned down` : `Order #${token} cancelled`);
 
   return (
@@ -109,6 +110,7 @@ export default function OrderCardFooter({ order, onOrderUpdated }: OrderCardFoot
                     { label: 'Details', icon: FileText, onClick: showDetails },
                     { label: 'Print kitchen slip', icon: ChefHat, onClick: () => printSlip(order, 'kitchen') },
                     { label: 'Print receipt', icon: Receipt, onClick: () => printSlip(order, 'receipt') },
+                    ...(canMove && active && !pending && next !== 'completed' ? [{ label: 'Mark as complete', icon: CheckCircle2, onClick: handleComplete }] : []),
                     ...(editable ? [{ label: 'Edit order', icon: Pencil, onClick: () => navigate(`/orders/${order._id}/edit`) }] : []),
                     ...(canCancel && active && !pending ? [{ label: 'Cancel order', icon: X, danger: true, onClick: askCancel }] : []),
                   ]}

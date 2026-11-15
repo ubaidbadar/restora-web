@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import ORDER_TYPE_LABELS from '../../../constants/order_type_labels';
 import ORDER_TYPES from '../../../constants/order_types';
 import type FormComponentProps from '../../../types/form_component_props';
+import type Table from '../../../types/table';
 import Tabs from '../../../ui/tabs';
 import Input from '../../../ui/input';
 import TableSelect from '../../../components/table_select';
@@ -10,14 +11,18 @@ import DeliveryFields from './delivery_fields';
 
 const TYPES = ORDER_TYPES.map((value) => ({ value, label: ORDER_TYPE_LABELS[value] }));
 
-/** Order type, plus the table or delivery fields it needs. Re-renders only when the type changes. */
-export default function OrderTypePicker(props: FormComponentProps) {
+/** Order type, plus its table or delivery fields. Watches only the values needed to preserve the current selection. */
+export default function OrderTypePicker({ tables, tablesLoading, tablesError, retryTables, editing, ...props }: FormComponentProps & { tables: Table[]; tablesLoading: boolean; tablesError?: string; retryTables: () => void; editing?: boolean }) {
   // New orders start as dine-in; ?table=<id> additionally preselects that table.
   const table = useSearchParams()[0].get('table') ?? '';
   const start = 'dine_in';
   const type = useWatch({ control: props.control, name: 'type', defaultValue: start });
   const customerId = useWatch({ control: props.control, name: 'customerId' });
   const customerPhone = useWatch({ control: props.control, name: 'newPhone' });
+  const selectedTableId = useWatch({ control: props.control, name: 'tableId' });
+  const firstTableId = tables.find((item) => !item.archived)?._id ?? '';
+  const requestedTableId = tables.some((item) => item._id === table && !item.archived) ? table : '';
+  const defaultTableId = selectedTableId === undefined ? requestedTableId || (editing ? '' : firstTableId) : selectedTableId;
 
   return (
     <section aria-label="Order type" className="flex flex-col gap-3">
@@ -25,7 +30,7 @@ export default function OrderTypePicker(props: FormComponentProps) {
           edited order starts with its own type. */}
       <Tabs register={props.register} name="type" label="Order type" options={TYPES} value={type} fill showLabel />
       {type === 'takeaway' && !customerId && !customerPhone && <Input label="Name (optional)" dir="auto" {...props.register('newName')} />}
-      {type === 'dine_in' && <TableSelect register={props.register} errors={props.errors} required allowTyped defaultTableId={table} />}
+      {type === 'dine_in' && <TableSelect register={props.register} errors={props.errors} tables={tables} loading={tablesLoading} error={tablesError} onRetry={retryTables} allowTyped defaultTableId={defaultTableId} />}
       {type === 'delivery' && <DeliveryFields {...props} />}
     </section>
   );

@@ -24,6 +24,8 @@ function setWide(wide: boolean) {
 const tokensShown = () => screen.queryAllByText(/#\d+$/).map((element) => element.textContent!.replace('Token ', ''));
 
 beforeEach(() => {
+  vi.mocked(api.request).mockReset();
+  vi.mocked(api.post).mockReset();
   useAuthStore.getState().setMe(sampleMe());
   // jsdom has no scrolling; the status tabs bring the picked one into view.
   Element.prototype.scrollIntoView = vi.fn();
@@ -64,6 +66,34 @@ describe('Orders board', () => {
     expect(tokensShown()).toEqual(['#7']);
     expect(screen.getByText(/Out of stock · No chicken left · Sana, 3:30 pm/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Pay/ })).toBeNull();
+  });
+
+  it('lets staff mark an accepted in-progress order complete directly', async () => {
+    setWide(false);
+    const onOrderUpdated = vi.fn();
+    const completed = { ...ORDERS[0]!, status: 'completed' as const };
+    vi.mocked(api.request).mockResolvedValue({ data: completed });
+
+    render(<MemoryRouter><BoardColumns orders={ORDERS} onOrderUpdated={onOrderUpdated} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'More for order 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Mark as complete' }));
+
+    await waitFor(() => expect(api.request).toHaveBeenCalledWith({
+      method: 'patch',
+      url: '/orders/a',
+      data: { status: 'completed' },
+    }));
+    expect(onOrderUpdated).toHaveBeenCalledWith(completed);
+  });
+
+  it('does not offer direct completion for unaccepted QR or already completed orders', () => {
+    setWide(true);
+    render(<MemoryRouter><BoardColumns orders={[...ORDERS, order('g', 6, 'pending')]} /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'More for order 6' }));
+    expect(screen.queryByRole('menuitem', { name: 'Mark as complete' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'More for order 5' }));
+    expect(screen.queryByRole('menuitem', { name: 'Mark as complete' })).toBeNull();
   });
 
   it('asks why before cancelling and sends the reason', async () => {

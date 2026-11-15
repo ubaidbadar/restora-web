@@ -44,10 +44,6 @@ const orderSchema = z
     paymentStatus: z.enum(PAYMENT_STATUSES),
   })
   .superRefine((order, ctx) => {
-    if (order.type === 'dine_in' && !order.tableId && !order.tableName) {
-      ctx.addIssue({ code: 'custom', path: ['tableId'], message: 'Pick the table' });
-      ctx.addIssue({ code: 'custom', path: ['tableName'], message: 'Enter the table' });
-    }
     if (order.type === 'delivery' && !order.address) ctx.addIssue({ code: 'custom', path: ['address'], message: 'Enter the delivery address' });
     if (order.type === 'dine_in' && order.serviceChargeValue > 0 && !order.serviceChargeType) ctx.addIssue({ code: 'custom', path: ['serviceChargeType'], message: 'Choose percentage or fixed charge' });
     if (order.type === 'dine_in' && order.serviceChargeType === 'percentage' && order.serviceChargeValue > 100) ctx.addIssue({ code: 'custom', path: ['serviceChargeValue'], message: 'Percentage cannot exceed 100' });

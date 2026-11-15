@@ -1,15 +1,20 @@
 import type FormComponentProps from '../types/form_component_props';
+import type Table from '../types/table';
 import Input from '../ui/input';
 import TableSelect from './table_select';
 import Textarea from '../ui/textarea';
 import fieldError from '../utils/field_error';
 
 interface ReservationFieldsProps extends Pick<FormComponentProps, 'register' | 'errors'> {
+  tables: Table[];
+  tablesLoading: boolean;
+  tablesError?: string;
+  retryTables: () => void;
   /** Editing an existing booking: the guest cannot be changed, so phone and name are left out. */
   editing?: boolean;
 }
 
-export default function ReservationFields({ register, errors, editing = false }: ReservationFieldsProps) {
+export default function ReservationFields({ register, errors, tables, tablesLoading, tablesError, retryTables, editing = false }: ReservationFieldsProps) {
   return (
     <>
       {!editing && (
@@ -23,7 +28,7 @@ export default function ReservationFields({ register, errors, editing = false }:
         <Input label="Date" type="date" required {...register('date')} error={fieldError(errors, 'date')} />
         <Input label="Time" type="time" required {...register('time')} error={fieldError(errors, 'time')} />
       </div>
-      <TableSelect register={register} errors={errors} />
+      <TableSelect register={register} errors={errors} tables={tables} loading={tablesLoading} error={tablesError} onRetry={retryTables} />
       <Textarea label="Note (advance payment, occasion, seating)" dir="auto" rows={3} className="min-h-0" placeholder="Rs 5,000 advance paid by JazzCash. Iftar, family hall." {...register('note')} />
     </>
   );

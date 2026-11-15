@@ -2,18 +2,23 @@ import { Users } from 'lucide-react';
 import Can from '../../components/can';
 import RESERVATION_STATUS_LABELS from '../../constants/reservation_status_labels';
 import type Reservation from '../../types/reservation';
+import type Table from '../../types/table';
 import Badge from '../../ui/badge';
 import formatTime from '../../utils/format_time';
 import ReservationActions from './reservation_actions';
 
 interface ReservationRowProps {
   reservation: Reservation;
+  tables: Table[];
+  tablesLoading: boolean;
+  tablesError?: string;
+  retryTables: () => void;
   onSaved: (reservation: Reservation) => void;
 }
 
 const badges = { pending: 'warning', confirmed: 'success', seated: 'neutral', cancelled: 'error' } as const;
 
-export default function ReservationRow({ reservation, onSaved }: ReservationRowProps) {
+export default function ReservationRow({ reservation, tables, tablesLoading, tablesError, retryTables, onSaved }: ReservationRowProps) {
   const name = reservation.customer?.name ?? 'Guest';
   const open = reservation.status === 'pending' || reservation.status === 'confirmed';
 
@@ -32,7 +37,7 @@ export default function ReservationRow({ reservation, onSaved }: ReservationRowP
       </div>
       {open && (
         <Can permission="reservations:manage">
-          <ReservationActions reservation={reservation} onSaved={onSaved} />
+          <ReservationActions reservation={reservation} tables={tables} tablesLoading={tablesLoading} tablesError={tablesError} retryTables={retryTables} onSaved={onSaved} />
         </Can>
       )}
     </li>

@@ -72,6 +72,14 @@ describe('new order schema: order-type fields', () => {
       .toBe('Khata needs a saved customer. Select one below.');
   });
 
+  it('allows a dine-in order without a table', () => {
+    const parsed = orderSchema.parse({ ...order('dine_in'), tableId: '', tableName: '' });
+
+    expect(parsed.type).toBe('dine_in');
+    expect(parsed.tableId).toBeUndefined();
+    expect(parsed.tableName).toBeUndefined();
+  });
+
   it('keeps the selected dine-in table and service charge but removes delivery details', () => {
     const parsed = orderSchema.parse(order('dine_in'));
 

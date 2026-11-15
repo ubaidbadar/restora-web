@@ -5,6 +5,7 @@ import CartBar from './cart_bar';
 import { useNavigate, useSearchParams } from 'react-router';
 import useAuthStore from '../../store/auth_store';
 import useRestaurantSettings from '../../hooks/useRestaurantSettings';
+import useGet from '../../hooks/useGet';
 import useBreakpoint from '../../hooks/useBreakpoint';
 import lockTerminal from '../../utils/lock_terminal';
 import api from '../../config/api';
@@ -28,6 +29,7 @@ import completeAddress from '../../utils/complete_address';
 import useOutboxStore from '../../store/outbox_store';
 import type Customer from '../../types/customer';
 import type Order from '../../types/order';
+import type Table from '../../types/table';
 import type CartItem from '../../types/cart_item';
 import calcTotals from '../../utils/calc_totals';
 import dayKey from '../../utils/day_key';
@@ -108,7 +110,7 @@ interface Editing {
 /** The customer whose profile the order was started from (`?customer=<id>`): already loaded by that page. */
 const startingCustomer = (id: string | null) => (id ? (getCache.get(getCache.keyOf(`/customers/${id}`)) as Customer | undefined) : undefined);
 
-const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?: Editing; workspace: Pick<NewOrderWorkspaceState, 'orderPanel' | 'menuDensity'> }) => {
+const Main = ({ editing, workspace, tables, tablesLoading, tablesError, retryTables, ...props }: FormComponentProps & { editing?: Editing; workspace: Pick<NewOrderWorkspaceState, 'orderPanel' | 'menuDensity'>; tables: Table[]; tablesLoading: boolean; tablesError?: string; retryTables: () => void }) => {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
   const { taxByPaymentMethod } = useRestaurantSettings();
@@ -140,6 +142,10 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
               <CartPanel
                 {...props}
                 taxByPaymentMethod={taxByPaymentMethod}
+                tables={tables}
+                tablesLoading={tablesLoading}
+                tablesError={tablesError}
+                retryTables={retryTables}
                 editing={Boolean(order)}
                 showHeading
                 heading="Checkout"
@@ -156,7 +162,7 @@ const Main = ({ editing, workspace, ...props }: FormComponentProps & { editing?:
           mode={workspace.orderPanel}
           component={({ open }) => <CartBar control={props.control} taxByPaymentMethod={taxByPaymentMethod} showEmpty={Boolean(order)} onOpen={open} />}
         >
-          <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} editing={Boolean(order)} showHeading={false} picked={order?.customer?._id ? order.customer : fromProfile} />
+          <CartPanel {...props} taxByPaymentMethod={taxByPaymentMethod} tables={tables} tablesLoading={tablesLoading} tablesError={tablesError} retryTables={retryTables} editing={Boolean(order)} showHeading={false} picked={order?.customer?._id ? order.customer : fromProfile} />
           <PlaceOrderBar {...props} taxByPaymentMethod={taxByPaymentMethod} submitLabel={order ? 'Save changes' : 'Place order'} />
         </DockedSheet>
       )}
@@ -169,13 +175,14 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
   const order = editing?.order;
   const fromProfile = startingCustomer(useSearchParams()[0].get('customer'));
   const workspace = useNewOrderWorkspaceStore();
+  const { data: tables = [], loading: tablesLoading, error: tablesError, get: retryTables } = useGet<Table[]>('/tables');
 
   return (
     <>
       <Form
         className="flex min-h-0 flex-1"
         id={ORDER_FORM}
-        component={(props) => <Main {...props} editing={editing} workspace={workspace} />}
+        component={(props) => <Main {...props} editing={editing} workspace={workspace} tables={tables} tablesLoading={tablesLoading} tablesError={tablesError} retryTables={retryTables} />}
         schema={orderSchema}
         defaultValues={
           order && {

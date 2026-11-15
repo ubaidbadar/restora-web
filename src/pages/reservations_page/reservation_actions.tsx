@@ -4,6 +4,7 @@ import FormDrawer from '../../components/form_drawer';
 import ReservationFields from '../../components/reservation_fields';
 import WhatsAppLink from '../../components/whatsapp_link';
 import type Reservation from '../../types/reservation';
+import type Table from '../../types/table';
 import AlertModal from '../../ui/alert_modal/modal';
 import Button from '../../ui/button';
 import IconButton from '../../ui/icon_button';
@@ -19,11 +20,15 @@ import getAxiosMessage from '../../utils/get_axios_message';
 
 interface ReservationActionsProps {
   reservation: Reservation;
+  tables: Table[];
+  tablesLoading: boolean;
+  tablesError?: string;
+  retryTables: () => void;
   onSaved: (reservation: Reservation) => void;
 }
 
 /** What can be done to a booking that has not been seated or cancelled yet. */
-export default function ReservationActions({ reservation, onSaved }: ReservationActionsProps) {
+export default function ReservationActions({ reservation, tables, tablesLoading, tablesError, retryTables, onSaved }: ReservationActionsProps) {
   const workplace = useAuthStore((state) => state.me!.workplace!);
   const name = reservation.customer?.name ?? 'Guest';
   const phone = reservation.customer?.phone;
@@ -76,7 +81,7 @@ export default function ReservationActions({ reservation, onSaved }: Reservation
               toast.success(`${name}'s booking moved to ${formatDay(pktToIso(date, time))}, ${formatTime(pktToIso(date, time))}`);
             })
         }
-        fields={(form) => <ReservationFields {...form} editing />}
+        fields={(form) => <ReservationFields {...form} tables={tables} tablesLoading={tablesLoading} tablesError={tablesError} retryTables={retryTables} editing />}
         component={({ open }) => <IconButton icon={Pencil} variant="outline" aria-label={`Edit reservation for ${name}`} onClick={open} />}
       />
       <AlertModal

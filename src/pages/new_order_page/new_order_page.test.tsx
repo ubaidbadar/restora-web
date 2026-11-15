@@ -97,6 +97,7 @@ beforeEach(() => {
   mocked.mockImplementation(async (config: { url: string }) => ({ data: answers[config.url] }));
   mocked.post.mockReset();
   mocked.put.mockReset();
+  answers['/tables'] = [];
   useAuthStore.getState().setMe(sampleMe());
   useOutboxStore.setState({ items: [], savedIds: {}, online: true });
   getCache.clear?.();
@@ -302,7 +303,7 @@ describe('New order (desktop)', () => {
     expect(body.clientId).toBeTruthy();
   });
 
-  it('refuses an empty order, a dine-in order without a table, and Paid without a method', async () => {
+  it('refuses an empty order and Paid without a method, but allows dine-in without a table', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
     placeOrder();
@@ -310,10 +311,6 @@ describe('New order (desktop)', () => {
 
     fireEvent.click(dishTile('Chicken Karahi'));
     pick(/Dine-in/);
-    placeOrder();
-    expect(await screen.findByText('Enter the table')).toBeTruthy();
-    fireEvent.change(screen.getByLabelText(/Table/), { target: { value: '4' } });
-
     pick(/^Paid now$/);
     placeOrder();
     expect(await screen.findByText('Pick how the customer paid')).toBeTruthy();
@@ -323,7 +320,32 @@ describe('New order (desktop)', () => {
     pick(/^Cash$/);
     placeOrder();
     await screen.findByText('Orders board');
-    expect(mocked.post.mock.calls[0]![1]).toMatchObject({ type: 'dine_in', tableName: '4', paymentStatus: 'paid', paymentMethod: 'cash' });
+    const body = mocked.post.mock.calls[0]![1];
+    expect(body).toMatchObject({ type: 'dine_in', paymentStatus: 'paid', paymentMethod: 'cash' });
+    expect(body.tableId).toBeUndefined();
+    expect(body.tableName).toBeUndefined();
+  });
+
+  it('defaults to the first active table and lets staff clear it', async () => {
+    answers['/tables'] = [
+      { _id: 'archived', name: 'Old table', archived: true, qrCode: 'old' },
+      { _id: 'table-1', name: 'Table 1', archived: false, qrCode: 'one', seats: 4 },
+      { _id: 'table-2', name: 'Table 2', archived: false, qrCode: 'two', seats: 2 },
+    ];
+    mocked.post.mockResolvedValue({ data: { _id: 'srv-table', dailyToken: 9 } });
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+
+    const table = await screen.findByLabelText('Table (optional)') as HTMLSelectElement;
+    expect(table.value).toBe('table-1');
+    fireEvent.change(table, { target: { value: '' } });
+    fireEvent.click(dishTile('Chicken Karahi'));
+    placeOrder();
+
+    await screen.findByText('Orders board');
+    const body = mocked.post.mock.calls[0]![1];
+    expect(body.tableId).toBeUndefined();
+    expect(body.tableName).toBeUndefined();
   });
 
   it('warns at once that khata needs a customer', async () => {

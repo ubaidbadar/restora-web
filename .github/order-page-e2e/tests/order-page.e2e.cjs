@@ -482,13 +482,21 @@ test('changing order type removes stale table and delivery-only fields from the 
   expect(orderWrite.body.rider).toBeUndefined();
 });
 
-test('dine-in cannot be submitted until a table is selected', async ({ app }) => {
+test('dine-in defaults to the first active table and can be placed without one', async ({ app }) => {
   const { page, writes } = app;
   await addDish(page, 'Chicken Karahi');
   const checkout = await openCheckout(page);
+  const table = checkout.getByLabel('Table (optional)');
+  await expect(table).toHaveValue('table-1');
+  await table.selectOption('');
   await activate(page, checkout.getByRole('button', { name: 'Place order' }));
-  await expect(checkout.getByText('Pick the table')).toBeVisible();
-  expect(writes.filter((write) => write.method === 'POST' && write.path === '/orders')).toHaveLength(0);
+  await expect(page).toHaveURL(/\/orders$/);
+
+  const orderWrite = writes.find((write) => write.method === 'POST' && write.path === '/orders');
+  expect(orderWrite).toBeTruthy();
+  expect(orderWrite.body).toMatchObject({ type: 'dine_in' });
+  expect(orderWrite.body.tableId).toBeUndefined();
+  expect(orderWrite.body.tableName).toBeUndefined();
 });
 
 test('rapid double activation cannot create duplicate orders', async ({ app }, testInfo) => {
