@@ -48,8 +48,11 @@ export default function ChangeList({ lines, before, after }: ChangeListProps) {
                 {line.name}
               </span>
               {line.detail && <span className="block text-xs text-muted">{line.detail}</span>}
+              {line.wasPrice !== undefined && line.nowPrice !== undefined && line.wasPrice !== line.nowPrice && (
+                <span className="block text-xs text-muted">Unit price: {formatRs(line.wasPrice)} → {formatRs(line.nowPrice)}</span>
+              )}
             </span>
-            {!added && !removed && (
+            {!added && !removed && line.was !== line.now && (
               <span className="shrink-0 text-ink tabular-nums">
                 <span className="text-muted">{line.was} →</span> {line.now}
               </span>
