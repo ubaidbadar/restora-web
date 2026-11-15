@@ -78,6 +78,22 @@ describe('Orders list view', () => {
     expect(screen.getByRole('dialog', { name: 'Turn down order #1?' })).toBeTruthy();
   });
 
+  it('submits the cancellation reason when a pending list order is turned down', async () => {
+    const pending = { ...ORDER, status: 'pending' as const };
+    render(<MemoryRouter><TodayList orders={[pending]} onOrderUpdated={vi.fn()} /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'More for order 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Turn down' }));
+    fireEvent.click(screen.getByLabelText('Other'));
+    fireEvent.click(screen.getByRole('button', { name: 'Turn down' }));
+
+    await waitFor(() => expect(api.request).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'post',
+      url: '/orders/o1/cancel',
+      data: expect.objectContaining({ reason: 'other' }),
+    })));
+  });
+
   it('queues completion from the list menu when the device is offline', () => {
     useOutboxStore.setState({ online: false, items: [] });
 
