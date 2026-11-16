@@ -8,6 +8,18 @@ test('a signed-in team member can open Orders and start, but not submit, a new o
   const pageErrors = [];
   const writes = [];
   const meStatuses = [];
+  let signInRequests = 0;
+  let signInRequestFailures = 0;
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === '/api/auth/sign-in/email' && request.method() === 'POST') {
+      signInRequests += 1;
+    }
+  });
+  page.on('requestfailed', (request) => {
+    if (new URL(request.url()).pathname === '/api/auth/sign-in/email' && request.method() === 'POST') {
+      signInRequestFailures += 1;
+    }
+  });
   page.on('pageerror', (error) => pageErrors.push(error.message));
   page.on('response', (response) => {
     if (new URL(response.url()).pathname === '/api/v1/me') meStatuses.push(response.status());
@@ -31,10 +43,14 @@ test('a signed-in team member can open Orders and start, but not submit, a new o
   const signInResponse = page.waitForResponse(
     (response) => new URL(response.url()).pathname === '/api/auth/sign-in/email'
       && response.request().method() === 'POST',
-    { timeout: 15_000 },
-  );
+    { timeout: 12_000 },
+  ).catch(() => null);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   const response = await signInResponse;
+  if (!response) {
+    const invalidFields = await page.locator('form input[aria-invalid="true"]').count();
+    throw new Error(`No sign-in response. Requests: ${signInRequests}; network failures: ${signInRequestFailures}; invalid form fields: ${invalidFields}. Check test-account email format, form validation and dev API connectivity.`);
+  }
   if (!response.ok()) {
     throw new Error(`Dedicated E2E sign-in failed with HTTP ${response.status()}. Check the configured test account and matching dev API.`);
   }
