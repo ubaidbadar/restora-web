@@ -225,7 +225,8 @@ describe('New order (desktop)', () => {
 
     const cart = screen.getByRole('list', { name: 'Items in this order' });
     expect(within(cart).queryByRole('spinbutton', { name: 'Unit price for Chicken Karahi' })).toBeNull();
-    expect(within(cart).getAllByText('Rs 1,000')).toHaveLength(2);
+    expect(within(cart).getByText('Rs 1,000')).toBeTruthy();
+    expect(within(cart).queryByText(/Menu price/)).toBeNull();
   });
 
   it('shows category labels on the menu picker, not on order lines or the API', async () => {
@@ -759,7 +760,8 @@ describe('New order (phone)', () => {
     const container = rider.closest('div.grid');
     expect(container?.className).toContain('grid-cols-1');
     expect(container?.className).toContain('sm:grid-cols-2');
-    expect(within(dialog).getByLabelText('Delivery fee (Rs)')).toBeTruthy();
+    const deliveryFee = within(dialog).getByLabelText('Delivery fee') as HTMLInputElement;
+    expect(deliveryFee.inputMode).toBe('numeric');
   });
 
   it('keeps the order type and payment when the sheet is closed and opened again', async () => {
