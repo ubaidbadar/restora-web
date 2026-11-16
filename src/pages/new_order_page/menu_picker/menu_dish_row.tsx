@@ -30,7 +30,7 @@ export default function MenuDishRow({ dish, categoryName, groups, contents, line
   const trigger = (onClick: () => void) => (
     <button type="button" onClick={onClick} className="min-w-0 flex-1 cursor-pointer py-1 text-start -outline-offset-2">
       <span className="block truncate text-sm font-medium text-ink">{dish.name}</span>
-      {categoryName && <span className="block truncate text-xs text-muted">{categoryName}</span>
+      {categoryName && <span className="block truncate text-xs text-muted">{categoryName}</span>}
       {contents && <span className="block truncate text-xs text-muted">{contents}</span>}
       <span className="block text-sm font-semibold tabular-nums text-body">{priceRange(dish.sizes)}</span>
       {hasOptions && <span className="block pt-0.5 text-xs font-medium text-primary">Choose size & add-ons</span>}
