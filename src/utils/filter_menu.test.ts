@@ -40,11 +40,11 @@ describe('menu item priorities', () => {
     expect(filterMenu(menu, '', ALL_CATEGORIES).map((dish) => dish._id)).toEqual(['soup', 'noodles', 'water']);
   });
 
-  it('calculates the 1-based position and number of items in each category', () => {
+  it('calculates the 1-based priority of each item within its category', () => {
     const priorities = menuItemPriorities(menu.items);
-    expect(priorities.get('soup')).toEqual({ priority: 1, count: 2 });
-    expect(priorities.get('noodles')).toEqual({ priority: 2, count: 2 });
-    expect(priorities.get('water')).toEqual({ priority: 1, count: 1 });
+    expect(priorities.get('soup')).toBe(1);
+    expect(priorities.get('noodles')).toBe(2);
+    expect(priorities.get('water')).toBe(1);
   });
   it('preserves the API order when legacy records share the same default priority', () => {
     const legacyItems = [
