@@ -17,7 +17,6 @@ import DealFields from './deal_fields';
 import DealRow from './deal_row';
 import dealSchema from './deal_schema';
 import menuItemPriorities from '../../../utils/menu_item_priorities';
-import saveMenuItemPriority from '../save_menu_item_priority';
 
 /** Deals: dishes sold together at one price ("Karahi + 2 naan + drink"). They sit in a category like any dish. */
 export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
@@ -29,6 +28,7 @@ export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
   const save = (deal: MenuItem) => onUpdate({ items: upsertById(menu.items, deal) });
   const priorities = menuItemPriorities(menu.items);
   const dishes = menu.items.filter((item) => !item.includes?.length);
+  const defaultCategoryId = menu.categories.find((category) => /deal/i.test(category.name))?._id ?? '';
 
   if (!menu.categories.length || !dishes.length) {
     return (
@@ -49,7 +49,8 @@ export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
             title="Add deal"
             schema={dealSchema}
             defaultValues={{
-              categoryId: menu.categories.find((category) => /deal/i.test(category.name))?._id ?? '',
+              categoryId: defaultCategoryId,
+              priority: menu.items.filter((item) => item.categoryId === defaultCategoryId).length + 1,
               price: '',
               includes: [{ itemId: '', sizeId: '', qty: '1' }],
               addonGroupIds: [],
@@ -59,7 +60,7 @@ export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
               hidden: false,
               photo: undefined,
             }}
-            onSave={(values) => api.post('/menu/items', values).then((res) => save(res.data))}
+            onSave={(values) => api.post('/menu/items', values).then((res) => onUpdate({ items: res.data.items }))}
             fields={(form) => <DealFields menu={menu} {...form} />}
             component={({ open }) => (
               <Button icon={Plus} onClick={open}>
@@ -83,10 +84,9 @@ export default function DealsTab({ menu, onUpdate }: MenuTabProps) {
         renderRow={(deal) => <DealRow
           deal={deal}
           menu={menu}
-          priority={priorities.get(deal._id)?.priority ?? 1}
-          priorityLimit={priorities.get(deal._id)?.count ?? 1}
-          onPrioritySave={(priority) => saveMenuItemPriority(deal._id, priority, { menu, onUpdate })}
+          priority={priorities.get(deal._id) ?? 1}
           onSaved={save}
+          onMenuSaved={(items) => onUpdate({ items })}
           onDeleted={() => onUpdate({ items: menu.items.filter((item) => item._id !== deal._id) })}
         />}
       />

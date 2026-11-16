@@ -7,6 +7,7 @@ import DishPicker from './dish_picker';
 
 interface MenuItemTileProps {
   dish: MenuItem;
+  categoryName?: string;
   groups: AddonGroup[];
   /** What is in a deal; '' for a dish. */
   contents: string;
@@ -20,7 +21,7 @@ interface MenuItemTileProps {
 const tileButton = 'flex min-h-28 w-full flex-1 cursor-pointer flex-col items-start rounded-card p-3 text-start -outline-offset-2';
 
 /** A tap adds a plain dish or opens its size and add-on choices; the selected quantity stays visible on the tile. */
-export default function MenuItemTile({ dish, groups, contents, lines, onAdd }: MenuItemTileProps) {
+export default function MenuItemTile({ dish, categoryName, groups, contents, lines, onAdd }: MenuItemTileProps) {
   const hasOptions = dish.sizes.length > 1 || groups.length > 0;
   const qty = lines.reduce((sum, line) => sum + line.qty, 0);
   const defaultSize = dish.sizes[0]!;
@@ -30,6 +31,7 @@ export default function MenuItemTile({ dish, groups, contents, lines, onAdd }: M
   const trigger = (onClick: () => void) => (
     <button type="button" onClick={onClick} title={contents || undefined} className={tileButton}>
       <span className="break-words text-sm leading-5 font-medium text-ink">{dish.name}</span>
+      {categoryName && <span className="mt-0.5 block w-full truncate text-xs text-muted">{categoryName}</span>}
       <span className="mt-auto flex w-full items-end justify-between gap-2 pt-2">
         <span className="min-w-0 break-words text-sm font-semibold tabular-nums text-ink">{priceRange(dish.sizes)}</span>
         {qty > 0 && (

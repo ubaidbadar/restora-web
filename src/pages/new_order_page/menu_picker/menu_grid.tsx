@@ -48,6 +48,7 @@ export default function MenuGrid({ menu, menuDensity, search, category, allItems
 
   const props = (dish: (typeof shown)[number]) => ({
     dish,
+    categoryName: menu.categories.find((category) => category._id === dish.categoryId)?.name,
     groups: dish.addonGroupIds.flatMap((id) => menu.addonGroups.filter((group) => group._id === id)),
     contents: dealContents(dish, allItems),
     lines: items.filter((line) => line.itemId === dish._id),

@@ -4,7 +4,6 @@ import FormDrawer from '../../../components/form_drawer';
 import type MenuCategory from '../../../types/menu_category';
 import AlertModal from '../../../ui/alert_modal/modal';
 import IconButton from '../../../ui/icon_button';
-import PriorityInput from '../../../components/priority_input';
 import api from '../../../config/api';
 import getAxiosMessage from '../../../utils/get_axios_message';
 import toast from '../../../utils/toast';
@@ -17,12 +16,11 @@ interface CategoryRowProps {
   dishes: number;
   priority: number;
   priorityLimit: number;
-  onPrioritySave: (priority: number) => Promise<void>;
-  onSaved: (category: MenuCategory) => void;
+  onSaved: (categories: MenuCategory[]) => void;
   onDeleted: () => void;
 }
 
-export default function CategoryRow({ category, dishes, priority, priorityLimit, onPrioritySave, onSaved, onDeleted }: CategoryRowProps) {
+export default function CategoryRow({ category, dishes, priority, priorityLimit, onSaved, onDeleted }: CategoryRowProps) {
   const remove = () => {
     if (dishes) {
       toast.error(`${category.name} still has dishes`);
@@ -46,13 +44,12 @@ export default function CategoryRow({ category, dishes, priority, priorityLimit,
         </p>
       </div>
       <Can permission="menu:update">
-        <PriorityInput value={priority} max={priorityLimit} label={category.name} onSave={onPrioritySave} />
         <FormDrawer
           title="Edit category"
           schema={categorySchema}
-          defaultValues={{ name: category.name }}
-          onSave={(values) => api.patch(`/menu/categories/${category._id}`, { name: values.name }).then((res) => onSaved(res.data))}
-          fields={(form) => <CategoryFields {...form} />}
+          defaultValues={{ name: category.name, priority }}
+          onSave={(values) => api.patch(`/menu/categories/${category._id}`, values).then((res) => onSaved(res.data.categories))}
+          fields={(form) => <CategoryFields maxPriority={priorityLimit} {...form} />}
           component={({ open }) => <IconButton icon={Pencil} aria-label={`Edit ${category.name}`} onClick={open} />}
         />
         <AlertModal

@@ -10,6 +10,7 @@ import DishPicker from './dish_picker';
 
 interface MenuDishRowProps {
   dish: MenuItem;
+  categoryName?: string;
   groups: AddonGroup[];
   /** What is in a deal; '' for a dish. */
   contents: string;
@@ -20,7 +21,7 @@ interface MenuDishRowProps {
 }
 
 /** A tap adds a plain dish or opens its size and add-on choices; quantity changes stay beside the row. Keep interactive rows in normal layout flow: WebKit can retain stale geometry when content-visibility:auto rows are revealed after scrolling (WebKit bug 321501). */
-export default function MenuDishRow({ dish, groups, contents, lines, onAdd, onQty }: MenuDishRowProps) {
+export default function MenuDishRow({ dish, categoryName, groups, contents, lines, onAdd, onQty }: MenuDishRowProps) {
   const hasOptions = dish.sizes.length > 1 || groups.length > 0;
   const qty = lines.reduce((sum, line) => sum + line.qty, 0);
   const defaultAddons = groups.flatMap((group) => (group.min > 0 && group.options.length > 0 ? [group.options[0]!] : []));
@@ -29,6 +30,7 @@ export default function MenuDishRow({ dish, groups, contents, lines, onAdd, onQt
   const trigger = (onClick: () => void) => (
     <button type="button" onClick={onClick} className="min-w-0 flex-1 cursor-pointer py-1 text-start -outline-offset-2">
       <span className="block truncate text-sm font-medium text-ink">{dish.name}</span>
+      {categoryName && <span className="block truncate text-xs text-muted">{categoryName}</span>}
       {contents && <span className="block truncate text-xs text-muted">{contents}</span>}
       <span className="block text-sm font-semibold tabular-nums text-body">{priceRange(dish.sizes)}</span>
       {hasOptions && <span className="block pt-0.5 text-xs font-medium text-primary">Choose size & add-ons</span>}

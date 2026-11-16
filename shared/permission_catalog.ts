@@ -4,7 +4,7 @@ const PERMISSION_CATALOG = [
   { permission: 'orders:create', label: 'Take new orders', group: 'Orders' },
   { permission: 'orders:update', label: 'Move orders along the board', group: 'Orders' },
   { permission: 'orders:payment', label: 'Record payments', group: 'Orders' },
-  { permission: 'orders:discount', label: 'Give discounts', group: 'Orders' },
+  { permission: 'orders:discount', label: 'Give discounts and adjust dish prices', group: 'Orders' },
   { permission: 'orders:cancel', label: 'Cancel orders', group: 'Orders' },
   { permission: 'customers:view', label: 'See customers', group: 'Customers' },
   { permission: 'customers:manage', label: 'Add and edit customers', group: 'Customers' },
