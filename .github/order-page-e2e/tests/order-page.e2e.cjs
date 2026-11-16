@@ -565,7 +565,12 @@ test('orders list exposes the board actions and completes an order from its row 
   const viewport = page.viewportSize();
   const menuBounds = await menu.boundingBox();
   const triggerBounds = await row.getByRole('button', { name: 'More for order 101' }).boundingBox();
-  if (!viewport || !menuBounds || !triggerBounds) throw new Error('The order actions menu or trigger has no visible bounds');
+  const cardBounds = await row.getByRole('button', { name: /#101/ }).boundingBox();
+  if (!viewport || !menuBounds || !triggerBounds || !cardBounds) throw new Error('The order card, actions menu or trigger has no visible bounds');
+  expect(triggerBounds.x).toBeGreaterThanOrEqual(cardBounds.x);
+  expect(triggerBounds.y).toBeGreaterThanOrEqual(cardBounds.y);
+  expect(triggerBounds.x + triggerBounds.width).toBeLessThanOrEqual(cardBounds.x + cardBounds.width + 1);
+  expect(triggerBounds.y + triggerBounds.height).toBeLessThanOrEqual(cardBounds.y + cardBounds.height + 1);
   expect(triggerBounds.width).toBeGreaterThanOrEqual(40);
   expect(triggerBounds.height).toBeGreaterThanOrEqual(40);
   expect(menuBounds.x).toBeGreaterThanOrEqual(0);
