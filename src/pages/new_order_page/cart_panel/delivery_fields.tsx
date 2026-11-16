@@ -33,7 +33,7 @@ export default function DeliveryFields({ control, register, errors, setValue, wa
         <Input label="Complete address" dir="auto" placeholder="Street, building, area, city" required {...register('address')} error={fieldError(errors, 'address')} />
       </div>
       <Input label="Rider" dir="auto" {...register('rider')} />
-      <Input label="Delivery fee (Rs)" inputMode="numeric" {...register('deliveryFee')} error={fieldError(errors, 'deliveryFee')} />
+      <Input label="Delivery fee" inputMode="numeric" {...register('deliveryFee')} error={fieldError(errors, 'deliveryFee')} />
     </div>
   );
 }
