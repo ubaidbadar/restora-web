@@ -225,7 +225,7 @@ describe('New order (desktop)', () => {
 
     const cart = screen.getByRole('list', { name: 'Items in this order' });
     expect(within(cart).queryByRole('spinbutton', { name: 'Unit price for Chicken Karahi' })).toBeNull();
-    expect(within(cart).getByText('Rs 1,000')).toBeTruthy();
+    expect(within(cart).getAllByText('Rs 1,000')).toHaveLength(2);
     expect(within(cart).queryByText(/Menu price/)).toBeNull();
   });
 
