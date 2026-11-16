@@ -7,7 +7,11 @@ test('a signed-in team member can open Orders and start, but not submit, a new o
 
   const pageErrors = [];
   const writes = [];
+  const meStatuses = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
+  page.on('response', (response) => {
+    if (new URL(response.url()).pathname === '/api/v1/me') meStatuses.push(response.status());
+  });
   page.on('request', (request) => {
     const url = request.url();
     const method = request.method().toUpperCase();
@@ -35,7 +39,14 @@ test('a signed-in team member can open Orders and start, but not submit, a new o
     throw new Error(`Dedicated E2E sign-in failed with HTTP ${response.status()}. Check the configured test account and matching dev API.`);
   }
 
-  await expect(page).toHaveURL(/\/orders(?:[?#].*)?$/, { timeout: 25_000 });
+  try {
+    await expect(page).toHaveURL(/\/orders(?:[?#].*)?$/, { timeout: 20_000 });
+  } catch {
+    // The credentials were accepted but the app never entered Orders. Report session status,
+    // not the response body, cookies or any account information.
+    const location = new URL(page.url());
+    throw new Error(`Sign-in returned HTTP ${response.status()}, but the app stayed at ${location.pathname}. /me HTTP statuses: ${meStatuses.join(', ') || 'none'}. Check session cookies and the dev API origin.`);
+  }
   await expect(page.getByRole('heading', { name: 'Orders', exact: true })).toBeVisible();
 
   await page.goto('/orders/new', { waitUntil: 'domcontentloaded' });
