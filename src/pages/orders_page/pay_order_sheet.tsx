@@ -36,20 +36,23 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
   const { taxByPaymentMethod } = useRestaurantSettings();
   const canComplete = can(useWorkplace(), 'orders:update') && order.status !== 'completed';
   const [markComplete, setMarkComplete] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const totalBy = (method: (typeof PAYMENT_METHODS)[number]) =>
     calcTotals(order.items, order.discount, taxByPaymentMethod[method] ?? 0, order.deliveryFee, order.type === 'dine_in' ? order.serviceChargeType : undefined, order.serviceChargeValue ?? 0).total;
 
-  const queueCompletion = () => {
+  const queueCompletion = (sync = true) => {
     queueOrderChange({
       order,
       method: 'patch',
       url: `/orders/${order._id}`,
       body: { status: 'completed' },
     });
-    void syncOutbox();
+    if (sync) void syncOutbox();
   };
 
   const recordPayment = async (method: (typeof PAYMENT_METHODS)[number], paymentStatus: 'paid' | 'khata' = 'paid') => {
+    if (submitting) return;
+    setSubmitting(true);
     try {
       const { data: paid } = await api.post(`/orders/${order._id}/payment`, { paymentMethod: method, ...(paymentStatus === 'khata' ? { paymentStatus } : {}) });
       let updated = paid;
@@ -57,8 +60,8 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
 
       if (markComplete && canComplete) {
         if (!useOutboxStore.getState().online) {
-          queueCompletion();
-          completionWarning = `Payment recorded. Order #${order.dailyToken} will be marked complete when the internet returns.`;
+          queueCompletion(false);
+          completionWarning = `Payment recorded. Completion for order #${order.dailyToken} is queued and will sync automatically.`;
         } else {
           try {
             const { data: completed } = await api.request({
@@ -68,9 +71,12 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
             });
             updated = completed;
           } catch (err) {
-            if (typeof err !== 'object' || err === null || !('response' in err) || !err.response) {
+            const status = typeof err === 'object' && err !== null && 'response' in err
+              ? (err.response as { status?: number } | undefined)?.status
+              : undefined;
+            if (!status || status === 408 || status === 425 || status === 429 || status >= 500) {
               queueCompletion();
-              completionWarning = `Payment recorded. Order #${order.dailyToken} will be marked complete when the internet returns.`;
+              completionWarning = `Payment recorded. Completion for order #${order.dailyToken} is queued and will sync automatically.`;
             } else {
               completionWarning = `Payment recorded, but order #${order.dailyToken} could not be marked complete: ${getAxiosMessage(err)}`;
             }
@@ -92,6 +98,7 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
         toast.success(`Order #${order.dailyToken} paid by ${PAYMENT_LABELS[method]}`);
       }
     } catch (err) {
+      setSubmitting(false);
       toast.error(getAxiosMessage(err));
     }
   };
@@ -103,17 +110,21 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
         <div className="mb-2 border-b border-border pb-3">
           <Checkbox
             checked={markComplete}
+            disabled={submitting}
             onChange={(event) => setMarkComplete(event.target.checked)}
             label="Mark order as complete"
           />
         </div>
       )}
+      {submitting && <p role="status" className="text-sm text-muted">Recording payment…</p>}
       {PAYMENT_METHODS.map((method) => (
         <Button
           key={method}
           variant="outline"
           size="lg"
           className="w-full"
+          disabled={submitting}
+          aria-busy={submitting}
           onClick={() => void recordPayment(method)}
         >
           <span className="flex-1 text-start">{PAYMENT_LABELS[method]}</span>
@@ -126,6 +137,8 @@ function PaymentOptions({ order, onOrderUpdated, close }: PaymentOptionsProps) {
             variant="outline"
             size="lg"
             className="w-full"
+            disabled={submitting}
+            aria-busy={submitting}
             onClick={() => void recordPayment('cash', 'khata')}
           >
             <span className="flex-1 text-start">Add to khata</span>
