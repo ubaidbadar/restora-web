@@ -380,7 +380,7 @@ test('small phone checkout keeps fields, quantity buttons and the footer usable'
 
   await chooseRadio(page, checkout, 'Delivery');
   const rider = checkout.getByLabel('Rider');
-  const deliveryFee = checkout.getByLabel('Delivery fee (Rs)');
+  const deliveryFee = checkout.getByLabel('Delivery fee');
   const riderBounds = await rider.boundingBox();
   const feeBounds = await deliveryFee.boundingBox();
   expect(riderBounds).not.toBeNull();
@@ -702,13 +702,13 @@ test('changing order type removes stale table and delivery-only fields from the 
   await checkout.getByLabel('Table').selectOption('table-8');
   await chooseRadio(page, checkout, 'Delivery');
   await expect(checkout.getByRole('region', { name: 'Service charge' })).toHaveCount(0);
-  await expect(checkout.getByLabel('Delivery fee (Rs)')).toBeVisible();
+  await expect(checkout.getByLabel('Delivery fee')).toBeVisible();
   await checkout.getByLabel('Complete address').fill('House 5, Main Road');
   await checkout.getByLabel('Rider').fill('Ahmed');
-  await checkout.getByLabel('Delivery fee (Rs)').fill('150');
+  await checkout.getByLabel('Delivery fee').fill('150');
   await chooseRadio(page, checkout, 'Takeaway');
   await expect(checkout.getByRole('region', { name: 'Service charge' })).toHaveCount(0);
-  await expect(checkout.getByLabel('Delivery fee (Rs)')).toHaveCount(0);
+  await expect(checkout.getByLabel('Delivery fee')).toHaveCount(0);
 
   await activate(page, checkout.getByRole('button', { name: 'Place order' }));
   await expect(page).toHaveURL(/\/orders$/);
