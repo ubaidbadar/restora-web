@@ -22,9 +22,20 @@ test('a signed-in team member can open Orders and start, but not submit, a new o
   const passwordField = page.locator('input[name="password"]');
   await expect(passwordField).toHaveCount(1);
   await passwordField.fill(password);
+  // Fail with a precise HTTP status instead of timing out on the login page for all three devices.
+  // Never log credentials, auth response bodies, cookies or tokens.
+  const signInResponse = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === '/api/auth/sign-in/email'
+      && response.request().method() === 'POST',
+    { timeout: 15_000 },
+  );
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  const response = await signInResponse;
+  if (!response.ok()) {
+    throw new Error(`Dedicated E2E sign-in failed with HTTP ${response.status()}. Check the configured test account and matching dev API.`);
+  }
 
-  await expect(page).toHaveURL(/\/orders(?:[?#].*)?$/, { timeout: 60_000 });
+  await expect(page).toHaveURL(/\/orders(?:[?#].*)?$/, { timeout: 25_000 });
   await expect(page.getByRole('heading', { name: 'Orders', exact: true })).toBeVisible();
 
   await page.goto('/orders/new', { waitUntil: 'domcontentloaded' });
