@@ -46,19 +46,20 @@ export default function TodayOrderRow({ order, onOrderUpdated }: TodayOrderRowPr
           order={order}
           onCancel={handleCancel}
           component={({ open: askCancel }) => (
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="min-w-0 flex-1">
-                <OrderRowLine order={{ ...order, itemCount }} onClick={showDetails} />
-              </div>
-              <OrderActionsMenu
-                order={order}
-                onShowDetails={showDetails}
-                onMarkComplete={handleComplete}
-                onCancel={askCancel}
-                showCompletionAction
-                showPendingCancellation
-              />
-            </div>
+            <OrderRowLine
+              order={{ ...order, itemCount }}
+              onClick={showDetails}
+              actions={
+                <OrderActionsMenu
+                  order={order}
+                  onShowDetails={showDetails}
+                  onMarkComplete={handleComplete}
+                  onCancel={askCancel}
+                  showCompletionAction
+                  showPendingCancellation
+                />
+              }
+            />
           )}
         />
       )}
