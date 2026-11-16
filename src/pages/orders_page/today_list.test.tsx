@@ -53,6 +53,21 @@ describe('Orders list view', () => {
     expect(screen.getByRole('menuitem', { name: 'Cancel order' })).toBeTruthy();
   });
 
+  it('keeps the actions inside the same card without nesting interactive buttons', () => {
+    render(<MemoryRouter><TodayList orders={[ORDER]} onOrderUpdated={vi.fn()} /></MemoryRouter>);
+
+    const menu = screen.getByRole('button', { name: 'More for order 1' });
+    const details = screen.getByRole('button', { name: /#1/ });
+
+    expect(details.contains(menu)).toBe(false);
+    expect(details.parentElement?.contains(menu)).toBe(true);
+    expect(details.parentElement?.classList.contains('relative')).toBe(true);
+
+    fireEvent.click(menu);
+    expect(screen.getByRole('menuitem', { name: 'Details' })).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: 'Order #1' })).toBeNull();
+  });
+
   it('keeps row actions separate from opening details', () => {
     render(<MemoryRouter><TodayList orders={[ORDER]} onOrderUpdated={vi.fn()} /></MemoryRouter>);
 
