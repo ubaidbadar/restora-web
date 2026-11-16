@@ -319,13 +319,16 @@ test('small phone checkout keeps fields, quantity buttons and the footer usable'
 
 test('category filters work across a large real-menu-shaped catalogue', async ({ app }) => {
   const { page } = app;
-  await chooseRadio(page, page, 'Pizza');
+  await chooseRadio(page, page.getByRole('group', { name: 'Category' }), 'Pizza');
   await expect(page.getByRole('button').filter({ hasText: 'Dish 25' }).first()).toBeVisible();
   await expect(page.getByRole('button').filter({ hasText: 'Chicken Karahi' })).toHaveCount(0);
 });
 
-test('each order line shows its own menu category without causing cart overflow', async ({ app }, testInfo) => {
+test('categories stay on the menu picker, not in the cart, without overflow', async ({ app }, testInfo) => {
   const { page } = app;
+  const dishes = page.getByRole('list', { name: 'Dishes' });
+  await expect(dishes.getByRole('listitem').filter({ hasText: 'Chicken Karahi' }).getByText('Karahi', { exact: true })).toBeVisible();
+  await expect(dishes.getByRole('listitem').filter({ hasText: 'Biryani' }).getByText('Rice', { exact: true })).toBeVisible();
   await addDish(page, 'Chicken Karahi');
   await addDish(page, 'Biryani');
 
@@ -338,9 +341,9 @@ test('each order line shows its own menu category without causing cart overflow'
   const cart = page.getByRole('list', { name: 'Items in this order' });
   const chicken = cart.getByRole('listitem').filter({ hasText: 'Chicken Karahi' });
   const biryani = cart.getByRole('listitem').filter({ hasText: 'Biryani' });
-  await expect(chicken.getByText('Karahi', { exact: true })).toBeVisible();
-  await expect(biryani.getByText('Rice', { exact: true })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath('order-lines-with-categories.png'), fullPage: true });
+  await expect(chicken.getByText('Karahi', { exact: true })).toHaveCount(0);
+  await expect(biryani.getByText('Rice', { exact: true })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('order-lines-compact.png'), fullPage: true });
 
   const dimensions = await cart.evaluate((element) => ({
     scrollWidth: element.scrollWidth,
