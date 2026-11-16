@@ -26,11 +26,12 @@ export default function MenuItemTile({ dish, categoryName, groups, contents, lin
   const qty = lines.reduce((sum, line) => sum + line.qty, 0);
   const defaultSize = dish.sizes[0]!;
   const defaultAddons = groups.flatMap((group) => (group.min > 0 && group.options.length > 0 ? [group.options[0]!] : []));
-  const handleAddDefault = () => onAdd(cartItemOf(dish, defaultSize, defaultAddons, '', categoryName));
+  const handleAddDefault = () => onAdd(cartItemOf(dish, defaultSize, defaultAddons));
 
   const trigger = (onClick: () => void) => (
     <button type="button" onClick={onClick} title={contents || undefined} className={tileButton}>
       <span className="break-words text-sm leading-5 font-medium text-ink">{dish.name}</span>
+      {categoryName && <span className="mt-0.5 block w-full truncate text-xs text-muted">{categoryName}</span>}
       <span className="mt-auto flex w-full items-end justify-between gap-2 pt-2">
         <span className="min-w-0 break-words text-sm font-semibold tabular-nums text-ink">{priceRange(dish.sizes)}</span>
         {qty > 0 && (
@@ -46,7 +47,7 @@ export default function MenuItemTile({ dish, categoryName, groups, contents, lin
   return (
     <li className={`relative flex min-h-28 flex-col rounded-card bg-surface shadow-card transition-shadow ${qty ? 'ring-2 ring-primary' : 'hover:shadow-lg'}`}>
       {hasOptions
-        ? <DishPicker dish={dish} categoryName={categoryName} groups={groups} contents={contents} onAdd={onAdd} component={({ open }) => trigger(open)} />
+        ? <DishPicker dish={dish} groups={groups} contents={contents} onAdd={onAdd} component={({ open }) => trigger(open)} />
         : trigger(handleAddDefault)}
     </li>
   );

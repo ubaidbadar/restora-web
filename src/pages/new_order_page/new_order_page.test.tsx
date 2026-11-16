@@ -228,10 +228,12 @@ describe('New order (desktop)', () => {
     expect(within(cart).getAllByText('Rs 1,000')).toHaveLength(2);
   });
 
-  it('shows the correct menu category on every order line without sending UI metadata to the API', async () => {
+  it('shows category labels on the menu picker, not on order lines or the API', async () => {
     mocked.post.mockResolvedValue({ data: { _id: 'srv-category', dailyToken: 81 } });
     renderPage();
     await screen.findByText('Chicken Karahi');
+    expect(within(dishTile('Chicken Karahi')).getByText('Karahi', { exact: true })).toBeTruthy();
+    expect(within(dishTile('Biryani')).getByText('Rice & Biryani', { exact: true })).toBeTruthy();
     fireEvent.click(dishTile('Chicken Karahi'));
     fireEvent.click(dishTile('Biryani'));
 
@@ -243,8 +245,8 @@ describe('New order (desktop)', () => {
     const cart = screen.getByRole('list', { name: 'Items in this order' });
     const lines = within(cart).getAllByRole('listitem');
     expect(lines).toHaveLength(2);
-    expect(within(lines[0]!).getByText('Karahi', { exact: true })).toBeTruthy();
-    expect(within(lines[1]!).getByText('Rice & Biryani', { exact: true })).toBeTruthy();
+    expect(within(cart).queryByText('Karahi', { exact: true })).toBeNull();
+    expect(within(cart).queryByText('Rice & Biryani', { exact: true })).toBeNull();
 
     pick(/^Takeaway$/);
     placeOrder();
@@ -719,9 +721,11 @@ describe('New order (phone)', () => {
 
   const sheet = () => screen.getByRole('dialog');
 
-  it('lists dishes with a + that turns into a stepper', async () => {
+  it('lists dishes with their categories and a + that turns into a stepper', async () => {
     renderPage();
     await screen.findByText('Chicken Karahi');
+    expect(within(dishTile('Chicken Karahi')).getByText('Karahi', { exact: true })).toBeTruthy();
+    expect(within(dishTile('Biryani')).getByText('Rice & Biryani', { exact: true })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Add Chicken Karahi' }));
     expect(screen.getByLabelText('1 Chicken Karahi')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'One more Chicken Karahi' }));

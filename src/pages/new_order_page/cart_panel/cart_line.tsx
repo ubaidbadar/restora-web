@@ -18,14 +18,13 @@ export default function CartLine({ line, onQty, onPrice, canChangePrice }: CartL
   const priceOverridden = line.priceOverridden ?? (line.price !== menuPrice);
 
   return (
-    <li className="flex items-center justify-between gap-2 overflow-hidden py-2">
-      <div className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-ink"><bdi>{line.name}</bdi></span>
-        {line.categoryName && <span className="mt-0.5 block truncate text-xs text-muted">{line.categoryName}</span>}
-        {details && <span className="block truncate text-sm text-body">{details}</span>}
-        {line.note && <span dir="auto" className="block truncate text-sm text-muted italic">“{line.note}”</span>}
-        <div className="mt-1 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted">Unit price</span>
+    <li className="min-w-0 py-3">
+      <span className="block break-words text-sm font-semibold leading-5 text-ink"><bdi>{line.name}</bdi></span>
+      {details && <span className="mt-0.5 block text-xs text-body">{details}</span>}
+      {line.note && <span dir="auto" className="mt-0.5 block text-xs text-muted italic">“{line.note}”</span>}
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 text-xs text-muted">Unit price</span>
           {canChangePrice ? (
             <Input
               type="number"
@@ -34,20 +33,21 @@ export default function CartLine({ line, onQty, onPrice, canChangePrice }: CartL
               inputMode="numeric"
               value={line.price}
               aria-label={`Unit price for ${line.name}`}
-              className="w-24! min-h-9! px-2! py-1! text-end text-sm"
+              className="w-20! min-h-9! px-2! py-1! text-end text-sm tabular-nums"
               onChange={(event) => onPrice(line.key, Math.max(0, Number(event.currentTarget.value) || 0))}
             />
           ) : (
             <span className="text-sm tabular-nums text-body">{formatRs(line.price)}</span>
           )}
-          {priceOverridden && <span className="text-xs text-muted">Menu price {formatRs(menuPrice)}</span>}
         </div>
-        <span className="mt-1 flex items-baseline gap-1 text-sm tabular-nums text-muted">
-          <span className="text-xs">Line total</span>
-          <span>{formatRs(line.price * line.qty)}</span>
+        <QtyStepper itemId={line.key} name={line.name} qty={line.qty} onChange={onQty} />
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 text-xs">
+        {priceOverridden && <span className="text-muted">Menu price {formatRs(menuPrice)}</span>}
+        <span className="ms-auto text-muted">
+          Total <strong className="font-semibold tabular-nums text-ink">{formatRs(line.price * line.qty)}</strong>
         </span>
       </div>
-      <QtyStepper itemId={line.key} name={line.name} qty={line.qty} onChange={onQty} />
     </li>
   );
 }
