@@ -30,10 +30,10 @@ export default function MenuItemTile({ dish, categoryName, groups, contents, lin
 
   const trigger = (onClick: () => void) => (
     <button type="button" onClick={onClick} title={contents || undefined} className={tileButton}>
-      <span className="break-words text-sm leading-5 font-medium text-ink">{dish.name}</span>
+      <span className="wrap-break-word text-sm leading-5 font-medium text-ink">{dish.name}</span>
       {categoryName && <span className="mt-0.5 block w-full truncate text-xs text-muted">{categoryName}</span>}
       <span className="mt-auto flex w-full items-end justify-between gap-2 pt-2">
-        <span className="min-w-0 break-words text-sm font-semibold tabular-nums text-ink">{priceRange(dish.sizes)}</span>
+        <span className="min-w-0 wrap-break-word text-sm font-semibold tabular-nums text-ink">{priceRange(dish.sizes)}</span>
         {qty > 0 && (
           <span aria-label={`${qty} in order`} className="pointer-events-none min-w-6 shrink-0 rounded-pill bg-primary px-1.5 text-center text-xs leading-6 font-semibold tabular-nums text-on-primary">
             {qty}
