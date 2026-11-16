@@ -8,6 +8,7 @@ describe('dishSchema', () => {
     const data = {
       name: 'Chicken Karahi',
       categoryId: 'cat_123',
+      priority: 1,
       photo: 'data:image/jpeg;base64,samplephoto',
       description: 'Delicious traditional karahi',
       sizes: [{ name: '', price: '1200' }],
@@ -23,6 +24,7 @@ describe('dishSchema', () => {
     const data = {
       name: 'Mutton Karahi',
       categoryId: 'cat_123',
+      priority: 1,
       sizes: [{ name: '', price: '2200' }],
       addonGroupIds: [],
       hidden: false,
@@ -36,6 +38,7 @@ describe('dishSchema', () => {
     const data = {
       name: 'Beef Boti',
       categoryId: 'cat_123',
+      priority: 1,
       photo: null,
       sizes: [{ name: '', price: '800' }],
       addonGroupIds: [],
@@ -43,6 +46,11 @@ describe('dishSchema', () => {
     };
     const parsed = dishSchema.parse(data);
     expect(parsed.photo).toBeNull();
+  });
+  it('rejects zero and fractional display priorities', () => {
+    const valid = { name: 'Tea', categoryId: 'cat_123', priority: 1, sizes: [{ name: '', price: '100' }], addonGroupIds: [], hidden: false };
+    expect(dishSchema.safeParse({ ...valid, priority: 0 }).success).toBe(false);
+    expect(dishSchema.safeParse({ ...valid, priority: 1.5 }).success).toBe(false);
   });
 });
 
@@ -63,9 +71,10 @@ describe('dishFormValues', () => {
       soldOut: false,
       hidden: false,
     };
-    const values = dishFormValues(dish);
+    const values = dishFormValues(dish, 3);
     expect(values.photo).toBe('https://example.com/photo.webp');
     expect(values.name).toBe('Biryani');
+    expect(values.priority).toBe(3);
   });
 
   it('handles dish without photo', () => {
@@ -82,7 +91,7 @@ describe('dishFormValues', () => {
       soldOut: false,
       hidden: false,
     };
-    const values = dishFormValues(dish);
+    const values = dishFormValues(dish, 1);
     expect(values.photo).toBeUndefined();
   });
 });

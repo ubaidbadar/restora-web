@@ -1,10 +1,11 @@
 import type MenuItem from '../../../types/menu_item';
 
 /** A deal as the edit form starts: its one price as text, and its size's id so orders keep pointing at it. */
-export default function dealFormValues(deal: MenuItem) {
+export default function dealFormValues(deal: MenuItem, priority: number) {
   return {
     name: deal.name,
     categoryId: deal.categoryId,
+    priority,
     photo: deal.photo,
     description: deal.description ?? '',
     sizeId: deal.sizes[0]?._id,
