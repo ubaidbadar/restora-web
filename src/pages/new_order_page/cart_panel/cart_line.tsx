@@ -15,6 +15,7 @@ interface CartLineProps {
 export default function CartLine({ line, onQty, onPrice, canChangePrice }: CartLineProps) {
   const details = lineDetails(line);
   const menuPrice = line.menuPrice ?? line.price;
+  console.log(line)
   return (
     <li className="min-w-0 py-3 flex justify-between">
       <div>
@@ -42,11 +43,14 @@ export default function CartLine({ line, onQty, onPrice, canChangePrice }: CartL
           )}
         </div>
       </div>
-      <div className='flex flex-col justify-between items-end'>
+      <div className='flex flex-col items-end'>
         <QtyStepper itemId={line.key} name={line.name} qty={line.qty} onChange={onQty} />
         {(line.priceOverridden ?? (line.price !== menuPrice)) && (
-          <span className="text-muted small text-xs ml-auto mb-1">Menu price {formatRs(menuPrice)}</span>
+          <span className="text-muted small text-xs mt-auto">Menu price {formatRs(menuPrice)}</span>
         )}
+        <span className="mt-auto text-xs">
+          Total <strong className="font-semibold tabular-nums text-ink">{formatRs(line.price * line.qty)}</strong>
+        </span>
       </div>
     </li>
   );
