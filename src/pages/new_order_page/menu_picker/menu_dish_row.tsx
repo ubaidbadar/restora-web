@@ -10,6 +10,7 @@ import DishPicker from './dish_picker';
 
 interface MenuDishRowProps {
   dish: MenuItem;
+  categoryName?: string;
   groups: AddonGroup[];
   /** What is in a deal; '' for a dish. */
   contents: string;
@@ -20,11 +21,11 @@ interface MenuDishRowProps {
 }
 
 /** A tap adds a plain dish or opens its size and add-on choices; quantity changes stay beside the row. Keep interactive rows in normal layout flow: WebKit can retain stale geometry when content-visibility:auto rows are revealed after scrolling (WebKit bug 321501). */
-export default function MenuDishRow({ dish, groups, contents, lines, onAdd, onQty }: MenuDishRowProps) {
+export default function MenuDishRow({ dish, categoryName, groups, contents, lines, onAdd, onQty }: MenuDishRowProps) {
   const hasOptions = dish.sizes.length > 1 || groups.length > 0;
   const qty = lines.reduce((sum, line) => sum + line.qty, 0);
   const defaultAddons = groups.flatMap((group) => (group.min > 0 && group.options.length > 0 ? [group.options[0]!] : []));
-  const addDefault = () => onAdd(cartItemOf(dish, dish.sizes[0]!, defaultAddons));
+  const addDefault = () => onAdd(cartItemOf(dish, dish.sizes[0]!, defaultAddons, '', categoryName));
 
   const trigger = (onClick: () => void) => (
     <button type="button" onClick={onClick} className="min-w-0 flex-1 cursor-pointer py-1 text-start -outline-offset-2">
@@ -38,7 +39,7 @@ export default function MenuDishRow({ dish, groups, contents, lines, onAdd, onQt
   return (
     <li className={`flex min-h-14 items-center gap-2 py-1.5 ps-3 pe-2 ${qty ? 'bg-primary-soft/40' : ''}`}>
       {hasOptions
-        ? <DishPicker dish={dish} groups={groups} contents={contents} onAdd={onAdd} component={({ open }) => trigger(open)} />
+        ? <DishPicker dish={dish} categoryName={categoryName} groups={groups} contents={contents} onAdd={onAdd} component={({ open }) => trigger(open)} />
         : trigger(addDefault)}
       {qty > 0 && lines.length === 1 ? (
         <QtyStepper itemId={lines[0]!.key} name={dish.name} qty={qty} onChange={onQty} />

@@ -27,11 +27,14 @@ vi.mock('../../utils/offline_db', () => ({ default: { get: vi.fn(async () => und
 const mocked = api as unknown as ReturnType<typeof vi.fn> & { post: ReturnType<typeof vi.fn>; put: ReturnType<typeof vi.fn>; request: ReturnType<typeof vi.fn> };
 
 const MENU: Menu = {
-  categories: [{ _id: 'c1', name: 'Karahi', sortOrder: 0 }],
+  categories: [
+    { _id: 'c1', name: 'Karahi', sortOrder: 0 },
+    { _id: 'c2', name: 'Rice & Biryani', sortOrder: 1 },
+  ],
   addonGroups: [{ _id: 'g1', name: 'Raita', min: 0, max: 1, options: [{ _id: 'o1', name: 'Raita', price: 50 }] }],
   items: [
     { _id: 'd1', categoryId: 'c1', name: 'Chicken Karahi', sizes: [{ _id: 's1', name: '', price: 1000 }], addonGroupIds: [], includes: [], days: [], from: '', to: '', soldOut: false, hidden: false },
-    { _id: 'd2', categoryId: 'c1', name: 'Biryani', sizes: [{ _id: 's2', name: 'Half', price: 300 }, { _id: 's3', name: 'Full', price: 550 }], addonGroupIds: ['g1'], includes: [], days: [], from: '', to: '', soldOut: false, hidden: false },
+    { _id: 'd2', categoryId: 'c2', name: 'Biryani', sizes: [{ _id: 's2', name: 'Half', price: 300 }, { _id: 's3', name: 'Full', price: 550 }], addonGroupIds: ['g1'], includes: [], days: [], from: '', to: '', soldOut: false, hidden: false },
   ],
 };
 const CUSTOMERS: Customer[] = [
@@ -212,6 +215,44 @@ describe('New order (desktop)', () => {
     expect(screen.queryByRole('list', { name: 'Items in this order' })).toBeNull();
   });
 
+  it('keeps unit prices read-only for staff without discount permission', async () => {
+    const me = sampleMe();
+    me.workplace!.permissions = me.workplace!.permissions.filter((permission) => permission !== 'orders:discount');
+    useAuthStore.getState().setMe(me);
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+
+    const cart = screen.getByRole('list', { name: 'Items in this order' });
+    expect(within(cart).queryByRole('spinbutton', { name: 'Unit price for Chicken Karahi' })).toBeNull();
+    expect(within(cart).getAllByText('Rs 1,000')).toHaveLength(2);
+  });
+
+  it('shows the correct menu category on every order line without sending UI metadata to the API', async () => {
+    mocked.post.mockResolvedValue({ data: { _id: 'srv-category', dailyToken: 81 } });
+    renderPage();
+    await screen.findByText('Chicken Karahi');
+    fireEvent.click(dishTile('Chicken Karahi'));
+    fireEvent.click(dishTile('Biryani'));
+
+    const picker = screen.getByRole('dialog', { name: 'Biryani' });
+    fireEvent.click(within(picker).getByRole('radio', { name: /Full · Rs 550/ }));
+    fireEvent.click(within(picker).getByRole('button', { name: /Raita/ }));
+    fireEvent.click(within(picker).getByRole('button', { name: 'Add · Rs 600' }));
+
+    const cart = screen.getByRole('list', { name: 'Items in this order' });
+    const lines = within(cart).getAllByRole('listitem');
+    expect(lines).toHaveLength(2);
+    expect(within(lines[0]!).getByText('Karahi', { exact: true })).toBeTruthy();
+    expect(within(lines[1]!).getByText('Rice & Biryani', { exact: true })).toBeTruthy();
+
+    pick(/^Takeaway$/);
+    placeOrder();
+    await screen.findByText('Orders board');
+    const body = mocked.post.mock.calls[0]![1];
+    expect(body.items.every((item: Record<string, unknown>) => !('categoryName' in item))).toBe(true);
+  });
+
   it('allows a per-order unit price override without changing the menu price', async () => {
     mocked.post.mockResolvedValue({ data: { _id: 'srv-price', dailyToken: 80 } });
     renderPage();
@@ -225,12 +266,39 @@ describe('New order (desktop)', () => {
     expect(screen.getByText('Menu price Rs 1,000')).toBeTruthy();
     expect(screen.getAllByText('Rs 850').length).toBeGreaterThan(0);
     expect(MENU.items[0]!.sizes[0]!.price).toBe(1000);
+    pick(/^Takeaway$/);
 
     placeOrder();
     await screen.findByText('Orders board');
     const body = mocked.post.mock.calls[0]![1];
     expect(body.items[0]).toMatchObject({ itemId: 'd1', sizeId: 's1', addonIds: [], qty: 1, price: 850 });
     expect(body.items[0].menuPrice).toBeUndefined();
+  });
+
+  it('submits a deliberate reset to the saved menu price when editing an order', async () => {
+    mocked.put.mockResolvedValue({ data: { _id: 'o-reset', dailyToken: 10 } });
+    const order = {
+      _id: 'o-reset', dailyToken: 10, type: 'takeaway',
+      items: [{ itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '', addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, qty: 1 }],
+      discount: 0, deliveryFee: 0, status: 'preparing', paymentStatus: 'unpaid', createdAt: '',
+    } as unknown as Order;
+    const items: CartItem[] = [{
+      key: 'd1|s1||price:850', itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '',
+      addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, savedPrice: 850, qty: 1,
+    }];
+    renderPage(<NewOrderPage editing={{ order, items }} />);
+    await screen.findByText('Edit order #10');
+
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Unit price for Chicken Karahi' }), { target: { value: '1000' } });
+    expect(screen.queryByText('Menu price Rs 1,000')).toBeNull();
+
+    placeOrder();
+    await screen.findByText('Orders board');
+    const body = mocked.put.mock.calls[0]![1];
+    expect(body.items[0]).toMatchObject({ itemId: 'd1', price: 1000 });
+    expect(body.items[0].menuPrice).toBeUndefined();
+    expect(body.items[0].savedPrice).toBeUndefined();
+    expect(body.items[0].priceOverridden).toBeUndefined();
   });
 
   it('keeps a manual price override in the offline order and its sync payload', async () => {
@@ -257,8 +325,8 @@ describe('New order (desktop)', () => {
       discount: 0, deliveryFee: 0, status: 'preparing', paymentStatus: 'unpaid', createdAt: '',
     } as unknown as Order;
     const items: CartItem[] = [{
-      key: 'd1|s1|', itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '',
-      addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, qty: 1,
+      key: 'd1|s1||price:850', itemId: 'd1', name: 'Chicken Karahi', sizeId: 's1', sizeName: '',
+      addonIds: [], price: 850, menuPrice: 1000, priceOverridden: true, savedPrice: 850, qty: 1,
     }];
     renderPage(<NewOrderPage editing={{ order, items }} />);
     await screen.findByText('Edit order #9');

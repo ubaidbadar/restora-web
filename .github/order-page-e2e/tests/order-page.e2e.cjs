@@ -2,7 +2,7 @@ const { test: base, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
 const CATEGORY_NAMES = [
-  'Pizza', 'Burgers', 'Hot Wings', 'Shawarma', 'Pasta', 'Chicken Karahi',
+  'Pizza', 'Burgers', 'Hot Wings', 'Shawarma', 'Pasta', 'Karahi',
   'Beef Karahi', 'Mutton Karahi', 'BBQ', 'Fish', 'Tandoori', 'Desi Kahanay',
   'Rice', 'Drink Bar', "Ice Cream's", "Shake's", 'Extra Topping', "Side Order's",
   "Frie's", 'Appetizer', 'Salad Bar', 'Deals', 'KFG SPC.', 'Service Charges',
@@ -322,6 +322,31 @@ test('category filters work across a large real-menu-shaped catalogue', async ({
   await chooseRadio(page, page, 'Pizza');
   await expect(page.getByRole('button').filter({ hasText: 'Dish 25' }).first()).toBeVisible();
   await expect(page.getByRole('button').filter({ hasText: 'Chicken Karahi' })).toHaveCount(0);
+});
+
+test('each order line shows its own menu category without causing cart overflow', async ({ app }, testInfo) => {
+  const { page } = app;
+  await addDish(page, 'Chicken Karahi');
+  await addDish(page, 'Biryani');
+
+  const picker = page.getByRole('dialog', { name: 'Biryani' });
+  await chooseRadio(page, picker, 'Full · Rs 550');
+  await activate(page, picker.getByRole('button', { name: /Raita/ }));
+  await activate(page, picker.getByRole('button', { name: 'Add · Rs 600' }));
+  await openCheckout(page);
+
+  const cart = page.getByRole('list', { name: 'Items in this order' });
+  const chicken = cart.getByRole('listitem').filter({ hasText: 'Chicken Karahi' });
+  const biryani = cart.getByRole('listitem').filter({ hasText: 'Biryani' });
+  await expect(chicken.getByText('Karahi', { exact: true })).toBeVisible();
+  await expect(biryani.getByText('Rice', { exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('order-lines-with-categories.png'), fullPage: true });
+
+  const dimensions = await cart.evaluate((element) => ({
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
 });
 
 test('slash focuses menu search and typing filters dishes', async ({ app }) => {

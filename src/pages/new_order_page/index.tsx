@@ -213,12 +213,12 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
         noValidate
         onKeyDown={(e) => keepEnterInInputs(e)}
         onSubmit={({ data, onSuccess, onError }) => {
-          // The menu price is only a snapshot. Send a final price to the server only when this line was overridden.
-          const items = (data.items as CartItem[]).map(({ itemId, sizeId, addonIds, note, qty, price, priceOverridden }) => ({
+          // Menu and saved prices are snapshots. Send a price only for an override or a deliberate change to a saved line.
+          const items = (data.items as CartItem[]).map(({ itemId, sizeId, addonIds, note, qty, price, priceOverridden, savedPrice }) => ({
             itemId, sizeId, addonIds, note, qty,
-            ...(priceOverridden ? { price } : {}),
+            ...(priceOverridden || (savedPrice !== undefined && price !== savedPrice) ? { price } : {}),
           }));
-          const payload = { ...data, items };
+          const payload: typeof data = { ...data, items };
           // Editing: payment is left out (it is recorded from the board).
           if (order) {
             const { paymentStatus: _status, paymentMethod: _method, ...changes } = payload;
