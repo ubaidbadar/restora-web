@@ -54,6 +54,20 @@
             }
           });
           loaded.observe(root, { childList: true });
+          // A WebView2 virtual-host mapping may settle after its first HTML
+          // request. Recover one time if CSS/JS subresources were unavailable
+          // during that first load. Never apply this to the hosted PWA.
+          window.setTimeout(() => {
+            if (!root.querySelector(':scope > .boot')) {
+              sessionStorage.removeItem('restora-desktop-asset-retry');
+              return;
+            }
+            if (problems.some((problem) => problem.startsWith('Failed to load:'))
+              && sessionStorage.getItem('restora-desktop-asset-retry') !== '1') {
+              sessionStorage.setItem('restora-desktop-asset-retry', '1');
+              location.reload();
+            }
+          }, 2200);
           window.setTimeout(async () => {
             if (!root.querySelector(':scope > .boot')) return;
             const script = document.querySelector('script[type="module"][src]');

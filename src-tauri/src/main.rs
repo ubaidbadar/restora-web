@@ -117,9 +117,20 @@ fn main() {
                             COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND(2),
                         )
                         .expect("Could not mount bundled React assets");
-                    core.Navigate(&HSTRING::from(APP_URL))
-                        .expect("Could not open the locally bundled React app");
                 })?;
+                // Virtual-host mappings are propagated into WebView2 resource
+                // loader processes asynchronously. Opening index.html in the
+                // same dispatch cycle can load HTML before CSS/JS resolve,
+                // leaving only the loading logo. Defer the first navigation.
+                let opening_window = window.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(600));
+                    if let Ok(url) = APP_URL.parse() {
+                        if let Err(error) = opening_window.navigate(url) {
+                            eprintln!("Restora POS: bundled page navigation failed: {error}");
+                        }
+                    }
+                });
             }
             Ok(())
         })
