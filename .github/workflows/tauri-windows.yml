@@ -117,14 +117,14 @@ jobs:
                 try {
                   Add-Type -AssemblyName System.Drawing
                   $rectType = @'
-using System;
-using System.Runtime.InteropServices;
-public static class RestoraWindowRect {
-  [StructLayout(LayoutKind.Sequential)]
-  public struct Rect { public int Left, Top, Right, Bottom; }
-  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hwnd, out Rect bounds);
-}
-'@
+          using System;
+          using System.Runtime.InteropServices;
+          public static class RestoraWindowRect {
+            [StructLayout(LayoutKind.Sequential)]
+            public struct Rect { public int Left, Top, Right, Bottom; }
+            [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hwnd, out Rect bounds);
+          }
+          '@
                   Add-Type -TypeDefinition $rectType
                   $rect = New-Object RestoraWindowRect+Rect
                   $handle = $process.MainWindowHandle
