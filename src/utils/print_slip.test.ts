@@ -97,4 +97,14 @@ describe('printSlip', () => {
     expect(printOrder).not.toHaveBeenCalled();
   });
 
+
+  it('does not show browser fallback when Windows explicitly reports the printer offline', async () => {
+    post.mockRejectedValue(new Error('Network Error'));
+    fetchMock
+      .mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) })
+      .mockResolvedValueOnce({ ok: false, status: 502, json: async () => ({ message: 'Windows reports offline for printer Kitchen Star' }) });
+    await printSlip(order, 'kitchen');
+    expect(printOrder).not.toHaveBeenCalled();
+  });
+
 });
