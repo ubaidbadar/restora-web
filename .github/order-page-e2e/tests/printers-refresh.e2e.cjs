@@ -4,6 +4,7 @@ test('printer inventory refreshes without disconnecting the PC', async ({ page }
   const writes = [];
   const errors = [];
   let labels = ['Existing kitchen printer'];
+  let healthState = 'offline';
   const me = {
     user: { id: 'printer-test-owner', name: 'Printer Test', email: 'printer@example.test' },
     mode: 'web',
@@ -40,12 +41,16 @@ test('printer inventory refreshes without disconnecting the PC', async ({ page }
       printers: labels.map((label, index) => ({
         systemName: `Windows Printer ${index + 1}`, label, prints: [], categoryIds: [],
         width: 48, copies: 1, present: true,
+        ...(index === 0 ? { health: { state: healthState, checkedAt: Math.floor(Date.now() / 1000), queuedJobs: 2, statusFlags: 128 } } : {}),
       })),
     }] });
     return route.fulfill({ json: [] });
   });
   await page.goto('/settings/printers');
   await expect(page.getByText('Existing kitchen printer', { exact: true })).toBeVisible();
+  await expect(page.getByText('Offline reported', { exact: true })).toBeVisible();
+  healthState = 'unknown';
+  await expect(page.getByText('Not verified', { exact: true })).toBeVisible({ timeout: 12_000 });
   labels = [...labels, 'New receipt printer'];
   await expect(page.getByText('New receipt printer', { exact: true })).toBeVisible({ timeout: 12_000 });
   labels = [...labels, 'Manual refresh printer'];
