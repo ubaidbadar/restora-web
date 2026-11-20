@@ -14,7 +14,7 @@ import agentFetch from './agent_fetch';
  * an offline order's kitchen slip keyed by its clientId: the synced order's slip from the server has the same key, so
  * the kitchen gets it once. Printed before counts as printed.
  */
-export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'receipt', key?: string): Promise<boolean | 'partial' | 'uncertain'> {
+export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'receipt', key?: string): Promise<boolean | 'partial' | 'uncertain' | 'blocked'> {
   try {
     const config: { printers: Printer[]; branchId?: string } = await (await agentFetch('/config')).json();
     const workplace = useAuthStore.getState().me?.workplace;
@@ -40,6 +40,7 @@ export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'rec
     let sent = 0;
     let failures = 0;
     let uncertain = 0;
+    let blocked = 0;
     for (const printer of printers) {
       // A kitchen printer with categories gets only their dishes.
       const categoryOf = (itemId: string) => menu?.items.find((item) => item._id === itemId)?.categoryId;
@@ -54,15 +55,18 @@ export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'rec
           res = await send(`${order._id}~${Date.now().toString(36)}`);
         }
         if (res.ok) sent++;
-        else if (res.status === 502) uncertain++; // The spooler may have accepted a copy before an error.
-        else failures++;
+        else if (res.status === 502) {
+          const error = await res.json().catch(() => null) as { message?: string } | null;
+          if (error?.message?.startsWith('Windows reports ')) blocked++;
+          else uncertain++; // A spooler submission may have succeeded before a different error.
+        } else failures++;
       } catch {
         // Once POST /print was attempted, a lost response cannot prove no slip was accepted.
         uncertain++;
       }
     }
-    if (sent) return failures || uncertain ? 'partial' : true;
-    return uncertain ? 'uncertain' : false;
+    if (sent) return failures || uncertain || blocked ? 'partial' : true;
+    return uncertain ? 'uncertain' : blocked ? 'blocked' : false;
   } catch {
     // No agent here, or it is not running.
     return false;
