@@ -8,7 +8,7 @@ use std::{
     path::PathBuf,
     sync::Mutex,
 };
-use tauri::{Manager, State, WebviewWindow};
+use tauri::{State, WebviewWindow};
 use crate::slips;
 
 #[derive(Serialize)]
