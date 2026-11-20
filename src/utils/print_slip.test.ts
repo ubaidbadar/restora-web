@@ -76,4 +76,25 @@ describe('printSlip', () => {
     await printSlip(order, 'receipt');
     expect(printOrder).toHaveBeenCalledWith(order, 'receipt');
   });
+
+  it('does not open the browser fallback after one local printer has already accepted the slip', async () => {
+    const bar = { ...kitchen, systemName: 'Bar Star' };
+    post.mockRejectedValue(new Error('Network Error'));
+    fetchMock
+      .mockResolvedValueOnce({ json: async () => ({ printers: [kitchen, bar] }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ printed: true }) })
+      .mockResolvedValueOnce({ ok: false, status: 403 });
+    await printSlip(order, 'kitchen');
+    expect(printOrder).not.toHaveBeenCalled();
+  });
+
+  it('does not retry through the browser when the localhost print response is lost', async () => {
+    post.mockRejectedValue(new Error('Network Error'));
+    fetchMock
+      .mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) })
+      .mockRejectedValueOnce(new Error('response lost'));
+    await printSlip(order, 'kitchen');
+    expect(printOrder).not.toHaveBeenCalled();
+  });
+
 });
