@@ -158,7 +158,8 @@ export default function LiveUpdates() {
       inboxReading = true;
       try {
         const { data } = await api.get<InboxRow[]>('/whatsapp/conversations');
-        if (inboxReady && window.location.pathname !== '/whatsapp') {
+        const path = window.location.hash.startsWith('#/') ? window.location.hash.slice(1).split('?')[0] : window.location.pathname;
+        if (inboxReady && path !== '/whatsapp') {
           const hasNewMessage = data.some(thread => {
             const last = thread.lastInboundAt || '';
             const previous = lastInbound.get(`${thread.phoneNumberId}:${thread.phone}`);

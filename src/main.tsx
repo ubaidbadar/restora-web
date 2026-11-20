@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, RouterProvider, useRouteError } from 'react-router';
+import { createBrowserRouter, createHashRouter, RouterProvider, useRouteError } from 'react-router';
 import { registerSW } from 'virtual:pwa-register';
 import useAuthStore from './store/auth_store';
 import ErrorBoundary from './ui/error_boundary';
@@ -29,6 +29,9 @@ const routeFromAgentLaunch = (request: string | null): string | undefined => {
     return undefined;
   }
 };
+// The packaged Windows app keeps /index.html as its file URL and uses hash
+// paths so refresh and deep links never bypass the bundled React entrypoint.
+const isDesktop = (window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true;
 const initialAgentRoute = routeFromAgentLaunch(new URLSearchParams(window.location.search).get('restoraLaunch'));
 if (initialAgentRoute) window.history.replaceState(window.history.state, '', initialAgentRoute);
 
@@ -43,7 +46,7 @@ const ErrorBoundaryWrapper = () => {
   return  <ErrorBoundary error={error} />
 }
 
-const router = createBrowserRouter([
+const router = (isDesktop ? createHashRouter : createBrowserRouter)([
   {
     path: '*',
     element: <App />,
@@ -114,12 +117,13 @@ const UPDATE_CHECK_MS = 60 * 60 * 1000;
 
 // The service worker keeps the built app on the device (production only). On the dev server it must not exist: one left
 // from a production build on this address would keep serving that old build, so every normal refresh showed old code.
-if (import.meta.env.DEV) {
-  void navigator.serviceWorker?.getRegistrations().then((registrations) => registrations.forEach((registration) => void registration.unregister()));
-} else if ((window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ !== true) {
-  // Native Windows installers already bundle the React files. Do not install
-  // a network-controlled PWA worker on the same virtual-host origin: it could
-  // override the tested desktop bundle with a different web deployment.
+// Tauri loads the React build from its own installer; an old web service worker
+// must never override the packaged files, even on an offline cold start.
+if (import.meta.env.DEV || isDesktop) {
+  void navigator.serviceWorker?.getRegistrations()
+    .then((registrations) => registrations.forEach((registration) => void registration.unregister()))
+    .catch(() => {});
+} else {
   const updateServiceWorker = registerSW({
     onNeedRefresh() {
       toast.info('A new version of Restora is ready.', { label: 'Update', onClick: () => void updateServiceWorker(true) });

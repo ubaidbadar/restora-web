@@ -45,7 +45,7 @@ fn main() {
                 .min_inner_size(900.0, 620.0)
                 .background_color(tauri::window::Color(246, 247, 249, 255))
                 .initialization_script(
-                    "if (location.origin === 'https://app.restora.live' || location.origin === 'http://localhost:3000') { Object.defineProperty(window, '__RESTORA_DESKTOP__', { value: true }); if (location.pathname === '/index.html') history.replaceState(history.state, '', '/'); }",
+                    "if (location.origin === 'https://app.restora.live' || location.origin === 'http://localhost:3000') { Object.defineProperty(window, '__RESTORA_DESKTOP__', { value: true }); }",
                 )
                 .on_navigation(trusted_navigation)
                 .on_new_window(|url, _| {

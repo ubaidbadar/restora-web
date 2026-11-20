@@ -17,7 +17,8 @@ export default function AgentReconnect() {
       try {
         // The Settings status component owns pairing on this route; avoid
         // two simultaneous one-time-code requests in React Strict Mode.
-        if (window.location.pathname.startsWith('/settings/printers')) return;
+        const path = window.location.hash.startsWith('#/') ? window.location.hash.slice(1).split('?')[0] : window.location.pathname;
+        if (path.startsWith('/settings/printers')) return;
         if (!desktop) {
           const permission = await navigator.permissions.query({ name: 'loopback-network' as PermissionName });
           if (permission.state !== 'granted') return;
