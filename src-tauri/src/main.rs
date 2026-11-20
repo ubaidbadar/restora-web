@@ -4,7 +4,6 @@ mod logo;
 mod native_printers;
 mod slips;
 
-
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder, webview::NewWindowResponse};
 
 const APP_URL: &str = "https://app.restora.live/index.html";
