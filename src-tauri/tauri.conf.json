@@ -12,7 +12,9 @@
   "app": {
     "windows": [],
     "security": {
-      "capabilities": []
+      "capabilities": [
+        "native-printing"
+      ]
     }
   },
   "bundle": {

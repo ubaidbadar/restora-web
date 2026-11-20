@@ -13,10 +13,13 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "=2.12.7", features = [] }
 tauri-plugin-single-instance = "2"
 tauri-plugin-opener = "2"
-restora-pc-agent = { git = "https://github.com/ubaidbadar/restora-pc-agent", rev = "6e6b1897e3449e75c58687203b13be5260f77133", features = ["embedded"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.62", features = ["Win32_UI_WindowsAndMessaging"] }
+windows = { version = "0.62", features = ["Win32_UI_WindowsAndMessaging", "Win32_Graphics_Printing", "Win32_Foundation"] }
 webview2-com = "0.39"
 
 [features]

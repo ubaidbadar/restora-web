@@ -1,3 +1,8 @@
+mod escpos;
+mod logo;
+mod native_printers;
+mod slips;
+
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder, webview::NewWindowResponse};
@@ -34,6 +39,10 @@ fn external_link(url: &tauri::Url) -> bool {
 
 fn main() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            native_printers::native_printers,
+            native_printers::native_print,
+        ])
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.unminimize();
@@ -42,25 +51,7 @@ fn main() {
             }
         }))
         .setup(|app| {
-            // Rust printing lives in this process, not in a second Windows agent.
-            if let Err(error) = restora_pc_agent::start_embedded() {
-                // Most commonly an old standalone agent still owns port 17777.
-                // This is a GUI-only Windows application: stderr would be
-                // invisible, so tell the operator how to recover.
-                #[cfg(windows)]
-                {
-                    use windows::Win32::UI::WindowsAndMessaging::{
-                        MB_ICONERROR, MB_OK, MessageBoxW,
-                    };
-                    use windows::core::HSTRING;
-                    let body = HSTRING::from(error.as_str());
-                    let title = HSTRING::from("Restora POS - Printing cannot start");
-                    unsafe {
-                        MessageBoxW(None, &body, &title, MB_OK | MB_ICONERROR);
-                    }
-                }
-                return Err(std::io::Error::other(error).into());
-            }
+            app.manage(std::sync::Arc::new(native_printers::PrintState::new(app.path().app_local_data_dir()?)));
 
             // Development uses Vite. The production window starts blank so it
             // cannot make a network request before local assets are mapped.
