@@ -98,9 +98,23 @@ jobs:
           try {
             $process = Start-Process -FilePath $binary -PassThru
             try {
-              Start-Sleep -Seconds 4
-              $process.Refresh()
-              if ($process.HasExited) { throw "Native POS exited with code $($process.ExitCode) while port 17777 was occupied" }
+              $reactStarted = $false
+              for ($attempt = 0; $attempt -lt 20; $attempt++) {
+                Start-Sleep -Seconds 1
+                $process.Refresh()
+                if ($process.HasExited) { throw "Native POS exited with code $($process.ExitCode) while port 17777 was occupied" }
+                if ($process.MainWindowTitle -eq 'Restora POS - Ready') {
+                  $reactStarted = $true
+                  break
+                }
+                if ($process.MainWindowTitle -match 'Startup failed') {
+                  throw 'WebView2 loaded the boot HTML but the React entrypoint failed to mount'
+                }
+              }
+              if (-not $reactStarted) {
+                throw "WebView2 React startup failed: no native React-ready handshake after launch (window title: $($process.MainWindowTitle))"
+              }
+              Write-Host 'PASS: React mounted and invoked the native Tauri readiness command.'
               $nextAgents = @(Get-Process -Name restora-pc-agent -ErrorAction SilentlyContinue).Count
               if ($nextAgents -ne $priorAgents) { throw 'The POS launched a separate print agent' }
               Write-Host 'PASS: native POS started with port 17777 occupied; no PC agent was started.'

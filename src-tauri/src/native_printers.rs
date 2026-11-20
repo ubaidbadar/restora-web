@@ -167,6 +167,16 @@ fn trusted_caller(webview: &WebviewWindow) -> Result<(), String> {
     Ok(())
 }
 
+/// Only React can mark the desktop UI ready; the Windows test checks the
+/// native window title, not merely that the process or WebView2 shell exists.
+#[tauri::command]
+pub fn native_desktop_ready(webview: WebviewWindow) -> Result<(), String> {
+    trusted_caller(&webview)?;
+    webview
+        .set_title("Restora POS - Ready")
+        .map_err(|error| error.to_string())
+}
+
 #[tauri::command]
 pub async fn native_printers(webview: WebviewWindow) -> Result<Vec<PrinterInfo>, String> {
     trusted_caller(&webview)?;

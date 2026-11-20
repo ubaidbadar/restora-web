@@ -41,6 +41,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             native_printers::native_printers,
             native_printers::native_print,
+            native_printers::native_desktop_ready,
         ])
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             if let Some(window) = app.get_webview_window("main") {

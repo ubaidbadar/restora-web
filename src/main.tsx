@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, createHashRouter, RouterProvider, useRouteError } from 'react-router';
 import { registerSW } from 'virtual:pwa-register';
@@ -40,6 +40,17 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
+
+/** A native handoff confirms React actually mounted inside the installed WebView2. */
+function NativeStartupReady() {
+  useEffect(() => {
+    if (!isDesktop) return;
+    void import('@tauri-apps/api/core').then(({ invoke }) => invoke('native_desktop_ready')).catch((error) => {
+      console.error('Could not confirm the Restora native interface is ready', error);
+    });
+  }, []);
+  return null;
+}
 
 const ErrorBoundaryWrapper = () => {
   const error = useRouteError();
@@ -136,6 +147,7 @@ if (import.meta.env.DEV || isDesktop) {
 
 createRoot(rootElement).render(
   <StrictMode>
+    <NativeStartupReady />
     <ToastContainer />
     <RouterProvider router={router} />
   </StrictMode>,

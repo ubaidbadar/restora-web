@@ -14,6 +14,7 @@
   },
   "permissions": [
     "allow-native-printers",
-    "allow-native-print"
+    "allow-native-print",
+    "allow-native-desktop-ready"
   ]
 }
