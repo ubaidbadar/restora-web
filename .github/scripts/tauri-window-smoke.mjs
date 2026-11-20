@@ -9,6 +9,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 const installed = process.argv[2];
 assert.ok(installed, 'Expected the NSIS installation directory');
 let socket;
+let lastDiagnostic = 'No WebView2 debugging response';
 
 async function connect(url) {
   return new Promise((resolve, reject) => {
@@ -34,6 +35,7 @@ for (let attempt = 0; attempt < 40; attempt++) {
   try {
     const response = await fetch('http://127.0.0.1:9222/json/list', { signal: AbortSignal.timeout(1700) });
     const targets = await response.json();
+    lastDiagnostic = JSON.stringify(targets.map(({ type, url, webSocketDebuggerUrl }) => ({ type, url, socket: !!webSocketDebuggerUrl }))).slice(0, 3000);
     const page = targets.find((target) => target.type === 'page'
       && target.url.startsWith('https://app.restora.live/')
       && target.webSocketDebuggerUrl);
@@ -41,10 +43,10 @@ for (let attempt = 0; attempt < 40; attempt++) {
       socket = await connect(page.webSocketDebuggerUrl);
       break;
     }
-  } catch { /* WebView2 may still be opening */ }
+  } catch (error) { lastDiagnostic = String(error); }
   await sleep(700);
 }
-assert.ok(socket, 'The installed WebView2 did not navigate to the locally mapped Restora origin');
+assert.ok(socket, 'The installed WebView2 did not navigate to the locally mapped Restora origin. Last debugging state: ' + lastDiagnostic);
 
 let counter = 0;
 function call(method, params = {}) {
