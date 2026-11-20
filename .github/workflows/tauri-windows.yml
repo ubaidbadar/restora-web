@@ -12,9 +12,11 @@ on:
       - 'yarn.lock'
       - 'vite.config.ts'
       - '.github/workflows/tauri-windows.yml'
-  push:
-    branches: [feature/tauri2-integrated-printing-20261120]
   workflow_dispatch:
+
+concurrency:
+  group: restora-native-print-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
