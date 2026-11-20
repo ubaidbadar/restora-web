@@ -60,7 +60,10 @@ export default function PrinterRow({ agent, printer, online, categories, onSaved
         </span>
         <bdi className="block truncate text-sm text-muted">{printer.systemName}</bdi>
         <span className="block truncate text-sm text-muted">{summary(printer, categories)}</span>
-        {online && printer.present && state && <span className="block text-xs text-muted">Windows queue · {printer.health?.queuedJobs ?? 0} waiting · checked {new Date(checkedAt * 1000).toLocaleTimeString()}</span>}
+        {online && printer.present && state && <span className="block text-xs text-muted">
+          {state === 'unknown' ? 'Windows could not verify printer readiness' : `${printer.health?.queuedJobs ?? 0} jobs in Windows queue`}
+          {' · '}Checked {new Date(checkedAt * 1000).toLocaleTimeString()}
+        </span>}
       </span>
       <FormDrawer
         title={`Edit ${printer.label}`}
