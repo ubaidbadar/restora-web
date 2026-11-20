@@ -125,10 +125,10 @@ fn main() {
                 let opening_window = window.clone();
                 std::thread::spawn(move || {
                     std::thread::sleep(std::time::Duration::from_millis(600));
-                    if let Ok(url) = APP_URL.parse() {
-                        if let Err(error) = opening_window.navigate(url) {
-                            eprintln!("Restora POS: bundled page navigation failed: {error}");
-                        }
+                    if let Ok(url) = APP_URL.parse()
+                        && let Err(error) = opening_window.navigate(url)
+                    {
+                        eprintln!("Restora POS: bundled page navigation failed: {error}");
                     }
                 });
             }
