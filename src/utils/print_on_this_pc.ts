@@ -14,7 +14,7 @@ import agentFetch from './agent_fetch';
  * an offline order's kitchen slip keyed by its clientId: the synced order's slip from the server has the same key, so
  * the kitchen gets it once. Printed before counts as printed.
  */
-export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'receipt', key?: string): Promise<boolean> {
+export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'receipt', key?: string): Promise<boolean | 'partial' | 'uncertain'> {
   try {
     const config: { printers: Printer[]; branchId?: string } = await (await agentFetch('/config')).json();
     const workplace = useAuthStore.getState().me?.workplace;
@@ -38,6 +38,8 @@ export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'rec
     };
 
     let sent = 0;
+    let failures = 0;
+    let uncertain = 0;
     for (const printer of printers) {
       // A kitchen printer with categories gets only their dishes.
       const categoryOf = (itemId: string) => menu?.items.find((item) => item._id === itemId)?.categoryId;
@@ -45,13 +47,22 @@ export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'rec
       if (!items.length) continue;
       const body = { branchId, printer: printer.systemName, kind, width: printer.width, copies: printer.copies, order: { ...order, items }, header };
       const send = (orderKey: string) => agentFetch('/print', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, orderKey }) }, 60_000);
-      let res = await send(key ?? order._id);
-      // Asked for again by a person: a reprint, with a key of its own.
-      if (!key && res.ok && (await res.json()).duplicate) res = await send(`${order._id}~${Date.now().toString(36)}`);
-      if (!res.ok) return false;
-      sent++;
+      try {
+        let res = await send(key ?? order._id);
+        if (res.ok && !key && (await res.json()).duplicate) {
+          // A deliberate reprint needs its own key, not the previous accepted one.
+          res = await send(`${order._id}~${Date.now().toString(36)}`);
+        }
+        if (res.ok) sent++;
+        else if (res.status === 502) uncertain++; // The spooler may have accepted a copy before an error.
+        else failures++;
+      } catch {
+        // Once POST /print was attempted, a lost response cannot prove no slip was accepted.
+        uncertain++;
+      }
     }
-    return sent > 0;
+    if (sent) return failures || uncertain ? 'partial' : true;
+    return uncertain ? 'uncertain' : false;
   } catch {
     // No agent here, or it is not running.
     return false;
