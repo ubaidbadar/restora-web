@@ -1,9 +1,0 @@
-[[permission]]
-identifier = "allow-native-printers"
-description = "Allow the Restora POS main window to list printers installed in Windows"
-commands.allow = ["native_printers"]
-
-[[permission]]
-identifier = "allow-native-print"
-description = "Allow the Restora POS main window to print kitchen slips and receipts"
-commands.allow = ["native_print"]
