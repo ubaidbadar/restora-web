@@ -71,7 +71,7 @@ export default function AgentRow({ agent, categories, onSaved, onRemoved, onRefr
       {!waiting && !agent.printers.length && <p className="px-5 pt-2 text-sm text-muted sm:px-6">The agent has not listed any printers yet.</p>}
       <ul className="mt-1 divide-y divide-border">
         {agent.printers.map((printer) => (
-          <PrinterRow key={printer.systemName} agent={agent} printer={printer} categories={categories} onSaved={onSaved} />
+          <PrinterRow key={printer.systemName} agent={agent} printer={printer} online={online} categories={categories} onSaved={onSaved} />
         ))}
       </ul>
     </li>
