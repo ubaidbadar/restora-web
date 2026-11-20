@@ -117,6 +117,37 @@ jobs:
             Write-Host 'Installed Restora POS launched with bundled React, in-process printing, and origin guard.'
             $webviews = @(Get-CimInstance Win32_Process -Filter "Name = 'msedgewebview2.exe'" -ErrorAction SilentlyContinue)
           Write-Host "WebView2 renderer processes in hosted CI: $($webviews.Count)"
+          $debugProcesses = @($webviews | Where-Object { $_.CommandLine -match 'remote-debugging-port' })
+          Write-Host "WebView2 process command lines with debug flag: $($debugProcesses.Count)"
+          $process.Refresh()
+          Write-Host "Restora POS window: $($process.MainWindowTitle), HWND $($process.MainWindowHandle)"
+          if ($process.MainWindowHandle -ne 0) {
+            try {
+              Add-Type -AssemblyName System.Drawing
+              $windowApi = @'
+          using System;
+          using System.Runtime.InteropServices;
+          public static class RestoraNativeWindow {
+            [StructLayout(LayoutKind.Sequential)]
+            public struct Rect { public int Left, Top, Right, Bottom; }
+            [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hwnd, out Rect bounds);
+          }
+          '@
+              Add-Type -TypeDefinition $windowApi
+              $bounds = New-Object RestoraNativeWindow+Rect
+              if ([RestoraNativeWindow]::GetWindowRect($process.MainWindowHandle, [ref]$bounds)) {
+                $width = [Math]::Max(1, $bounds.Right - $bounds.Left)
+                $height = [Math]::Max(1, $bounds.Bottom - $bounds.Top)
+                $bitmap = [System.Drawing.Bitmap]::new($width, $height)
+                $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+                try {
+                  $graphics.CopyFromScreen($bounds.Left, $bounds.Top, 0, 0, [System.Drawing.Size]::new($width, $height))
+                  $bitmap.Save((Join-Path $env:RUNNER_TEMP 'restora-desktop-window.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+                  Write-Host "Captured Restora window: $width x $height"
+                } finally { $graphics.Dispose(); $bitmap.Dispose() }
+              }
+            } catch { Write-Warning "GUI capture unavailable: $($_.Exception.Message)" }
+          }
           $browserDebug = @(Get-NetTCPConnection -LocalPort 9222 -State Listen -ErrorAction SilentlyContinue)
           Write-Host "WebView2 debugging TCP listeners: $($browserDebug.Count)"
           $sessions = (query user 2>$null) -join " | "
@@ -125,3 +156,10 @@ jobs:
           } finally {
             Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
           }
+      - name: Upload GUI screenshot for manual acceptance when available
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: restora-windows-webview2-screenshot
+          path: ${{ runner.temp }}/restora-desktop-window.png
+          if-no-files-found: ignore
