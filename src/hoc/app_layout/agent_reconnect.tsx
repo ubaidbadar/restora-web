@@ -15,8 +15,10 @@ export default function AgentReconnect() {
     void (async () => {
       const desktop = (window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true;
       try {
+        // The Settings status component owns pairing on this route; avoid
+        // two simultaneous one-time-code requests in React Strict Mode.
+        if (window.location.pathname.startsWith('/settings/printers')) return;
         if (!desktop) {
-          if (window.location.pathname.startsWith('/settings/printers')) return;
           const permission = await navigator.permissions.query({ name: 'loopback-network' as PermissionName });
           if (permission.state !== 'granted') return;
         }
