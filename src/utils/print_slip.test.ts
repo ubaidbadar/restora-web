@@ -24,7 +24,10 @@ describe('printSlip', () => {
     vi.stubGlobal('fetch', fetchMock);
     useAuthStore.getState().setMe(sampleMe());
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete (window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__;
+  });
 
   it('queues the slip at the backend and prints nothing here', async () => {
     post.mockResolvedValue({ data: { queued: 1 } });
@@ -68,6 +71,14 @@ describe('printSlip', () => {
     fetchMock.mockRejectedValue(new Error('Failed to fetch'));
     await printSlip(order, 'receipt');
     expect(printOrder).toHaveBeenCalledWith(order, 'receipt');
+  });
+
+  it('never opens a browser printer selection dialog in Tauri desktop', async () => {
+    Object.defineProperty(window, '__RESTORA_DESKTOP__', { value: true, configurable: true });
+    post.mockRejectedValue(new Error('Network Error'));
+    fetchMock.mockRejectedValue(new Error('Local native printer unavailable'));
+    await printSlip(order, 'receipt');
+    expect(printOrder).not.toHaveBeenCalled();
   });
 
   it('falls back when the agent has no printer for this kind of slip', async () => {
