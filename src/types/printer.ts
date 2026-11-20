@@ -12,4 +12,11 @@ export default interface Printer {
   copies: number;
   /** False when Windows no longer lists it (unplugged, removed). */
   present: boolean;
+  /** Best-effort Windows queue report; no driver flag proves physical paper output. */
+  health?: {
+    state: 'offline' | 'paused' | 'paperOut' | 'paperJam' | 'doorOpen' | 'error' | 'busy' | 'unknown';
+    checkedAt: number;
+    queuedJobs: number;
+    statusFlags: number;
+  };
 }
