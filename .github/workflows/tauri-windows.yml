@@ -65,6 +65,9 @@ jobs:
           $setup | Select-Object Name, Length
       - name: Smoke test installed Tauri POS with bundled React and printing
         shell: pwsh
+        env:
+          # CI only. Never enable the debugging port in production releases.
+          WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: '--remote-debugging-port=9222 --remote-allow-origins=*'
         run: |
           $ErrorActionPreference = 'Stop'
           $setup = @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter '*setup.exe')[0]
@@ -94,6 +97,7 @@ jobs:
             $newAgents = @(Get-Process -Name 'restora-pc-agent' -ErrorAction SilentlyContinue).Count
             if ($newAgents -ne $oldAgents) { throw 'A separate print-agent executable was launched' }
             Write-Host 'Installed Restora POS launched with bundled React, in-process printing, and origin guard.'
+            node .github/scripts/tauri-window-smoke.mjs "$installDir"
           } finally {
             Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
           }
