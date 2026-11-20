@@ -45,6 +45,8 @@ jobs:
           yarn typecheck
           yarn lint
           yarn test
+      - name: Build this repository's React assets for native resource tests
+        run: yarn build
       - name: Rust formatting
         run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
       - name: Resolve native dependencies
