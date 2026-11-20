@@ -10,6 +10,9 @@ const CANVAS = '#F6F7F9';
 const DESCRIPTION = 'Orders, customers, khata and WhatsApp campaigns for your restaurant.';
 
 export default defineConfig(({ command, mode }) => {
+  // Windows installers must boot without fetching JS or CSS subresources from
+  // WebView2's virtual host. Only desktop builds use this one-file output.
+  const desktopBundle = process.env.RESTORA_DESKTOP_BUNDLE === '1';
   // index.html's link previews need the app's full address. Set VITE_APP_URL in .env for production.
   const viteEnv = loadEnv(mode, '.', 'VITE_');
   if (command === 'build' && !viteEnv.VITE_API_URL?.trim()) {
@@ -20,6 +23,11 @@ export default defineConfig(({ command, mode }) => {
   const apiUrl = viteEnv.VITE_API_URL || 'http://localhost:5001';
 
   return {
+    build: desktopBundle ? {
+      cssCodeSplit: false,
+      assetsInlineLimit: () => true,
+      rolldownOptions: { output: { codeSplitting: false } },
+    } : undefined,
     plugins: [
       react(),
       babel({ presets: [reactCompilerPreset()] }),
