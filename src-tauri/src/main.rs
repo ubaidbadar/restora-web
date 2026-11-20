@@ -98,12 +98,17 @@ fn main() {
                     .into());
                 }
                 let path = files.to_string_lossy().into_owned();
+                // Map *and navigate* in the same WebView2 UI-thread callback.
+                // with_webview dispatches asynchronously; a separate
+                // window.navigate() could race the mapping, leaving index.html
+                // or its module imports served by the live website instead of
+                // by the installed React bundle.
                 window.with_webview(move |webview| unsafe {
-                    webview
+                    let core = webview
                         .controller()
                         .CoreWebView2()
-                        .expect("WebView2 controller unavailable")
-                        .cast::<ICoreWebView2_3>()
+                        .expect("WebView2 controller unavailable");
+                    core.cast::<ICoreWebView2_3>()
                         .expect("WebView2 virtual-host support missing")
                         .SetVirtualHostNameToFolderMapping(
                             &HSTRING::from("app.restora.live"),
@@ -111,8 +116,9 @@ fn main() {
                             COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND(2),
                         )
                         .expect("Could not mount bundled React assets");
+                    core.Navigate(&HSTRING::from(APP_URL))
+                        .expect("Could not open the locally bundled React app");
                 })?;
-                window.navigate(APP_URL.parse()?)?;
             }
             Ok(())
         })
