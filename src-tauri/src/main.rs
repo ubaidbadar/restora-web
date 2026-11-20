@@ -8,6 +8,13 @@ fn trusted_navigation(url: &tauri::Url) -> bool {
     if url.as_str() == "about:blank" {
         return true;
     }
+    if cfg!(debug_assertions)
+        && url.scheme() == "http"
+        && url.port() == Some(3000)
+        && matches!(url.host_str(), Some("localhost") | Some("127.0.0.1"))
+    {
+        return true;
+    }
     url.scheme() == "https"
         && matches!(
             url.host_str(),
@@ -45,7 +52,7 @@ fn main() {
                 .min_inner_size(900.0, 620.0)
                 .background_color(tauri::window::Color(246, 247, 249, 255))
                 .initialization_script(
-                    "if (location.origin === 'https://app.restora.live' || location.origin === 'http://localhost:3000') { Object.defineProperty(window, '__RESTORA_DESKTOP__', { value: true }); }",
+                    "if (location.origin === 'https://app.restora.live' || (location.origin === 'http://localhost:3000' || location.origin === 'http://127.0.0.1:3000')) { Object.defineProperty(window, '__RESTORA_DESKTOP__', { value: true }); }",
                 )
                 .on_navigation(trusted_navigation)
                 .on_new_window(|url, _| {
@@ -105,6 +112,17 @@ mod tests {
 
     #[test]
     fn keeps_native_window_on_trusted_origins() {
+        if cfg!(debug_assertions) {
+            assert!(trusted_navigation(
+                &"http://localhost:3000/orders/new".parse().unwrap()
+            ));
+            assert!(trusted_navigation(
+                &"http://127.0.0.1:3000/".parse().unwrap()
+            ));
+        }
+        assert!(!trusted_navigation(
+            &"http://localhost:3001/".parse().unwrap()
+        ));
         for url in [
             "about:blank",
             "https://app.restora.live/index.html",
