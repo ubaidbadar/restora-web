@@ -112,6 +112,35 @@ jobs:
                 }
               }
               if (-not $reactStarted) {
+                # A native window may exist while HTML or JS never loaded. Capture
+                # the actual user-facing screen rather than reporting process exit.
+                try {
+                  Add-Type -AssemblyName System.Drawing
+                  $rectType = @'
+using System;
+using System.Runtime.InteropServices;
+public static class RestoraWindowRect {
+  [StructLayout(LayoutKind.Sequential)]
+  public struct Rect { public int Left, Top, Right, Bottom; }
+  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hwnd, out Rect bounds);
+}
+'@
+                  Add-Type -TypeDefinition $rectType
+                  $rect = New-Object RestoraWindowRect+Rect
+                  $handle = $process.MainWindowHandle
+                  Write-Host "Main window: handle=$handle, title=$($process.MainWindowTitle)"
+                  if ($handle -ne 0 -and [RestoraWindowRect]::GetWindowRect($handle, [ref]$rect)) {
+                    $width = [Math]::Min(1600, [Math]::Max(1, $rect.Right - $rect.Left))
+                    $height = [Math]::Min(1000, [Math]::Max(1, $rect.Bottom - $rect.Top))
+                    $bmp = [System.Drawing.Bitmap]::new($width, $height)
+                    $gfx = [System.Drawing.Graphics]::FromImage($bmp)
+                    try {
+                      $gfx.CopyFromScreen($rect.Left, $rect.Top, 0, 0, [System.Drawing.Size]::new($width, $height))
+                      $bmp.Save((Join-Path $env:RUNNER_TEMP 'restora-startup-failure.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+                      Write-Host "Captured diagnostic screenshot: $width x $height"
+                    } finally { $gfx.Dispose(); $bmp.Dispose() }
+                  }
+                } catch { Write-Warning "Startup screenshot failed: $($_.Exception.Message)" }
                 throw "WebView2 React startup failed: no native React-ready handshake after launch (window title: $($process.MainWindowTitle))"
               }
               Write-Host 'PASS: React mounted and invoked the native Tauri readiness command.'
@@ -131,3 +160,10 @@ jobs:
           $banned = $files | Select-String -Pattern 'restora_pc_agent|start_embedded|TcpListener|127\.0\.0\.1:17777'
           if ($banned) { throw "Native desktop still contains legacy print-agent references: $banned" }
           Write-Host 'PASS: no local print agent, listener, or embedded agent dependency.'
+      - name: Upload startup diagnostic screenshot
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: restora-startup-diagnostic
+          path: ${{ runner.temp }}/restora-startup-failure.png
+          if-no-files-found: ignore
