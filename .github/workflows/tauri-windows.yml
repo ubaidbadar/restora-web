@@ -1,0 +1,69 @@
+name: Restora Web Tauri 2 Windows
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src-tauri/**'
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'vite.config.ts'
+      - '.github/workflows/tauri-windows.yml'
+  push:
+    branches: [feature/tauri2-integrated-printing-20261120]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 100
+    env:
+      VITE_APP_URL: https://app.restora.live
+      VITE_API_URL: https://restora.live
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: yarn
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+      - name: Install the existing web dependencies
+        run: yarn install --frozen-lockfile --non-interactive
+      - name: Validate React and TypeScript
+        run: |
+          yarn typecheck
+          yarn lint
+          yarn test
+      - name: Rust formatting
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+      - name: Resolve native dependencies
+        run: cargo generate-lockfile --manifest-path src-tauri/Cargo.toml
+      - name: Rust tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked
+      - name: Rust lints
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --locked -- -D warnings
+      - name: Compile and bundle this repository's React UI
+        run: yarn desktop:build
+      - name: Confirm native installer
+        shell: pwsh
+        run: |
+          $setup = @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter '*setup.exe')
+          if ($setup.Count -ne 1) { throw "Expected exactly one Restora installer; found $($setup.Count)" }
+          $setup | Select-Object Name, Length
+      - name: Upload Windows test installer
+        uses: actions/upload-artifact@v5
+        with:
+          name: restora-web-tauri2-win-x64-unsigned
+          path: src-tauri/target/release/bundle/nsis/*setup.exe
+          if-no-files-found: error

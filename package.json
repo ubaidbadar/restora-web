@@ -18,7 +18,9 @@
     "qa:setup": "node .github/scripts/setup-qa.cjs",
     "qa:order": "yarn build && yarn qa:order:built",
     "qa:order:built": "node .github/scripts/run-order-page-e2e.cjs",
-    "qa:verify": "yarn verify && yarn qa:order:built"
+    "qa:verify": "yarn verify && yarn qa:order:built",
+    "desktop:dev": "npx --yes @tauri-apps/cli@2.12.0 dev",
+    "desktop:build": "npx --yes @tauri-apps/cli@2.12.0 build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

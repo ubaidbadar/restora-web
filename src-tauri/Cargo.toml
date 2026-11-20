@@ -1,0 +1,23 @@
+[package]
+name = "restora-pos"
+version = "0.2.0"
+edition = "2024"
+description = "Restora POS (bundled React UI and integrated native Windows printing)"
+license = "UNLICENSED"
+build = "build.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.7", features = [] }
+tauri-plugin-single-instance = "2"
+restora-pc-agent = { git = "https://github.com/ubaidbadar/restora-pc-agent", rev = "e3f33af8b4285df971ca37248698dd2a51f1e390", features = ["embedded"] }
+
+[target.'cfg(windows)'.dependencies]
+windows = "0.62"
+webview2-com = "0.39"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
