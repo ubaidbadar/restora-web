@@ -43,6 +43,8 @@
           problems.push('Startup promise: ' + String(event.reason).slice(0, 200));
         });
         document.addEventListener('DOMContentLoaded', () => {
+          const native = window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke;
+          if (native) Promise.resolve(native('native_desktop_ready', { stage: 'html' })).catch(() => {});
           const root = document.getElementById('root');
           if (!root) return;
           const loaded = new MutationObserver(() => {
@@ -83,6 +85,9 @@
             const details = document.createElement('pre');
             details.id = 'restora-startup-diagnostics';
             details.style.cssText = 'white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f2f5;border-radius:8px;padding:12px;font-size:12px';
+            if (native) {
+              Promise.resolve(native('native_desktop_ready', { stage: 'failed', detail: resource })).catch(() => {});
+            }
             details.textContent = [
               resource,
               'Page: ' + location.href,
