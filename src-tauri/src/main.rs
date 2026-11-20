@@ -144,7 +144,11 @@ mod tests {
         ] {
             assert!(external_link(&url.parse().unwrap()), "{url}");
         }
-        for url in ["file:///C:/Windows", "javascript:alert(1)", "http://untrusted.example"] {
+        for url in [
+            "file:///C:/Windows",
+            "javascript:alert(1)",
+            "http://untrusted.example",
+        ] {
             assert!(!external_link(&url.parse().unwrap()), "{url}");
         }
     }
