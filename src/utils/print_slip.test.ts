@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import api from '../config/api';
 import useAuthStore from '../store/auth_store';
+import useOutboxStore from '../store/outbox_store';
 import sampleMe from '../test/sample_me';
 import type Order from '../types/order';
 import printOrder from './print_order';
@@ -23,6 +24,7 @@ describe('printSlip', () => {
     fetchMock.mockReset();
     vi.stubGlobal('fetch', fetchMock);
     useAuthStore.getState().setMe(sampleMe());
+    useOutboxStore.getState().setOnline(true);
   });
   afterEach(() => vi.unstubAllGlobals());
 
@@ -35,6 +37,7 @@ describe('printSlip', () => {
   });
 
   it('without internet, prints through the agent on this PC with the order\'s own id as its key', async () => {
+    useOutboxStore.getState().setOnline(false);
     post.mockRejectedValue(new Error('Network Error'));
     fetchMock.mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) }).mockResolvedValueOnce({ ok: true, json: async () => ({ printed: true }) });
     await printSlip(order, 'kitchen');
@@ -45,6 +48,7 @@ describe('printSlip', () => {
   });
 
   it('without internet, prints again when asked again, with a key of its own', async () => {
+    useOutboxStore.getState().setOnline(false);
     post.mockRejectedValue(new Error('Network Error'));
     fetchMock
       .mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) })
@@ -71,6 +75,7 @@ describe('printSlip', () => {
   });
 
   it('falls back when the agent has no printer for this kind of slip', async () => {
+    useOutboxStore.getState().setOnline(false);
     post.mockRejectedValue(new Error('Network Error'));
     fetchMock.mockResolvedValue({ json: async () => ({ printers: [kitchen] }) });
     await printSlip(order, 'receipt');
@@ -78,6 +83,7 @@ describe('printSlip', () => {
   });
 
   it('does not open the browser fallback after one local printer has already accepted the slip', async () => {
+    useOutboxStore.getState().setOnline(false);
     const bar = { ...kitchen, systemName: 'Bar Star' };
     post.mockRejectedValue(new Error('Network Error'));
     fetchMock
@@ -89,6 +95,7 @@ describe('printSlip', () => {
   });
 
   it('does not retry through the browser when the localhost print response is lost', async () => {
+    useOutboxStore.getState().setOnline(false);
     post.mockRejectedValue(new Error('Network Error'));
     fetchMock
       .mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) })
@@ -99,11 +106,27 @@ describe('printSlip', () => {
 
 
   it('does not show browser fallback when Windows explicitly reports the printer offline', async () => {
+    useOutboxStore.getState().setOnline(false);
     post.mockRejectedValue(new Error('Network Error'));
     fetchMock
       .mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) })
       .mockResolvedValueOnce({ ok: false, status: 502, json: async () => ({ message: 'Windows reports offline for printer Kitchen Star' }) });
     await printSlip(order, 'kitchen');
+    expect(printOrder).not.toHaveBeenCalled();
+  });
+
+  it('never sends a duplicate local slip if an online backend request loses its response', async () => {
+    post.mockRejectedValue(new Error('Network Error'));
+    await printSlip(order, 'kitchen');
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(printOrder).not.toHaveBeenCalled();
+  });
+
+  it('does not print locally when a server error could have occurred after queueing', async () => {
+    post.mockRejectedValue({ response: { status: 500 } });
+    await printSlip(order, 'receipt');
+    expect(fetchMock).not.toHaveBeenCalled();
     expect(printOrder).not.toHaveBeenCalled();
   });
 
