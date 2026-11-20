@@ -28,8 +28,7 @@ export default function SetupCard({ agent, embedded = false, onAdded, onSaved, o
         : 'Install the Windows agent once. Then Restora sends kitchen slips and receipts to your printers automatically.'}>
       {embedded ? (
         <p className="text-sm text-body">
-          Your desktop app starts the print engine automatically. Restora connects this PC to your selected branch
-          and lets you choose printers for kitchen slips and receipts. If connection fails, use Try again above.
+          Your desktop app includes native printing and uses the Windows default printer automatically. If connection fails, use Try again above.
         </p>
       ) : (
         <>
