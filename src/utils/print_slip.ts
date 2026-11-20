@@ -29,6 +29,8 @@ export default async function printSlip(order: Order, kind: 'kitchen' | 'receipt
     toast.warning('Some printers accepted the slip, but others did not. Check the printer queues before retrying.');
   } else if (result === 'uncertain') {
     toast.warning('Print result is unknown. Check the Windows print queue before trying again.');
+  } else if (result === 'blocked') {
+    toast.warning('Windows reports a printer unavailable. Check its power, connection, paper and queue status.');
   } else {
     printOrder(order, kind);
   }
