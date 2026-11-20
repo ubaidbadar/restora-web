@@ -18,15 +18,18 @@ const viaBackend = (order: Order, kind: 'kitchen' | 'receipt') =>
  * when there is internet, through the agent on this PC when there is not. Without an agent, in the browser's print dialog.
  */
 export default async function printSlip(order: Order, kind: 'kitchen' | 'receipt') {
-  if ((await viaBackend(order, kind)) || (await printOnThisPc(order, kind))) {
-    toast.success(kind === 'kitchen' ? 'Kitchen slip sent to the printer' : 'Receipt sent to the printer');
+  if ((window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true) {
+    // Native Tauri printing is direct Winspool I/O. No server print job,
+    // agent pairing, localhost service, or browser print dialog.
+    if (await printOnThisPc(order, kind)) {
+      toast.success(kind === 'kitchen' ? 'Kitchen slip sent to Windows' : 'Receipt sent to Windows');
+    } else {
+      toast.error('Could not print. Check that an ESC/POS thermal printer is installed and set as the Windows default.');
+    }
     return;
   }
-  if ((window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true) {
-    // The installed POS must never unexpectedly open a WebView2 print dialog.
-    // A missing Windows default / unsupported thermal printer needs a visible
-    // error instead of printing to an arbitrary browser-selected device.
-    toast.error('No available Windows thermal printer. Check the Windows default printer and try again.');
+  if ((await viaBackend(order, kind)) || (await printOnThisPc(order, kind))) {
+    toast.success(kind === 'kitchen' ? 'Kitchen slip sent to the printer' : 'Receipt sent to the printer');
     return;
   }
   printOrder(order, kind);

@@ -11,6 +11,8 @@ import toast from '../../utils/toast';
  */
 export default function AgentReconnect() {
   useEffect(() => {
+    // PWA compatibility only: native desktop never starts or contacts an agent.
+    if ((window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true) return;
     let left = false;
     void (async () => {
       const desktop = (window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true;

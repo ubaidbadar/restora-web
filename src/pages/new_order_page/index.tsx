@@ -302,6 +302,13 @@ export default function NewOrderPage({ editing }: { editing?: Editing }) {
             .then((res) => {
               // The board may already have it, sent live by the server.
               getCache.update<Order[]>(getCache.keyOf('/orders'), (list) => (list ? upsertById(list, res.data) : list));
+              if ((window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true) {
+                // The installed POS prints its own orders directly to Windows.
+                // The stable clientId also protects against repeats after an offline sync.
+                void printOnThisPc(res.data, 'kitchen', clientId).then((printed) => {
+                  if (!printed) toast.error('Order saved, but Windows did not accept the kitchen slip. Check the default thermal printer.');
+                });
+              }
               finish(`Order #${res.data?.dailyToken ?? ''} placed`);
             })
             .catch((err) => (err.response ? onError(err) : (saveOffline(), void syncOutbox())));

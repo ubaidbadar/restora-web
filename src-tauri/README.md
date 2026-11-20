@@ -1,13 +1,22 @@
-# Restora POS — Windows desktop from restora-web
+# Restora POS — native Windows printing
 
-**Source of truth:** this repository's React application. The older `restora-desktop` repository is deprecated and is **not** used.
+This Tauri 2 project is part of **restora-web**, the sole source of its React UI.
+It has **no dependency on restora-pc-agent**, no Electron wrapper, no background
+print-agent service, no pairing code, and no localhost HTTP listener or port 17777.
 
-Run `yarn desktop:dev` to launch the existing Vite web app inside Tauri with the Rust printing engine, and `yarn desktop:build` for a Windows x64 NSIS setup EXE. Install Rust/MSVC Build Tools and WebView2 on Windows first. Regular `yarn dev`, `yarn build`, Firebase hosting, and the existing PWA remain unchanged.
+Native commands `native_printers` and `native_print` run in the same Rust
+process and call the Windows Print Spooler directly, selecting the Windows default
+printer without a test print or a duplicate printer-settings screen. Thermal
+kitchen and receipt slips use ESC/POS bytes (58/80 mm), with a local durable
+print history for offline/duplicate suppression. An accepted spooler job is not
+proof that paper physically exited the printer.
 
-In release builds, `yarn build` compiles **this repository's React code**. Tauri bundles `dist/` into the installer as `web/`; Windows WebView2 maps those local files to `https://app.restora.live`, preserving the app's existing origin, Better Auth HTTP-only session cookies, POS terminal cookies, and IndexedDB offline outbox. The app does not fetch a remote JavaScript bundle at launch. API requests still reach `https://restora.live` when online.
+The React frontend is compiled from this repository and bundled in the Windows
+NSIS installer. The WebView2 virtual-host mapping keeps its cookie/session
+origin. The native capability is limited to the main window and only two
+commands. The normal hosted website/PWA path remains unchanged.
 
-Windows printing is the in-process `restora-pc-agent` Rust library; no Electron, PowerShell, or separately installed agent is needed. It uses the system default printer for kinds not explicitly routed, with the backend pairing changes in Restora's companion backend branch. The old standalone agent must be quit because it holds TCP port 17777.
-
-The app intentionally grants **no Tauri IPC capabilities** to website scripts. The native worker uses origin and host checks. `src-tauri/tauri.conf.json` declares Windows NSIS packaging and the bundled React resources.
-
-**Limitations:** this is a Windows-only desktop target, and native receipts require a configured ESC/POS-compatible Windows printer. A network connection is still required for sign-in, sync, cloud actions and the backend print queue; offline orders use the existing outbox. OAuth through embedded WebView2 and direct navigation/refresh of arbitrary client-side deep routes need full interactive acceptance testing on a real Windows machine. The CI-built installer is unsigned.
+Native print on order creation happens in the installed POS. Other devices'
+cloud-created orders still need a deliberate printer-routing design; do not
+assume that this desktop is a central print server. Real 58/80 mm and USB/network
+printer testing is required before production deployment.
