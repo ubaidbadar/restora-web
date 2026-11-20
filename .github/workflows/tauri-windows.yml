@@ -97,7 +97,13 @@ jobs:
             $newAgents = @(Get-Process -Name 'restora-pc-agent' -ErrorAction SilentlyContinue).Count
             if ($newAgents -ne $oldAgents) { throw 'A separate print-agent executable was launched' }
             Write-Host 'Installed Restora POS launched with bundled React, in-process printing, and origin guard.'
-            node .github/scripts/tauri-window-smoke.mjs "$installDir"
+            $webviews = @(Get-CimInstance Win32_Process -Filter "Name = 'msedgewebview2.exe'" -ErrorAction SilentlyContinue)
+          Write-Host "WebView2 renderer processes in hosted CI: $($webviews.Count)"
+          $browserDebug = @(Get-NetTCPConnection -LocalPort 9222 -State Listen -ErrorAction SilentlyContinue)
+          Write-Host "WebView2 debugging TCP listeners: $($browserDebug.Count)"
+          $sessions = (query user 2>$null) -join " | "
+          Write-Host "Windows runner sessions: $sessions"
+          node .github/scripts/tauri-window-smoke.mjs "$installDir"
           } finally {
             Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
           }
