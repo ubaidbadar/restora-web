@@ -1,9 +1,9 @@
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 mod escpos;
 mod logo;
 mod native_printers;
 mod slips;
 
-#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder, webview::NewWindowResponse};
 
