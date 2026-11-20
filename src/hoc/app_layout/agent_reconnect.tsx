@@ -1,34 +1,47 @@
 import { useEffect } from 'react';
 import agentFetch from '../../utils/agent_fetch';
 import pairThisPc from '../../utils/pair_this_pc';
+import useAuthStore from '../../store/auth_store';
 import toast from '../../utils/toast';
 
 /**
- * On a PC whose browser already lets Restora reach the print agent (Chrome asked once, on Settings → Printers), an agent
- * that is not paired, e.g. installed again, pairs by itself when Restora opens: nobody goes to Settings. Elsewhere it
- * checks nothing, so no other phone or laptop is ever asked about devices on its network.
+ * Desktop includes its own native print worker: pair it after sign-in without
+ * ever opening printer settings. Browser users still need an already granted
+ * loopback permission to talk to a separately installed agent.
  */
 export default function AgentReconnect() {
   useEffect(() => {
-    // Opened twice in development (Strict Mode): only the second check goes on to pair.
     let left = false;
     void (async () => {
+      const desktop = (window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true;
       try {
-        // Settings → Printers pairs it itself, and says why when it can't.
-        if (window.location.pathname.startsWith('/settings/printers')) return;
-        const permission = await navigator.permissions.query({ name: 'loopback-network' as PermissionName });
-        if (permission.state !== 'granted') return;
-        const status = (await (await agentFetch('/status')).json()) as { paired: boolean; reconnectRequired?: boolean };
-        if (left || status.paired || status.reconnectRequired) return;
+        if (!desktop) {
+          if (window.location.pathname.startsWith('/settings/printers')) return;
+          const permission = await navigator.permissions.query({ name: 'loopback-network' as PermissionName });
+          if (permission.state !== 'granted') return;
+        }
+        const response = await agentFetch('/status');
+        if (!response.ok) return;
+        const status = (await response.json()) as { paired: boolean; branchId?: string; reconnectRequired?: boolean };
+        if (left) return;
+        const selectedBranch = useAuthStore.getState().me?.workplace?.branch?._id;
+        if (status.paired) {
+          if (desktop && status.branchId && selectedBranch && status.branchId !== selectedBranch) {
+            toast.error('Printing is connected to another branch. Ask a manager to reconnect this PC.');
+          }
+          return;
+        }
+        if (status.reconnectRequired) {
+          if (desktop) toast.error('Printing was disconnected. Reconnect this PC under Settings → Printing.');
+          return;
+        }
         await pairThisPc();
-        toast.success('The print agent on this PC is connected again.');
+        if (!left) toast.success(desktop ? 'Built-in printing connected.' : 'The print agent on this PC is connected again.');
       } catch {
-        // No agent here, a browser without this permission, or it could not pair: Settings → Printers shows why.
+        if (desktop && !left) toast.error('Built-in printing could not connect. Check Settings → Printing.');
       }
     })();
-    return () => {
-      left = true;
-    };
+    return () => { left = true; };
   }, []);
   return null;
 }
