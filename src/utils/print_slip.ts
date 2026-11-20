@@ -18,9 +18,18 @@ const viaBackend = (order: Order, kind: 'kitchen' | 'receipt') =>
  * when there is internet, through the agent on this PC when there is not. Without an agent, in the browser's print dialog.
  */
 export default async function printSlip(order: Order, kind: 'kitchen' | 'receipt') {
-  if ((await viaBackend(order, kind)) || (await printOnThisPc(order, kind))) {
-    toast.success(kind === 'kitchen' ? 'Kitchen slip sent to the printer' : 'Receipt sent to the printer');
+  if (await viaBackend(order, kind)) {
+    toast.success(kind === 'kitchen' ? 'Kitchen slip queued for printing' : 'Receipt queued for printing');
     return;
   }
-  printOrder(order, kind);
+  const result = await printOnThisPc(order, kind);
+  if (result === true) {
+    toast.success(kind === 'kitchen' ? 'Kitchen slip submitted to Windows' : 'Receipt submitted to Windows');
+  } else if (result === 'partial') {
+    toast.warning('Some printers accepted the slip, but others did not. Check the printer queues before retrying.');
+  } else if (result === 'uncertain') {
+    toast.warning('Print result is unknown. Check the Windows print queue before trying again.');
+  } else {
+    printOrder(order, kind);
+  }
 }
