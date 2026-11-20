@@ -116,7 +116,10 @@ const UPDATE_CHECK_MS = 60 * 60 * 1000;
 // from a production build on this address would keep serving that old build, so every normal refresh showed old code.
 if (import.meta.env.DEV) {
   void navigator.serviceWorker?.getRegistrations().then((registrations) => registrations.forEach((registration) => void registration.unregister()));
-} else {
+} else if ((window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ !== true) {
+  // Native Windows installers already bundle the React files. Do not install
+  // a network-controlled PWA worker on the same virtual-host origin: it could
+  // override the tested desktop bundle with a different web deployment.
   const updateServiceWorker = registerSW({
     onNeedRefresh() {
       toast.info('A new version of Restora is ready.', { label: 'Update', onClick: () => void updateServiceWorker(true) });
