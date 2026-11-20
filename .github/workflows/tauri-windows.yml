@@ -63,6 +63,40 @@ jobs:
           $setup = @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter '*setup.exe')
           if ($setup.Count -ne 1) { throw "Expected exactly one Restora installer; found $($setup.Count)" }
           $setup | Select-Object Name, Length
+      - name: Smoke test installed Tauri POS with bundled React and printing
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter '*setup.exe')[0]
+          $installDir = Join-Path $env:RUNNER_TEMP 'restora-pos-smoke'
+          $installer = Start-Process -FilePath $setup.FullName -ArgumentList @('/S', "/D=$installDir") -Wait -PassThru
+          if ($installer.ExitCode -ne 0) { throw "NSIS setup failed with exit code $($installer.ExitCode)" }
+          $binary = Join-Path $installDir 'restora-pos.exe'
+          if (-not (Test-Path -LiteralPath $binary)) { throw "Installed Restora POS executable missing: $binary" }
+          $assets = Join-Path $installDir 'web/index.html'
+          if (-not (Test-Path -LiteralPath $assets)) { throw "Bundled React index.html missing: $assets" }
+          $oldAgents = @(Get-Process -Name 'restora-pc-agent' -ErrorAction SilentlyContinue).Count
+          $process = Start-Process -FilePath $binary -PassThru
+          try {
+            $ready = $false
+            for ($attempt = 0; $attempt -lt 30; $attempt++) {
+              Start-Sleep -Seconds 1
+              $process.Refresh()
+              if ($process.HasExited) { throw "Installed Restora POS exited unexpectedly (code $($process.ExitCode))" }
+              try {
+                $snapshot = Invoke-RestMethod -Uri 'http://127.0.0.1:17777/status' -TimeoutSec 2
+                if ($null -ne $snapshot.paired) { $ready = $true; break }
+              } catch { }
+            }
+            if (-not $ready) { throw 'The installed in-process print engine did not start' }
+            $blocked = Invoke-WebRequest -Uri 'http://127.0.0.1:17777/setup/pair' -Method Post -ContentType 'application/json' -Body '{"code":"000000"}' -SkipHttpErrorCheck -TimeoutSec 3
+            if ($blocked.StatusCode -ne 403) { throw "Originless pairing was not blocked: $($blocked.StatusCode)" }
+            $newAgents = @(Get-Process -Name 'restora-pc-agent' -ErrorAction SilentlyContinue).Count
+            if ($newAgents -ne $oldAgents) { throw 'A separate print-agent executable was launched' }
+            Write-Host 'Installed Restora POS launched with bundled React, in-process printing, and origin guard.'
+          } finally {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+          }
       - name: Upload Windows test installer
         uses: actions/upload-artifact@v5
         with:
