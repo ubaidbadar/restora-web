@@ -26,6 +26,12 @@ fn trusted_navigation(url: &tauri::Url) -> bool {
         )
 }
 
+/// Open safe external links in the user's default browser. New Tauri
+/// webviews would not have our local-file mapping and could expose untrusted UI.
+fn external_link(url: &tauri::Url) -> bool {
+    matches!(url.scheme(), "https" | "mailto" | "tel")
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
@@ -37,7 +43,24 @@ fn main() {
         }))
         .setup(|app| {
             // Rust printing lives in this process, not in a second Windows agent.
-            restora_pc_agent::start_embedded().map_err(std::io::Error::other)?;
+            if let Err(error) = restora_pc_agent::start_embedded() {
+                // Most commonly an old standalone agent still owns port 17777.
+                // This is a GUI-only Windows application: stderr would be
+                // invisible, so tell the operator how to recover.
+                #[cfg(windows)]
+                {
+                    use windows::Win32::UI::WindowsAndMessaging::{
+                        MB_ICONERROR, MB_OK, MessageBoxW,
+                    };
+                    use windows::core::HSTRING;
+                    let body = HSTRING::from(error.as_str());
+                    let title = HSTRING::from("Restora POS - Printing cannot start");
+                    unsafe {
+                        MessageBoxW(None, &body, &title, MB_OK | MB_ICONERROR);
+                    }
+                }
+                return Err(std::io::Error::other(error).into());
+            }
 
             // Development uses Vite. The production window starts blank so it
             // cannot make a network request before local assets are mapped.
@@ -56,11 +79,12 @@ fn main() {
                 )
                 .on_navigation(trusted_navigation)
                 .on_new_window(|url, _| {
-                    if trusted_navigation(&url) {
-                        NewWindowResponse::Allow
-                    } else {
-                        NewWindowResponse::Deny
+                    // WhatsApp, support, maps and email links should work in
+                    // the system browser without creating remote Tauri windows.
+                    if external_link(&url) {
+                        let _ = tauri_plugin_opener::open_url(url.as_str(), None::<&str>);
                     }
+                    NewWindowResponse::Deny
                 })
                 .build()?;
 
@@ -109,6 +133,21 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unsafe_external_links_never_launch_from_the_native_app() {
+        for url in [
+            "https://wa.me/923001234567",
+            "https://maps.google.com/",
+            "mailto:help@restora.live",
+            "tel:+923001234567",
+        ] {
+            assert!(external_link(&url.parse().unwrap()), "{url}");
+        }
+        for url in ["file:///C:/Windows", "javascript:alert(1)", "http://untrusted.example"] {
+            assert!(!external_link(&url.parse().unwrap()), "{url}");
+        }
+    }
 
     #[test]
     fn keeps_native_window_on_trusted_origins() {
