@@ -22,6 +22,11 @@ export default function GoogleSignIn({ next }: { next: string }) {
   const { data } = useGet<{ web: string[] }>('/public/sign-in-providers');
   const error = params.get('error');
   if (!data?.web.includes('google')) return null;
+  if ((window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true) {
+    // Google OAuth forbids authorization in embedded WebViews. Do not launch
+    // a broken or policy-violating login flow inside the Windows desktop app.
+    return <p className="text-sm text-muted">Google sign-in is not yet available in the Windows app. Use your Restora email and password to sign in.</p>;
+  }
 
   const signIn = () =>
     authApi

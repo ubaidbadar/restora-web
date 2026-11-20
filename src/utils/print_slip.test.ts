@@ -4,9 +4,11 @@ import api from '../config/api';
 import useAuthStore from '../store/auth_store';
 import sampleMe from '../test/sample_me';
 import type Order from '../types/order';
+import { invoke } from '@tauri-apps/api/core';
 import printOrder from './print_order';
 import printSlip from './print_slip';
 
+vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('../config/api', () => ({ default: { post: vi.fn() } }));
 vi.mock('./print_order', () => ({ default: vi.fn() }));
 vi.mock('./offline_db', () => ({ default: { get: vi.fn(async () => undefined), set: vi.fn(async () => undefined), clear: vi.fn(async () => undefined) } }));
@@ -19,12 +21,16 @@ describe('printSlip', () => {
   const fetchMock = vi.fn();
   beforeEach(() => {
     post.mockReset();
+    vi.mocked(invoke).mockReset();
     vi.mocked(printOrder).mockReset();
     fetchMock.mockReset();
     vi.stubGlobal('fetch', fetchMock);
     useAuthStore.getState().setMe(sampleMe());
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete (window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__;
+  });
 
   it('queues the slip at the backend and prints nothing here', async () => {
     post.mockResolvedValue({ data: { queued: 1 } });
@@ -68,6 +74,25 @@ describe('printSlip', () => {
     fetchMock.mockRejectedValue(new Error('Failed to fetch'));
     await printSlip(order, 'receipt');
     expect(printOrder).toHaveBeenCalledWith(order, 'receipt');
+  });
+
+  it('in Tauri desktop uses only the native Windows printer, never backend queues, an agent or browser print', async () => {
+    Object.defineProperty(window, '__RESTORA_DESKTOP__', { value: true, configurable: true });
+    vi.mocked(invoke).mockResolvedValue({ printed: true, printer: 'Windows default' });
+    await printSlip(order, 'kitchen');
+    expect(invoke).toHaveBeenCalledWith('native_print', expect.any(Object));
+    expect(post).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(printOrder).not.toHaveBeenCalled();
+  });
+
+  it('if native printing fails, never falls back to an agent or opens a browser dialog', async () => {
+    Object.defineProperty(window, '__RESTORA_DESKTOP__', { value: true, configurable: true });
+    vi.mocked(invoke).mockRejectedValue(new Error('Printer offline'));
+    await printSlip(order, 'kitchen');
+    expect(post).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(printOrder).not.toHaveBeenCalled();
   });
 
   it('falls back when the agent has no printer for this kind of slip', async () => {

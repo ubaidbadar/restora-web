@@ -4,6 +4,7 @@ import type Menu from '../types/menu';
 import type Order from '../types/order';
 import type Printer from '../types/printer';
 import agentFetch from './agent_fetch';
+import { invoke } from '@tauri-apps/api/core';
 
 /**
  * Prints an order's slip on this PC's printers through the print agent, which works without internet: the printers come
@@ -15,6 +16,52 @@ import agentFetch from './agent_fetch';
  * the kitchen gets it once. Printed before counts as printed.
  */
 export default async function printOnThisPc(order: Order, kind: 'kitchen' | 'receipt', key?: string): Promise<boolean> {
+  if ((window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true) {
+    const workplace = useAuthStore.getState().me?.workplace;
+    const branchId = workplace?.branch?._id;
+    if (!branchId || (order.branchId && order.branchId !== branchId)) return false;
+    const branch = workplace?.branch;
+    const receipt = workplace?.settings.receipt;
+    const header = {
+      restaurant: workplace?.restaurant.name ?? '',
+      branch: branch ? [branch.name, branch.address, branch.area, branch.city].filter(Boolean).join(', ') : undefined,
+      phone: branch?.phone,
+      ntn: receipt?.ntn,
+      strn: receipt?.strn,
+      footer: receipt?.footer,
+    };
+    const logo = workplace?.restaurant.logo;
+    let logoData: number[] | undefined;
+    if (kind === 'receipt' && logo?.startsWith('https://')) {
+      try {
+        const response = await fetch(logo, { credentials: 'omit', cache: 'force-cache' });
+        if (response.ok) {
+          const data = await response.blob();
+          if (data.size <= 2 * 1024 * 1024) logoData = Array.from(new Uint8Array(await data.arrayBuffer()));
+        }
+      } catch {
+        // A missing image never blocks an offline receipt.
+      }
+    }
+    try {
+      await invoke('native_print', {
+        request: {
+          branchId,
+          orderKey: key ?? `${order._id}~manual-${crypto.randomUUID()}`,
+          kind,
+          order,
+          header,
+          logoData,
+          width: 48,
+          copies: 1,
+        },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   try {
     const config: { printers: Printer[]; branchId?: string } = await (await agentFetch('/config')).json();
     const workplace = useAuthStore.getState().me?.workplace;

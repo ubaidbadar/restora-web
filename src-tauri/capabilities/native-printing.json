@@ -1,0 +1,20 @@
+{
+  "identifier": "native-printing",
+  "description": "Only the first-party Restora POS window may use native printing",
+  "windows": [
+    "main"
+  ],
+  "platforms": [
+    "windows"
+  ],
+  "remote": {
+    "urls": [
+      "https://app.restora.live/*"
+    ]
+  },
+  "permissions": [
+    "allow-native-printers",
+    "allow-native-print",
+    "allow-native-desktop-ready"
+  ]
+}

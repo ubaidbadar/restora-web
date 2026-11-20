@@ -45,7 +45,7 @@ function AppLayoutFrame({ lg, me, place }: { lg: boolean; me: ReturnType<typeof 
         <LiveUpdates key={place} />
       </Can>
       <Can permission="devices:manage">
-        <AgentReconnect key={place} />
+        {(window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ !== true && <AgentReconnect key={place} />}
       </Can>
       {me?.device && <PosIdleLock seconds={me.device.settings.idleLockSeconds} />}
       {!lg && <BottomNav />}

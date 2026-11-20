@@ -30,6 +30,97 @@
     <meta property="og:image:alt" content="Restora logo: Orders, customers, khata and WhatsApp campaigns for your restaurant." />
     <meta name="twitter:card" content="summary_large_image" />
 
+    <!-- Desktop /index.html boot diagnostics. On a normal hosted web route this is inactive. -->
+    <script>
+      (() => {
+        if (location.origin !== 'https://app.restora.live' || location.pathname !== '/index.html') return;
+        const problems = [];
+        window.addEventListener('error', (event) => {
+          const resource = event.target && (event.target.src || event.target.href);
+          problems.push(resource ? 'Failed to load: ' + resource : (event.message || 'JavaScript startup error'));
+        }, true);
+        window.addEventListener('unhandledrejection', (event) => {
+          problems.push('Startup promise: ' + String(event.reason).slice(0, 200));
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+          const native = window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke;
+          if (native) Promise.resolve(native('native_desktop_ready', { stage: 'html' })).catch(() => {});
+          const root = document.getElementById('root');
+          if (!root) return;
+          const loaded = new MutationObserver(() => {
+            if (!root.querySelector(':scope > .boot') && root.firstElementChild) {
+              loaded.disconnect();
+              document.title = 'Restora POS - React loaded';
+            }
+          });
+          loaded.observe(root, { childList: true });
+          // A WebView2 virtual-host mapping may settle after its first HTML
+          // request. Recover one time if CSS/JS subresources were unavailable
+          // during that first load. Never apply this to the hosted PWA.
+          window.setTimeout(() => {
+            if (!root.querySelector(':scope > .boot')) {
+              sessionStorage.removeItem('restora-desktop-asset-retry');
+              return;
+            }
+            if (problems.some((problem) => problem.startsWith('Failed to load:'))
+              && sessionStorage.getItem('restora-desktop-asset-retry') !== '1') {
+              sessionStorage.setItem('restora-desktop-asset-retry', '1');
+              location.reload();
+            }
+          }, 2200);
+          window.setTimeout(async () => {
+            if (!root.querySelector(':scope > .boot')) return;
+            const script = document.querySelector('script[type="module"][src]');
+            let resource = 'No bundled JavaScript module found';
+            if (script && script.src) {
+              try {
+                const response = await fetch(script.src, {
+                  cache: 'no-store',
+                  signal: AbortSignal.timeout(4000)
+                });
+                const contentType = response.headers.get('content-type') || 'unknown';
+                resource = 'Main module: HTTP ' + response.status + ', content-type: ' + contentType;
+              } catch (error) {
+                resource = 'Main module fetch failed: ' + String(error).slice(0, 180);
+              }
+            }
+            if (!root.querySelector(':scope > .boot')) return;
+            loaded.disconnect();
+            document.title = 'Restora POS - Startup failed';
+            const panel = document.createElement('main');
+            panel.style.cssText = 'min-height:100vh;display:grid;place-items:center;padding:24px;background:#f6f7f9;color:#161923;font:15px/1.5 system-ui';
+            const card = document.createElement('section');
+            card.style.cssText = 'max-width:680px;width:100%;background:white;border:1px solid #ddd;border-radius:14px;padding:28px';
+            const heading = document.createElement('h1');
+            heading.style.cssText = 'font-size:22px;margin:0 0 12px';
+            heading.textContent = 'Restora POS could not load';
+            const info = document.createElement('p');
+            info.textContent = 'The installed desktop interface did not start. Please send these diagnostic details with the issue.';
+            const details = document.createElement('pre');
+            details.id = 'restora-startup-diagnostics';
+            details.style.cssText = 'white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f2f5;border-radius:8px;padding:12px;font-size:12px';
+            if (native) {
+              Promise.resolve(native('native_desktop_ready', { stage: 'failed', detail: resource })).catch(() => {});
+            }
+            details.textContent = [
+              resource,
+              'Page: ' + location.href,
+              'Tauri desktop flag: ' + String(window.__RESTORA_DESKTOP__ === true),
+              'Online: ' + String(navigator.onLine),
+              ...problems.slice(0, 6)
+            ].join('\n');
+            const retry = document.createElement('button');
+            retry.textContent = 'Retry';
+            retry.style.cssText = 'background:#4f46e5;color:white;border:0;border-radius:8px;padding:10px 18px;cursor:pointer';
+            retry.addEventListener('click', () => location.reload());
+            card.append(heading, info, details, retry);
+            panel.append(card);
+            root.replaceChildren(panel);
+          }, 9000);
+        }, { once: true });
+      })();
+    </script>
+
     <!-- The restaurant's appearance as this device saved it last (utils/apply_appearance), set before anything paints, so a
          dark or themed restaurant never flashes the default colours. -->
     <script>

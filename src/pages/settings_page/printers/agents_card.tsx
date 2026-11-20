@@ -28,7 +28,7 @@ export default function AgentsCard({
 }) {
   // Desktop packages the Windows printing engine: no second installer is needed.
   // User-agent marking is only for the setup copy, never for server authorization.
-  const embedded = navigator.userAgent.includes("RestoraDesktop/1");
+  const embedded = (window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true;
   const {
     data: agents = [],
     loading,

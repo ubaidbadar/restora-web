@@ -20,11 +20,12 @@ describe('AgentReconnect', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    delete (window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__;
   });
 
   it('pairs an agent that is not paired, once the browser allows reaching it', async () => {
     allow('granted');
-    fetchMock.mockResolvedValueOnce({ json: async () => ({ paired: false }) }).mockResolvedValueOnce({ ok: true, json: async () => ({ paired: true }) });
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ paired: false }) }).mockResolvedValueOnce({ ok: true, json: async () => ({ paired: true }) });
     post.mockResolvedValue({ data: { _id: 'pa1', pairing: { code: '482913' } } });
     render(<AgentReconnect />);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -36,10 +37,20 @@ describe('AgentReconnect', () => {
 
   it('does not silently re-pair a PC that was deliberately disconnected', async () => {
     allow('granted');
-    fetchMock.mockResolvedValueOnce({ json: async () => ({ paired: false, reconnectRequired: true }) });
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ paired: false, reconnectRequired: true }) });
     render(<AgentReconnect />);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(post).not.toHaveBeenCalled();
+  });
+
+  it('native desktop never contacts, pairs or requests permission for a PC agent', async () => {
+    Object.defineProperty(window, '__RESTORA_DESKTOP__', { value: true, configurable: true });
+    allow('prompt');
+    render(<AgentReconnect />);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(post).not.toHaveBeenCalled();
+    expect(navigator.permissions.query).not.toHaveBeenCalled();
   });
 
   it('never reaches for the agent before the browser has been allowed to', async () => {
@@ -51,7 +62,7 @@ describe('AgentReconnect', () => {
 
   it('leaves a paired agent alone', async () => {
     allow('granted');
-    fetchMock.mockResolvedValueOnce({ json: async () => ({ paired: true }) });
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ paired: true }) });
     render(<AgentReconnect />);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(post).not.toHaveBeenCalled();

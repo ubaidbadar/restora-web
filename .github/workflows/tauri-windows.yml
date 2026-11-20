@@ -1,0 +1,174 @@
+name: Restora Web Tauri 2 Windows
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src-tauri/**'
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'vite.config.ts'
+      - '.github/workflows/tauri-windows.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: restora-native-print-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 100
+    env:
+      VITE_APP_URL: https://app.restora.live
+      VITE_API_URL: https://restora.live
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: yarn
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+      - name: Install the existing web dependencies
+        run: yarn install --frozen-lockfile --non-interactive
+      - name: Validate React and TypeScript
+        run: |
+          yarn typecheck
+          yarn lint
+          yarn test
+      - name: Build this repository's React assets for native resource tests
+        run: yarn build
+      - name: Rust formatting
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+      - name: Resolve native dependencies
+        run: cargo generate-lockfile --manifest-path src-tauri/Cargo.toml
+      - name: Rust tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked
+      - name: Rust lints
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --locked -- -D warnings
+      - name: Compile and bundle this repository's React UI
+        run: yarn desktop:build
+      - name: Confirm native installer
+        shell: pwsh
+        run: |
+          $desktopHtml = Get-Content dist/index.html -Raw
+          if ($desktopHtml -match '<script[^>]*src="/assets/[^"]+\.js"') { throw 'Desktop build still depends on external JS files' }
+          if ($desktopHtml -match '<link[^>]*href="/assets/[^"]+\.css"') { throw 'Desktop build still depends on external CSS files' }
+          if ($desktopHtml -notmatch '<script type="module">') { throw 'The desktop JS was not embedded in index.html' }
+          Write-Host 'PASS: the installed React startup JS/CSS are self-contained.'
+          $setup = @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter '*setup.exe')
+          if ($setup.Count -ne 1) { throw "Expected exactly one Restora installer; found $($setup.Count)" }
+          $setup | Select-Object Name, Length
+      - name: Upload Windows test installer
+        uses: actions/upload-artifact@v5
+        with:
+          name: restora-web-tauri2-win-x64-unsigned
+          path: src-tauri/target/release/bundle/nsis/*setup.exe
+          if-no-files-found: error
+      - name: Verify installed POS needs no localhost printing port
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter '*setup.exe')[0]
+          $installDir = Join-Path $env:RUNNER_TEMP 'restora-pos-smoke'
+          $installer = Start-Process -FilePath $setup.FullName -ArgumentList @('/S', "/D=$installDir") -Wait -PassThru
+          if ($installer.ExitCode -ne 0) { throw "NSIS install failed with exit code $($installer.ExitCode)" }
+          $binary = Join-Path $installDir 'restora-pos.exe'
+          if (-not (Test-Path $binary)) { throw 'Installed Restora POS executable missing' }
+          $dist = (Resolve-Path dist).Path
+          foreach ($source in @(Get-ChildItem $dist -Recurse -File)) {
+            $relative = $source.FullName.Substring($dist.Length + 1)
+            $installed = Join-Path (Join-Path $installDir 'web') $relative
+            if (-not (Test-Path $installed)) { throw "Bundled React asset missing: $relative" }
+            if ((Get-FileHash $source.FullName).Hash -ne (Get-FileHash $installed).Hash) {
+              throw "Bundled React asset differs: $relative"
+            }
+          }
+          # Simulate the original error 10048. Tauri must remain usable even
+          # while an unrelated process occupies the old agent's TCP port.
+          $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 17777)
+          $listener.Start()
+          $priorAgents = @(Get-Process -Name restora-pc-agent -ErrorAction SilentlyContinue).Count
+          try {
+            $process = Start-Process -FilePath $binary -PassThru
+            try {
+              $reactStarted = $false
+              for ($attempt = 0; $attempt -lt 20; $attempt++) {
+                Start-Sleep -Seconds 1
+                $process.Refresh()
+                if ($process.HasExited) { throw "Native POS exited with code $($process.ExitCode) while port 17777 was occupied" }
+                if ($process.MainWindowTitle -eq 'Restora POS - Ready') {
+                  $reactStarted = $true
+                  break
+                }
+                if ($process.MainWindowTitle -match 'Startup failed') {
+                  throw 'WebView2 loaded the boot HTML but the React entrypoint failed to mount'
+                }
+              }
+              if (-not $reactStarted) {
+                # A native window may exist while HTML or JS never loaded. Capture
+                # the actual user-facing screen rather than reporting process exit.
+                try {
+                  Add-Type -AssemblyName System.Drawing
+                  $rectType = @'
+          using System;
+          using System.Runtime.InteropServices;
+          public static class RestoraWindowRect {
+            [StructLayout(LayoutKind.Sequential)]
+            public struct Rect { public int Left, Top, Right, Bottom; }
+            [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hwnd, out Rect bounds);
+          }
+          '@
+                  Add-Type -TypeDefinition $rectType
+                  $rect = New-Object RestoraWindowRect+Rect
+                  $handle = $process.MainWindowHandle
+                  Write-Host "Main window: handle=$handle, title=$($process.MainWindowTitle)"
+                  if ($handle -ne 0 -and [RestoraWindowRect]::GetWindowRect($handle, [ref]$rect)) {
+                    $width = [Math]::Min(1600, [Math]::Max(1, $rect.Right - $rect.Left))
+                    $height = [Math]::Min(1000, [Math]::Max(1, $rect.Bottom - $rect.Top))
+                    $bmp = [System.Drawing.Bitmap]::new($width, $height)
+                    $gfx = [System.Drawing.Graphics]::FromImage($bmp)
+                    try {
+                      $gfx.CopyFromScreen($rect.Left, $rect.Top, 0, 0, [System.Drawing.Size]::new($width, $height))
+                      $bmp.Save((Join-Path $env:RUNNER_TEMP 'restora-startup-failure.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+                      Write-Host "Captured diagnostic screenshot: $width x $height"
+                    } finally { $gfx.Dispose(); $bmp.Dispose() }
+                  }
+                } catch { Write-Warning "Startup screenshot failed: $($_.Exception.Message)" }
+                throw "WebView2 React startup failed: no native React-ready handshake after launch (window title: $($process.MainWindowTitle))"
+              }
+              Write-Host 'PASS: React mounted and invoked the native Tauri readiness command.'
+              $nextAgents = @(Get-Process -Name restora-pc-agent -ErrorAction SilentlyContinue).Count
+              if ($nextAgents -ne $priorAgents) { throw 'The POS launched a separate print agent' }
+              Write-Host 'PASS: native POS started with port 17777 occupied; no PC agent was started.'
+            } finally {
+              Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            }
+          } finally {
+            $listener.Stop()
+          }
+      - name: Reject agent libraries and TCP listeners in Tauri source
+        shell: pwsh
+        run: |
+          $files = @(Get-ChildItem src-tauri/src -Recurse -Filter '*.rs')
+          $banned = $files | Select-String -Pattern 'restora_pc_agent|start_embedded|TcpListener|127\.0\.0\.1:17777'
+          if ($banned) { throw "Native desktop still contains legacy print-agent references: $banned" }
+          Write-Host 'PASS: no local print agent, listener, or embedded agent dependency.'
+      - name: Upload startup diagnostic screenshot
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: restora-startup-diagnostic
+          path: ${{ runner.temp }}/restora-startup-failure.png
+          if-no-files-found: ignore

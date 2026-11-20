@@ -16,3 +16,7 @@ dev-dist
 .github/authenticated-e2e/node_modules/
 .github/authenticated-e2e/playwright-report/
 .github/authenticated-e2e/test-results/
+
+# Tauri native build outputs
+src-tauri/target/
+src-tauri/gen/schemas/

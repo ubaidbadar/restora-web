@@ -3,8 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import useAuthStore from '../store/auth_store';
 import sampleMe from '../test/sample_me';
 import type Order from '../types/order';
+import { invoke } from '@tauri-apps/api/core';
 import printOnThisPc from './print_on_this_pc';
 
+vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('./offline_db', () => ({ default: { get: vi.fn(async () => undefined), set: vi.fn(async () => undefined), clear: vi.fn(async () => undefined) } }));
 
 const order = { _id: 'k1-abc', dailyToken: 'A-3', type: 'takeaway', items: [{ itemId: 'm1', name: 'Karahi', qty: 1, price: 1400 }], pendingSync: true } as unknown as Order;
@@ -14,10 +16,14 @@ describe('printOnThisPc', () => {
   const fetchMock = vi.fn();
   beforeEach(() => {
     fetchMock.mockReset();
+    vi.mocked(invoke).mockReset();
     vi.stubGlobal('fetch', fetchMock);
     useAuthStore.getState().setMe(sampleMe());
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete (window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__;
+  });
 
   it('an automatic slip is sent with its key, the one the synced order\'s slip from the server has', async () => {
     fetchMock.mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) }).mockResolvedValueOnce({ ok: true, json: async () => ({ printed: true }) });
@@ -56,6 +62,16 @@ describe('printOnThisPc', () => {
     expect(await printOnThisPc(order, 'kitchen', 'available-only')).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(JSON.parse(fetchMock.mock.calls[1]![1].body).printer).toBe('Kitchen Star');
+  });
+
+  it('prints directly through Tauri with no localhost or agent requests', async () => {
+    Object.defineProperty(window, '__RESTORA_DESKTOP__', { value: true, configurable: true });
+    vi.mocked(invoke).mockResolvedValueOnce({ printed: true, printer: 'Windows default' });
+    expect(await printOnThisPc(order, 'kitchen', 'k1-abc')).toBe(true);
+    expect(invoke).toHaveBeenCalledWith('native_print', expect.objectContaining({
+      request: expect.objectContaining({ kind: 'kitchen', orderKey: 'k1-abc', width: 48 }),
+    }));
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('is false when no printer here prints kitchen slips', async () => {

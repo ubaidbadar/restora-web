@@ -18,7 +18,9 @@
     "qa:setup": "node .github/scripts/setup-qa.cjs",
     "qa:order": "yarn build && yarn qa:order:built",
     "qa:order:built": "node .github/scripts/run-order-page-e2e.cjs",
-    "qa:verify": "yarn verify && yarn qa:order:built"
+    "qa:verify": "yarn verify && yarn qa:order:built",
+    "desktop:dev": "npx --yes @tauri-apps/cli@2.12.0 dev",
+    "desktop:build": "npx --yes @tauri-apps/cli@2.12.0 build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -31,7 +33,8 @@
     "react-hook-form": "^7.81.0",
     "react-router": "^7.18.4",
     "read-excel-file": "5.8.8",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@tauri-apps/api": "2.12.5"
   },
   "devDependencies": {
     "@babel/core": "^8.0.6",
