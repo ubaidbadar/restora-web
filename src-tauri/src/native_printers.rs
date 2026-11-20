@@ -170,10 +170,28 @@ fn trusted_caller(webview: &WebviewWindow) -> Result<(), String> {
 /// Only React can mark the desktop UI ready; the Windows test checks the
 /// native window title, not merely that the process or WebView2 shell exists.
 #[tauri::command]
-pub fn native_desktop_ready(webview: WebviewWindow) -> Result<(), String> {
+pub fn native_desktop_ready(
+    webview: WebviewWindow,
+    stage: Option<String>,
+    detail: Option<String>,
+) -> Result<(), String> {
     trusted_caller(&webview)?;
+    let title = match stage.as_deref() {
+        Some("html") => String::from("Restora POS - HTML loaded"),
+        Some("failed") => {
+            let detail = detail.unwrap_or_default();
+            let summary: String = detail
+                .chars()
+                .filter(|character| character.is_ascii_graphic() || *character == ' ')
+                .take(100)
+                .collect();
+            format!("Restora POS - Startup failed: {summary}")
+        }
+        None | Some("react") => String::from("Restora POS - Ready"),
+        _ => return Err(String::from("Unknown native startup stage")),
+    };
     webview
-        .set_title("Restora POS - Ready")
+        .set_title(&title)
         .map_err(|error| error.to_string())
 }
 
