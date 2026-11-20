@@ -33,8 +33,10 @@ function summary(printer: Printer, categories: MenuCategory[]) {
 }
 
 export default function PrinterRow({ agent, printer, online, categories, onSaved }: PrinterRowProps) {
-  const age = printer.health ? Date.now() / 1000 - printer.health.checkedAt : Infinity;
-  const state = age >= -30 && age <= 120 ? printer.health?.state : undefined;
+  // Compare timestamps from the server, rather than reading the clock during React render.
+  const lastSeen = agent.lastSeenAt ? Date.parse(agent.lastSeenAt) / 1000 : 0;
+  const checkedAt = printer.health?.checkedAt ?? 0;
+  const state = checkedAt >= lastSeen - 120 && checkedAt <= lastSeen + 30 ? printer.health?.state : undefined;
   const label = !online ? 'PC offline' : !printer.present ? 'Not installed' : ({
     offline: 'Offline reported',
     paused: 'Paused',
@@ -58,7 +60,7 @@ export default function PrinterRow({ agent, printer, online, categories, onSaved
         </span>
         <bdi className="block truncate text-sm text-muted">{printer.systemName}</bdi>
         <span className="block truncate text-sm text-muted">{summary(printer, categories)}</span>
-        {online && printer.present && state && <span className="block text-xs text-muted">Windows queue · {printer.health?.queuedJobs ?? 0} waiting · checked {Math.max(0, Math.round(age))}s ago</span>}
+        {online && printer.present && state && <span className="block text-xs text-muted">Windows queue · {printer.health?.queuedJobs ?? 0} waiting · checked {new Date(checkedAt * 1000).toLocaleTimeString()}</span>}
       </span>
       <FormDrawer
         title={`Edit ${printer.label}`}
