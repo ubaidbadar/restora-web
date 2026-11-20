@@ -13,6 +13,7 @@ import printerSchema from './printer_schema';
 interface PrinterRowProps {
   agent: PrintAgent;
   printer: Printer;
+  online: boolean;
   categories: MenuCategory[];
   onSaved: (agent: PrintAgent) => void;
 }
@@ -31,16 +32,33 @@ function summary(printer: Printer, categories: MenuCategory[]) {
     .join(' · ');
 }
 
-export default function PrinterRow({ agent, printer, categories, onSaved }: PrinterRowProps) {
+export default function PrinterRow({ agent, printer, online, categories, onSaved }: PrinterRowProps) {
+  const age = printer.health ? Date.now() / 1000 - printer.health.checkedAt : Infinity;
+  const state = age >= -30 && age <= 120 ? printer.health?.state : undefined;
+  const label = !online ? 'PC offline' : !printer.present ? 'Not installed' : ({
+    offline: 'Offline reported',
+    paused: 'Paused',
+    paperOut: 'Paper out',
+    paperJam: 'Paper jam',
+    doorOpen: 'Cover open',
+    error: 'Printer error',
+    busy: 'Processing',
+    unknown: 'Not verified',
+  } as const)[state ?? 'unknown'];
+  const variant = !online || !printer.present ? 'warning'
+    : state === 'offline' || state === 'error' || state === 'paperOut' || state === 'paperJam' || state === 'doorOpen' ? 'error'
+      : state === 'paused' ? 'warning' : 'neutral';
+
   return (
     <li className="flex min-h-14 items-center justify-between gap-2 py-2 ps-5 pe-3 sm:ps-6 sm:pe-4">
       <span className="min-w-0">
         <span className="flex items-center gap-2">
           <bdi className="truncate font-medium text-ink">{printer.label}</bdi>
-          {!printer.present && <Badge variant="warning">Not found</Badge>}
+          <Badge variant={variant}>{label}</Badge>
         </span>
         <bdi className="block truncate text-sm text-muted">{printer.systemName}</bdi>
         <span className="block truncate text-sm text-muted">{summary(printer, categories)}</span>
+        {online && printer.present && state && <span className="block text-xs text-muted">Windows queue · {printer.health?.queuedJobs ?? 0} waiting · checked {Math.max(0, Math.round(age))}s ago</span>}
       </span>
       <FormDrawer
         title={`Edit ${printer.label}`}
