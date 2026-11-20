@@ -302,10 +302,10 @@ fn submit_raw(printer: &str, bytes: &[u8]) -> Result<(), String> {
         let _ = unsafe { GetPrinterW(handle, 6, None, &mut needed) };
         if needed == 4 {
             let mut status = [0u8; 4];
-            if unsafe { GetPrinterW(handle, 6, Some(&mut status), &mut needed) }.is_ok() {
-                if let Some(problem) = printer_problem(u32::from_le_bytes(status)) {
-                    return Err(problem.to_string());
-                }
+            if unsafe { GetPrinterW(handle, 6, Some(&mut status), &mut needed) }.is_ok()
+                && let Some(problem) = printer_problem(u32::from_le_bytes(status))
+            {
+                return Err(problem.to_string());
             }
         }
         let mut title = utf16("Restora POS receipt");

@@ -110,8 +110,6 @@ pub struct Header {
     pub ntn: Option<String>,
     pub strn: Option<String>,
     pub footer: Option<String>,
-    /// The logo's address (https, or a data URL), printed at the top of a receipt.
-    pub logo: Option<String>,
     /// The logo's image file, loaded by the agent before printing (`logo::load`), never sent.
     #[serde(skip)]
     pub logo_file: Option<Vec<u8>>,
