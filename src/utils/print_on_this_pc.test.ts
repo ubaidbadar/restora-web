@@ -62,4 +62,22 @@ describe('printOnThisPc', () => {
     fetchMock.mockResolvedValueOnce({ json: async () => ({ printers: [{ ...kitchen, prints: ['receipt'] }] }) });
     expect(await printOnThisPc(order, 'kitchen', 'k1-abc')).toBe(false);
   });
+
+  it('returns partial after one printer accepts a slip and another rejects it', async () => {
+    const bar = { ...kitchen, systemName: 'Bar Star' };
+    fetchMock
+      .mockResolvedValueOnce({ json: async () => ({ printers: [kitchen, bar] }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ printed: true }) })
+      .mockResolvedValueOnce({ ok: false, status: 403 });
+    expect(await printOnThisPc(order, 'kitchen', 'partial-print')).toBe('partial');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not assume no printing occurred after a lost print response', async () => {
+    fetchMock
+      .mockResolvedValueOnce({ json: async () => ({ printers: [kitchen] }) })
+      .mockRejectedValueOnce(new Error('connection reset after printing'));
+    expect(await printOnThisPc(order, 'kitchen', 'unknown-result')).toBe('uncertain');
+  });
+
 });
