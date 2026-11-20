@@ -43,14 +43,14 @@ describe('AgentReconnect', () => {
     expect(post).not.toHaveBeenCalled();
   });
 
-  it('connects native desktop printing without requiring browser loopback permission', async () => {
+  it('native desktop never contacts, pairs or requests permission for a PC agent', async () => {
     Object.defineProperty(window, '__RESTORA_DESKTOP__', { value: true, configurable: true });
     allow('prompt');
-    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ paired: false }) }).mockResolvedValueOnce({ ok: true, json: async () => ({ paired: true }) });
-    post.mockResolvedValue({ data: { _id: 'desktop-pc', pairing: { code: '482913' } } });
     render(<AgentReconnect />);
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(post).toHaveBeenCalledTimes(1);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(post).not.toHaveBeenCalled();
+    expect(navigator.permissions.query).not.toHaveBeenCalled();
   });
 
   it('never reaches for the agent before the browser has been allowed to', async () => {
