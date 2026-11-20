@@ -63,6 +63,12 @@ jobs:
           $setup = @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter '*setup.exe')
           if ($setup.Count -ne 1) { throw "Expected exactly one Restora installer; found $($setup.Count)" }
           $setup | Select-Object Name, Length
+      - name: Upload Windows test installer
+        uses: actions/upload-artifact@v5
+        with:
+          name: restora-web-tauri2-win-x64-unsigned
+          path: src-tauri/target/release/bundle/nsis/*setup.exe
+          if-no-files-found: error
       - name: Smoke test installed Tauri POS with bundled React and printing
         shell: pwsh
         env:
@@ -78,6 +84,18 @@ jobs:
           if (-not (Test-Path -LiteralPath $binary)) { throw "Installed Restora POS executable missing: $binary" }
           $assets = Join-Path $installDir 'web/index.html'
           if (-not (Test-Path -LiteralPath $assets)) { throw "Bundled React index.html missing: $assets" }
+          $builtDist = (Resolve-Path 'dist').Path
+          $builtFiles = @(Get-ChildItem $builtDist -Recurse -File)
+          if (-not $builtFiles.Count) { throw 'React production build is empty' }
+          foreach ($source in $builtFiles) {
+            $relative = $source.FullName.Substring($builtDist.Length + 1)
+            $copy = Join-Path (Join-Path $installDir 'web') $relative
+            if (-not (Test-Path -LiteralPath $copy)) { throw "Bundled React asset missing: $relative" }
+            $sourceHash = (Get-FileHash -LiteralPath $source.FullName -Algorithm SHA256).Hash
+            $copyHash = (Get-FileHash -LiteralPath $copy -Algorithm SHA256).Hash
+            if ($sourceHash -ne $copyHash) { throw "Bundled React asset differs from source: $relative" }
+          }
+          Write-Host "PASS: $($builtFiles.Count) React files byte-for-byte match the installed Tauri bundle."
           $oldAgents = @(Get-Process -Name 'restora-pc-agent' -ErrorAction SilentlyContinue).Count
           $process = Start-Process -FilePath $binary -PassThru
           try {
@@ -107,9 +125,3 @@ jobs:
           } finally {
             Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
           }
-      - name: Upload Windows test installer
-        uses: actions/upload-artifact@v5
-        with:
-          name: restora-web-tauri2-win-x64-unsigned
-          path: src-tauri/target/release/bundle/nsis/*setup.exe
-          if-no-files-found: error
