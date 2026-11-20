@@ -69,97 +69,49 @@ jobs:
           name: restora-web-tauri2-win-x64-unsigned
           path: src-tauri/target/release/bundle/nsis/*setup.exe
           if-no-files-found: error
-      - name: Smoke test installed Tauri POS with bundled React and printing
+      - name: Verify installed POS needs no localhost printing port
         shell: pwsh
-        env:
-          # CI only. Never enable the debugging port in production releases.
-          WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: '--remote-debugging-port=9222 --remote-allow-origins=*'
         run: |
           $ErrorActionPreference = 'Stop'
           $setup = @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter '*setup.exe')[0]
           $installDir = Join-Path $env:RUNNER_TEMP 'restora-pos-smoke'
           $installer = Start-Process -FilePath $setup.FullName -ArgumentList @('/S', "/D=$installDir") -Wait -PassThru
-          if ($installer.ExitCode -ne 0) { throw "NSIS setup failed with exit code $($installer.ExitCode)" }
+          if ($installer.ExitCode -ne 0) { throw "NSIS install failed with exit code $($installer.ExitCode)" }
           $binary = Join-Path $installDir 'restora-pos.exe'
-          if (-not (Test-Path -LiteralPath $binary)) { throw "Installed Restora POS executable missing: $binary" }
-          $assets = Join-Path $installDir 'web/index.html'
-          if (-not (Test-Path -LiteralPath $assets)) { throw "Bundled React index.html missing: $assets" }
-          $builtDist = (Resolve-Path 'dist').Path
-          $builtFiles = @(Get-ChildItem $builtDist -Recurse -File)
-          if (-not $builtFiles.Count) { throw 'React production build is empty' }
-          foreach ($source in $builtFiles) {
-            $relative = $source.FullName.Substring($builtDist.Length + 1)
-            $copy = Join-Path (Join-Path $installDir 'web') $relative
-            if (-not (Test-Path -LiteralPath $copy)) { throw "Bundled React asset missing: $relative" }
-            $sourceHash = (Get-FileHash -LiteralPath $source.FullName -Algorithm SHA256).Hash
-            $copyHash = (Get-FileHash -LiteralPath $copy -Algorithm SHA256).Hash
-            if ($sourceHash -ne $copyHash) { throw "Bundled React asset differs from source: $relative" }
-          }
-          Write-Host "PASS: $($builtFiles.Count) React files byte-for-byte match the installed Tauri bundle."
-          $oldAgents = @(Get-Process -Name 'restora-pc-agent' -ErrorAction SilentlyContinue).Count
-          $process = Start-Process -FilePath $binary -PassThru
-          try {
-            $ready = $false
-            for ($attempt = 0; $attempt -lt 30; $attempt++) {
-              Start-Sleep -Seconds 1
-              $process.Refresh()
-              if ($process.HasExited) { throw "Installed Restora POS exited unexpectedly (code $($process.ExitCode))" }
-              try {
-                $snapshot = Invoke-RestMethod -Uri 'http://127.0.0.1:17777/status' -TimeoutSec 2
-                if ($null -ne $snapshot.paired) { $ready = $true; break }
-              } catch { }
+          if (-not (Test-Path $binary)) { throw 'Installed Restora POS executable missing' }
+          $dist = (Resolve-Path dist).Path
+          foreach ($source in @(Get-ChildItem $dist -Recurse -File)) {
+            $relative = $source.FullName.Substring($dist.Length + 1)
+            $installed = Join-Path (Join-Path $installDir 'web') $relative
+            if (-not (Test-Path $installed)) { throw "Bundled React asset missing: $relative" }
+            if ((Get-FileHash $source.FullName).Hash -ne (Get-FileHash $installed).Hash) {
+              throw "Bundled React asset differs: $relative"
             }
-            if (-not $ready) { throw 'The installed in-process print engine did not start' }
-            $blocked = Invoke-WebRequest -Uri 'http://127.0.0.1:17777/setup/pair' -Method Post -ContentType 'application/json' -Body '{"code":"000000"}' -SkipHttpErrorCheck -TimeoutSec 3
-            if ($blocked.StatusCode -ne 403) { throw "Originless pairing was not blocked: $($blocked.StatusCode)" }
-            $newAgents = @(Get-Process -Name 'restora-pc-agent' -ErrorAction SilentlyContinue).Count
-            if ($newAgents -ne $oldAgents) { throw 'A separate print-agent executable was launched' }
-            Write-Host 'Installed Restora POS launched with bundled React, in-process printing, and origin guard.'
-            $webviews = @(Get-CimInstance Win32_Process -Filter "Name = 'msedgewebview2.exe'" -ErrorAction SilentlyContinue)
-          Write-Host "WebView2 renderer processes in hosted CI: $($webviews.Count)"
-          $debugProcesses = @($webviews | Where-Object { $_.CommandLine -match 'remote-debugging-port' })
-          Write-Host "WebView2 process command lines with debug flag: $($debugProcesses.Count)"
-          $process.Refresh()
-          Write-Host "Restora POS window: $($process.MainWindowTitle), HWND $($process.MainWindowHandle)"
-          if ($process.MainWindowHandle -ne 0) {
+          }
+          # Simulate the original error 10048. Tauri must remain usable even
+          # while an unrelated process occupies the old agent's TCP port.
+          $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 17777)
+          $listener.Start()
+          $priorAgents = @(Get-Process -Name restora-pc-agent -ErrorAction SilentlyContinue).Count
+          try {
+            $process = Start-Process -FilePath $binary -PassThru
             try {
-              Add-Type -AssemblyName System.Drawing
-              $windowApi = @'
-          using System;
-          using System.Runtime.InteropServices;
-          public static class RestoraNativeWindow {
-            [StructLayout(LayoutKind.Sequential)]
-            public struct Rect { public int Left, Top, Right, Bottom; }
-            [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hwnd, out Rect bounds);
-          }
-          '@
-              Add-Type -TypeDefinition $windowApi
-              $bounds = New-Object RestoraNativeWindow+Rect
-              if ([RestoraNativeWindow]::GetWindowRect($process.MainWindowHandle, [ref]$bounds)) {
-                $width = [Math]::Max(1, $bounds.Right - $bounds.Left)
-                $height = [Math]::Max(1, $bounds.Bottom - $bounds.Top)
-                $bitmap = [System.Drawing.Bitmap]::new($width, $height)
-                $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-                try {
-                  $graphics.CopyFromScreen($bounds.Left, $bounds.Top, 0, 0, [System.Drawing.Size]::new($width, $height))
-                  $bitmap.Save((Join-Path $env:RUNNER_TEMP 'restora-desktop-window.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-                  Write-Host "Captured Restora window: $width x $height"
-                } finally { $graphics.Dispose(); $bitmap.Dispose() }
-              }
-            } catch { Write-Warning "GUI capture unavailable: $($_.Exception.Message)" }
-          }
-          $browserDebug = @(Get-NetTCPConnection -LocalPort 9222 -State Listen -ErrorAction SilentlyContinue)
-          Write-Host "WebView2 debugging TCP listeners: $($browserDebug.Count)"
-          $sessions = (query user 2>$null) -join " | "
-          Write-Host "Windows runner sessions: $sessions"
-          node .github/scripts/tauri-window-smoke.mjs "$installDir"
+              Start-Sleep -Seconds 4
+              $process.Refresh()
+              if ($process.HasExited) { throw "Native POS exited with code $($process.ExitCode) while port 17777 was occupied" }
+              $nextAgents = @(Get-Process -Name restora-pc-agent -ErrorAction SilentlyContinue).Count
+              if ($nextAgents -ne $priorAgents) { throw 'The POS launched a separate print agent' }
+              Write-Host 'PASS: native POS started with port 17777 occupied; no PC agent was started.'
+            } finally {
+              Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            }
           } finally {
-            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            $listener.Stop()
           }
-      - name: Upload GUI screenshot for manual acceptance when available
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: restora-windows-webview2-screenshot
-          path: ${{ runner.temp }}/restora-desktop-window.png
-          if-no-files-found: ignore
+      - name: Reject agent libraries and TCP listeners in Tauri source
+        shell: pwsh
+        run: |
+          $files = @(Get-ChildItem src-tauri/src -Recurse -Filter '*.rs')
+          $banned = $files | Select-String -Pattern 'restora_pc_agent|start_embedded|TcpListener|127\.0\.0\.1:17777'
+          if ($banned) { throw "Native desktop still contains legacy print-agent references: $banned" }
+          Write-Host 'PASS: no local print agent, listener, or embedded agent dependency.'
