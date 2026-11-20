@@ -22,5 +22,12 @@ export default async function printSlip(order: Order, kind: 'kitchen' | 'receipt
     toast.success(kind === 'kitchen' ? 'Kitchen slip sent to the printer' : 'Receipt sent to the printer');
     return;
   }
+  if ((window as Window & { __RESTORA_DESKTOP__?: boolean }).__RESTORA_DESKTOP__ === true) {
+    // The installed POS must never unexpectedly open a WebView2 print dialog.
+    // A missing Windows default / unsupported thermal printer needs a visible
+    // error instead of printing to an arbitrary browser-selected device.
+    toast.error('No available Windows thermal printer. Check the Windows default printer and try again.');
+    return;
+  }
   printOrder(order, kind);
 }
