@@ -190,9 +190,7 @@ pub fn native_desktop_ready(
         None | Some("react") => String::from("Restora POS - Ready"),
         _ => return Err(String::from("Unknown native startup stage")),
     };
-    webview
-        .set_title(&title)
-        .map_err(|error| error.to_string())
+    webview.set_title(&title).map_err(|error| error.to_string())
 }
 
 #[tauri::command]
